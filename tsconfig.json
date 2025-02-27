@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"target": "es6",
+		"module": "es6",
+		"declaration": true,
+		"outDir": "./dist",
+		"strict": true,
+		"esModuleInterop": true,
+		"lib": ["dom", "es2019", "dom.iterable"],
+		"sourceMap": true,
+		"moduleResolution": "bundler"
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
+} 
