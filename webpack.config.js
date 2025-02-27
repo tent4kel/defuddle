@@ -5,21 +5,21 @@ module.exports = {
   entry: './src/index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'defuddle.js',
+    filename: 'index.js',
     library: {
       name: 'Defuddle',
       type: 'umd',
-      export: 'Defuddle'
+      export: 'default'
     },
     globalObject: 'this'
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js']
   },
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/
       }

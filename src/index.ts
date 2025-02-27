@@ -1,5 +1,5 @@
 export { Defuddle } from './defuddle';
-export { DefuddleMetadata } from './metadata';
+export type { DefuddleMetadata } from './metadata';
 
 // Re-export the DefuddleResponse interface for TypeScript users
 import { Defuddle } from './defuddle';
