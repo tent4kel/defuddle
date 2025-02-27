@@ -37,16 +37,15 @@ declare module "defuddle" {
         content: string;
     }
     export class Defuddle {
-        private static debug;
+        #private;
+        /**
+         * Enable or disable debug logging
+         */
         static enableDebug(enable?: boolean): void;
-        private static log;
-        private static readonly POSITIVE_PATTERNS;
-        private static readonly NEGATIVE_PATTERNS;
-        private static readonly BLOCK_ELEMENTS;
-        private static readonly HIDDEN_ELEMENTS_SELECTOR;
-        private static readonly ALLOWED_ATTRIBUTES;
+        /**
+         * Parse a document and extract its main content
+         */
         static parse(doc: Document): DefuddleResponse;
-        private static evaluateMediaQueries;
         private static applyMobileStyles;
         private static removeHiddenElements;
         private static removeClutter;

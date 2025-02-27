@@ -10,11 +10,7 @@ declare global {
 const POSITIVE_PATTERNS = /article|content|main|post|body|text|blog|story/i;
 const NEGATIVE_PATTERNS = /comment|meta|footer|footnote|foot|nav|sidebar|banner|ad|popup|menu/i;
 const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
-
-// Mobile viewport settings
 const MOBILE_WIDTH = 600;
-
-// Hidden element selectors
 const HIDDEN_ELEMENTS_SELECTOR = [
 	'[hidden]',
 	'[style*="display: none"]',
@@ -24,8 +20,6 @@ const HIDDEN_ELEMENTS_SELECTOR = [
 	'.hidden',
 	'.invisible'
 ].join(',');
-
-// Allowed attributes
 const ALLOWED_ATTRIBUTES = new Set([
 	'href',
 	'src',
@@ -188,28 +182,22 @@ interface DefuddleResponse extends DefuddleMetadata {
 }
 
 export class Defuddle {
-	private static debug = true;
+	static #debug = false;
 
-	static enableDebug(enable: boolean = true) {
-		this.debug = enable;
+	/**
+	 * Enable or disable debug logging
+	 */
+	static enableDebug(enable: boolean = true): void {
+		this.#debug = enable;
 	}
 
-	private static log(...args: any[]) {
-		if (this.debug) {
-			console.log('Defuddle:', ...args);
-		}
-	}
-
-	private static readonly POSITIVE_PATTERNS = POSITIVE_PATTERNS;
-	private static readonly NEGATIVE_PATTERNS = NEGATIVE_PATTERNS;
-	private static readonly BLOCK_ELEMENTS = BLOCK_ELEMENTS;
-	private static readonly HIDDEN_ELEMENTS_SELECTOR = HIDDEN_ELEMENTS_SELECTOR;
-	private static readonly ALLOWED_ATTRIBUTES = ALLOWED_ATTRIBUTES;
-
+	/**
+	 * Parse a document and extract its main content
+	 */
 	static parse(doc: Document): DefuddleResponse {
 		try {
 			// Evaluate styles and sizes on original document
-			const mobileStyles = this.evaluateMediaQueries(doc);
+			const mobileStyles = this.#evaluateMediaQueries(doc);
 			const smallImages = this.findSmallImages(doc);
 			
 			// Clone after evaluation
@@ -254,7 +242,14 @@ export class Defuddle {
 		}
 	}
 
-	private static evaluateMediaQueries(doc: Document): StyleChange[] {
+	// Make all other methods private with #
+	static #log(...args: any[]): void {
+		if (this.#debug) {
+			console.log('Defuddle:', ...args);
+		}
+	}
+
+	static #evaluateMediaQueries(doc: Document): StyleChange[] {
 		const mobileStyles: StyleChange[] = [];
 
 		try {
@@ -327,7 +322,7 @@ export class Defuddle {
 		let count = 0;
 
 		// Existing hidden elements selector
-		const hiddenElements = doc.querySelectorAll(this.HIDDEN_ELEMENTS_SELECTOR);
+		const hiddenElements = doc.querySelectorAll(HIDDEN_ELEMENTS_SELECTOR);
 		hiddenElements.forEach(el => {
 			el.remove();
 			count++;
@@ -347,7 +342,7 @@ export class Defuddle {
 			}
 		});
 
-		this.log('Removed hidden elements:', count);
+		this.#log('Removed hidden elements:', count);
 	}
 
 	private static removeClutter(doc: Document) {
@@ -418,7 +413,7 @@ export class Defuddle {
 		// Batch remove elements
 		elementsToRemove.forEach(el => el.remove());
 
-		this.log('Found clutter elements:', {
+		this.#log('Found clutter elements:', {
 			basicSelectors: basicSelectorCount,
 			patternMatches: patternMatchCount,
 			total: basicSelectorCount + patternMatchCount
@@ -453,7 +448,7 @@ export class Defuddle {
 				h2.innerHTML = h1.innerHTML;
 				// Copy allowed attributes
 				Array.from(h1.attributes).forEach(attr => {
-					if (this.ALLOWED_ATTRIBUTES.has(attr.name)) {
+					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
 						h2.setAttribute(attr.name, attr.value);
 					}
 				});
@@ -479,7 +474,7 @@ export class Defuddle {
 			comment.remove();
 		});
 
-		this.log('Removed HTML comments:', comments.length);
+		this.#log('Removed HTML comments:', comments.length);
 	}
 
 	private static stripUnwantedAttributes(element: Element) {
@@ -490,7 +485,7 @@ export class Defuddle {
 			
 			attributes.forEach(attr => {
 				const attrName = attr.name.toLowerCase();
-				if (!this.ALLOWED_ATTRIBUTES.has(attrName) && !attrName.startsWith('data-')) {
+				if (!ALLOWED_ATTRIBUTES.has(attrName) && !attrName.startsWith('data-')) {
 					el.removeAttribute(attr.name);
 					attributeCount++;
 				}
@@ -500,7 +495,7 @@ export class Defuddle {
 		processElement(element);
 		element.querySelectorAll('*').forEach(processElement);
 
-		this.log('Stripped attributes:', attributeCount);
+		this.#log('Stripped attributes:', attributeCount);
 	}
 
 	private static removeEmptyElements(element: Element) {
@@ -566,7 +561,7 @@ export class Defuddle {
 			}
 		}
 
-		this.log('Removed empty elements:', {
+		this.#log('Removed empty elements:', {
 			count: removedCount,
 			iterations
 		});
@@ -623,7 +618,7 @@ export class Defuddle {
 			}
 		});
 
-		this.log('Found small images:', removedCount);
+		this.#log('Found small images:', removedCount);
 		return smallImages;
 	}
 
@@ -639,7 +634,7 @@ export class Defuddle {
 			}
 		});
 
-		this.log('Removed small images:', removedCount);
+		this.#log('Removed small images:', removedCount);
 	}
 
 	private static getImageIdentifier(img: HTMLImageElement): string | null {
@@ -698,8 +693,8 @@ export class Defuddle {
 		// Sort by score descending
 		candidates.sort((a, b) => b.score - a.score);
 		
-		if (this.debug) {
-			this.log('Content candidates:', candidates.map(c => ({
+		if (this.#debug) {
+			this.#log('Content candidates:', candidates.map(c => ({
 				element: c.element.tagName,
 				selector: this.getElementSelector(c.element),
 				score: c.score
@@ -735,7 +730,7 @@ export class Defuddle {
 	private static scoreElements(doc: Document): ContentScore[] {
 		const candidates: ContentScore[] = [];
 
-		this.BLOCK_ELEMENTS.forEach(tag => {
+		BLOCK_ELEMENTS.forEach((tag: string) => {
 			Array.from(doc.getElementsByTagName(tag)).forEach((element: Element) => {
 				const score = this.scoreElement(element);
 				if (score > 0) {
@@ -755,12 +750,12 @@ export class Defuddle {
 		const id = element.id.toLowerCase();
 
 		// Check positive patterns
-		if (this.POSITIVE_PATTERNS.test(className) || this.POSITIVE_PATTERNS.test(id)) {
+		if (POSITIVE_PATTERNS.test(className) || POSITIVE_PATTERNS.test(id)) {
 			score += 25;
 		}
 
 		// Check negative patterns
-		if (this.NEGATIVE_PATTERNS.test(className) || this.NEGATIVE_PATTERNS.test(id)) {
+		if (NEGATIVE_PATTERNS.test(className) || NEGATIVE_PATTERNS.test(id)) {
 			score -= 25;
 		}
 

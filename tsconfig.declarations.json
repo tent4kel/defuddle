@@ -1,15 +1,15 @@
 {
 	"compilerOptions": {
 		"target": "es6",
-		"module": "es6",
+		"module": "amd",
 		"moduleResolution": "node",
-		"declaration": false,
-		"outDir": "./dist",
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"outFile": "./dist/index.d.ts",
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"lib": ["dom", "es2019", "dom.iterable"],
-		"sourceMap": true
+		"lib": ["dom", "es2019", "dom.iterable"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules", "dist"]

@@ -47,24 +47,18 @@ To build the package, you'll need Node.js and npm installed. Then run:
 # Install dependencies
 npm install
 
-# Build TypeScript files
+# Clean and build
 npm run build
-
-# Build browser bundle
-npm run build:browser
-
-# Build both TypeScript and browser bundle
-npm run build:all
 ```
 
-This will generate the following files:
-- `dist/defuddle.js` - bundle for browser use
-- `dist/*.d.ts` - TypeScript declaration files
-- `dist/*.js` - CommonJS modules for Node.js
+This will generate:
+- `dist/index.js` - CommonJS build for Node.js
+- `dist/defuddle.js` - UMD build for browsers
+- `dist/index.d.ts` - TypeScript declaration file
 
 ### Using in a browser
 
-You can include the bundle directly in your HTML:
+You can include the browser bundle directly in your HTML:
 
 ```html
 <script src="path/to/defuddle.js"></script>
@@ -72,6 +66,13 @@ You can include the bundle directly in your HTML:
   const article = Defuddle.parse(document);
   console.log(article.title);
 </script>
+```
+
+### Using in Node.js
+
+```javascript
+const { Defuddle } = require('defuddle');
+// Note: You'll need to provide a DOM-like environment in Node.js
 ```
 
 ## Differences from Mozilla Readability

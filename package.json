@@ -3,21 +3,25 @@
 	"version": "0.1.0",
 	"description": "Extract article content and metadata from web pages",
 	"main": "dist/index.js",
+	"browser": "dist/defuddle.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"clean": "rm -rf dist",
-		"build": "npm run clean && webpack && tsc --emitDeclarationOnly"
+		"build": "npm run clean && webpack && tsc --project tsconfig.declarations.json"
 	},
 	"author": "kepano",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/node": "^20.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
+		"undici-types": "^5.0.0",
 		"webpack": "^5.90.3",
 		"webpack-cli": "^5.1.4"
 	},
 	"files": [
 		"dist/index.js",
+		"dist/defuddle.js",
 		"dist/index.d.ts",
 		"README.md",
 		"LICENSE"
