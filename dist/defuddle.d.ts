@@ -3,7 +3,6 @@ export declare class Defuddle {
     private doc;
     private options;
     private debug;
-    private keepClasses;
     /**
      * Create a new Defuddle instance
      * @param doc - The document to parse

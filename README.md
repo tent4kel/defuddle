@@ -8,19 +8,17 @@ npm install defuddle
 
 ## Usage
 
-Defuddle is designed to work in browser environments where the DOM is available.
+```typescript
+import { Defuddle } from 'defuddle';
 
-```javascript
-// Basic usage
-const article = Defuddle.parse(document);
-console.log(article.content); // HTML string of the main content
-console.log(article.title);   // Title of the article
+const article = new Defuddle(document).parse();
 
-// Enable debug mode to see logs
-Defuddle.enableDebug(true);
+// Use the extracted content and metadata
+console.log(article.content);  // HTML string of the main content
+console.log(article.title);    // Title of the article
 ```
 
-## Parsing
+## Response
 
 The `parse()` method returns an object with the following properties:
 
@@ -52,33 +50,15 @@ npm run build
 ```
 
 This will generate:
-- `dist/index.js` - CommonJS build for Node.js
-- `dist/defuddle.js` - UMD build for browsers
+- `dist/index.js` - UMD build for both Node.js and browsers
 - `dist/index.d.ts` - TypeScript declaration file
-
-### Using in a browser
-
-You can include the browser bundle directly in your HTML:
-
-```html
-<script src="path/to/defuddle.js"></script>
-<script>
-  const article = Defuddle.parse(document);
-  console.log(article.title);
-</script>
-```
-
-### Using in Node.js
-
-```javascript
-const { Defuddle } = require('defuddle');
-// Note: You'll need to provide a DOM-like environment in Node.js
-```
 
 ## Differences from Mozilla Readability
 
 While Defuddle aims to be a drop-in replacement for Mozilla Readability, there are some differences:
 
-- More forgiving, removes fewer uncertain elements.
-- Uses a page's mobile styles to guess at un-necessary elements.
-- Extracts more metadata from the page, including schema.org data.
+- More forgiving, removes fewer uncertain elements
+- Uses a page's mobile styles to guess at unnecessary elements
+- Extracts more metadata from the page, including schema.org data
+- Simpler scoring algorithm focused on content density and semantic markup
+- Better handling of modern web components and dynamic content

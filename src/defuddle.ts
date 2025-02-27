@@ -176,7 +176,6 @@ export class Defuddle {
 	private doc: Document;
 	private options: DefuddleOptions;
 	private debug: boolean;
-	private keepClasses: boolean;
 
 	/**
 	 * Create a new Defuddle instance
@@ -187,7 +186,6 @@ export class Defuddle {
 		this.doc = doc;
 		this.options = options;
 		this.debug = options.debug || false;
-		this.keepClasses = options.keepClasses || false;
 	}
 
 	/**
@@ -427,9 +425,7 @@ export class Defuddle {
 		this.handleHeadings(element);
 		
 		// Strip unwanted attributes
-		if (!this.keepClasses) {
-			this.stripUnwantedAttributes(element);
-		}
+		this.stripUnwantedAttributes(element);
 
 		// Remove empty elements
 		this.removeEmptyElements(element);
@@ -449,7 +445,7 @@ export class Defuddle {
 				h2.innerHTML = h1.innerHTML;
 				// Copy allowed attributes
 				Array.from(h1.attributes).forEach(attr => {
-					if (ALLOWED_ATTRIBUTES.has(attr.name) || this.keepClasses) {
+					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
 						h2.setAttribute(attr.name, attr.value);
 					}
 				});
