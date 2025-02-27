@@ -1,4 +1,16 @@
+**Beware! Defuddle is very much a work in progress!**
+
 Defuddle extracts the main content from web pages. It cleans up web pages by removing clutter like comments, sidebars, headers, footers, and other non-essential elements, leaving only the primary content.
+
+## Key features
+
+Defuddle aims to be a replacement for Mozilla Readability, with a few differences:
+
+- More forgiving, removes fewer uncertain elements
+- Uses a page's mobile styles to guess at unnecessary elements
+- Extracts more metadata from the page, including schema.org data
+- Simpler scoring algorithm focused on content density and semantic markup
+- Better handling of modern web components and dynamic content
 
 ## Installation
 
@@ -52,13 +64,3 @@ npm run build
 This will generate:
 - `dist/index.js` - UMD build for both Node.js and browsers
 - `dist/index.d.ts` - TypeScript declaration file
-
-## Differences from Mozilla Readability
-
-While Defuddle aims to be a drop-in replacement for Mozilla Readability, there are some differences:
-
-- More forgiving, removes fewer uncertain elements
-- Uses a page's mobile styles to guess at unnecessary elements
-- Extracts more metadata from the page, including schema.org data
-- Simpler scoring algorithm focused on content density and semantic markup
-- Better handling of modern web components and dynamic content
