@@ -1,14 +1,4 @@
-export interface DefuddleMetadata {
-	title: string;
-	description: string;
-	domain: string;
-	favicon: string;
-	image: string;
-	published: string;
-	author: string;
-	site: string;
-	schemaOrgData: any;
-}
+import { DefuddleMetadata } from './types';
 
 export class MetadataExtractor {
 	static extract(doc: Document, schemaOrgData: any): DefuddleMetadata {

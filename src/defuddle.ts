@@ -1,10 +1,5 @@
-import { MetadataExtractor, DefuddleMetadata } from './metadata';
-
-declare global {
-	interface Window {
-		Defuddle: typeof Defuddle;
-	}
-}
+import { MetadataExtractor } from './metadata';
+import { DefuddleOptions, DefuddleResponse } from './types';
 
 // Patterns for scoring content
 const POSITIVE_PATTERNS = /article|content|main|post|body|text|blog|story/i;
@@ -177,32 +172,36 @@ interface StyleChange {
 	styles: string;
 }
 
-interface DefuddleResponse extends DefuddleMetadata {
-	content: string;
-}
-
 export class Defuddle {
-	static #debug = false;
+	private doc: Document;
+	private options: DefuddleOptions;
+	private debug: boolean;
+	private keepClasses: boolean;
 
 	/**
-	 * Enable or disable debug logging
+	 * Create a new Defuddle instance
+	 * @param doc - The document to parse
+	 * @param options - Options for parsing
 	 */
-	static enableDebug(enable: boolean = true): void {
-		this.#debug = enable;
+	constructor(doc: Document, options: DefuddleOptions = {}) {
+		this.doc = doc;
+		this.options = options;
+		this.debug = options.debug || false;
+		this.keepClasses = options.keepClasses || false;
 	}
 
 	/**
-	 * Parse a document and extract its main content
+	 * Parse the document and extract its main content
 	 */
-	static parse(doc: Document): DefuddleResponse {
+	parse(): DefuddleResponse {
 		try {
 			// Evaluate styles and sizes on original document
-			const mobileStyles = this.#evaluateMediaQueries(doc);
-			const smallImages = this.findSmallImages(doc);
+			const mobileStyles = this._evaluateMediaQueries(this.doc);
+			const smallImages = this.findSmallImages(this.doc);
 			
 			// Clone after evaluation
-			const clone = doc.cloneNode(true) as Document;
-			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(doc);
+			const clone = this.doc.cloneNode(true) as Document;
+			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
 
 			// Apply mobile style to clone
 			this.applyMobileStyles(clone, mobileStyles);
@@ -211,8 +210,8 @@ export class Defuddle {
 			const mainContent = this.findMainContent(clone);
 			if (!mainContent) {
 				return {
-					content: doc.body.innerHTML,
-					...MetadataExtractor.extract(doc, schemaOrgData)
+					content: this.doc.body.innerHTML,
+					...MetadataExtractor.extract(this.doc, schemaOrgData)
 				};
 			}
 
@@ -226,30 +225,30 @@ export class Defuddle {
 			// Clean up the main content
 			this.cleanContent(mainContent);
 
-			const metadata = MetadataExtractor.extract(doc, schemaOrgData);
+			const metadata = MetadataExtractor.extract(this.doc, schemaOrgData);
 
 			return {
-				content: mainContent ? mainContent.outerHTML : doc.body.innerHTML,
+				content: mainContent ? mainContent.outerHTML : this.doc.body.innerHTML,
 				...metadata
 			};
 		} catch (error) {
 			console.error('Defuddle', 'Error processing document:', error);
-			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(doc);
+			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
 			return {
-				content: doc.body.innerHTML,
-				...MetadataExtractor.extract(doc, schemaOrgData)
+				content: this.doc.body.innerHTML,
+				...MetadataExtractor.extract(this.doc, schemaOrgData)
 			};
 		}
 	}
 
-	// Make all other methods private with #
-	static #log(...args: any[]): void {
-		if (this.#debug) {
+	// Make all other methods private by removing the static keyword and using private
+	private _log(...args: any[]): void {
+		if (this.debug) {
 			console.log('Defuddle:', ...args);
 		}
 	}
 
-	static #evaluateMediaQueries(doc: Document): StyleChange[] {
+	private _evaluateMediaQueries(doc: Document): StyleChange[] {
 		const mobileStyles: StyleChange[] = [];
 
 		try {
@@ -299,7 +298,7 @@ export class Defuddle {
 		return mobileStyles;
 	}
 
-	private static applyMobileStyles(doc: Document, mobileStyles: StyleChange[]) {
+	private applyMobileStyles(doc: Document, mobileStyles: StyleChange[]) {
 		let appliedCount = 0;
 
 		mobileStyles.forEach(({selector, styles}) => {
@@ -318,7 +317,7 @@ export class Defuddle {
 
 	}
 
-	private static removeHiddenElements(doc: Document) {
+	private removeHiddenElements(doc: Document) {
 		let count = 0;
 
 		// Existing hidden elements selector
@@ -342,10 +341,10 @@ export class Defuddle {
 			}
 		});
 
-		this.#log('Removed hidden elements:', count);
+		this._log('Removed hidden elements:', count);
 	}
 
-	private static removeClutter(doc: Document) {
+	private removeClutter(doc: Document) {
 		let basicSelectorCount = 0;
 		let patternMatchCount = 0;
 
@@ -413,14 +412,14 @@ export class Defuddle {
 		// Batch remove elements
 		elementsToRemove.forEach(el => el.remove());
 
-		this.#log('Found clutter elements:', {
+		this._log('Found clutter elements:', {
 			basicSelectors: basicSelectorCount,
 			patternMatches: patternMatchCount,
 			total: basicSelectorCount + patternMatchCount
 		});
 	}
 
-	private static cleanContent(element: Element) {
+	private cleanContent(element: Element) {
 		// Remove HTML comments
 		this.removeHtmlComments(element);
 		
@@ -428,13 +427,15 @@ export class Defuddle {
 		this.handleHeadings(element);
 		
 		// Strip unwanted attributes
-		this.stripUnwantedAttributes(element);
+		if (!this.keepClasses) {
+			this.stripUnwantedAttributes(element);
+		}
 
 		// Remove empty elements
 		this.removeEmptyElements(element);
 	}
 
-	private static handleHeadings(element: Element) {
+	private handleHeadings(element: Element) {
 		const h1s = element.getElementsByTagName('h1');
 		let isFirstH1 = true;
 
@@ -448,7 +449,7 @@ export class Defuddle {
 				h2.innerHTML = h1.innerHTML;
 				// Copy allowed attributes
 				Array.from(h1.attributes).forEach(attr => {
-					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+					if (ALLOWED_ATTRIBUTES.has(attr.name) || this.keepClasses) {
 						h2.setAttribute(attr.name, attr.value);
 					}
 				});
@@ -457,7 +458,7 @@ export class Defuddle {
 		});
 	}
 
-	private static removeHtmlComments(element: Element) {
+	private removeHtmlComments(element: Element) {
 		const comments: Comment[] = [];
 		const walker = document.createTreeWalker(
 			element,
@@ -474,10 +475,10 @@ export class Defuddle {
 			comment.remove();
 		});
 
-		this.#log('Removed HTML comments:', comments.length);
+		this._log('Removed HTML comments:', comments.length);
 	}
 
-	private static stripUnwantedAttributes(element: Element) {
+	private stripUnwantedAttributes(element: Element) {
 		let attributeCount = 0;
 
 		const processElement = (el: Element) => {
@@ -495,10 +496,10 @@ export class Defuddle {
 		processElement(element);
 		element.querySelectorAll('*').forEach(processElement);
 
-		this.#log('Stripped attributes:', attributeCount);
+		this._log('Stripped attributes:', attributeCount);
 	}
 
-	private static removeEmptyElements(element: Element) {
+	private removeEmptyElements(element: Element) {
 		let removedCount = 0;
 		let iterations = 0;
 		let keepRemoving = true;
@@ -561,13 +562,13 @@ export class Defuddle {
 			}
 		}
 
-		this.#log('Removed empty elements:', {
+		this._log('Removed empty elements:', {
 			count: removedCount,
 			iterations
 		});
 	}
 
-	private static findSmallImages(doc: Document): Set<string> {
+	private findSmallImages(doc: Document): Set<string> {
 		let removedCount = 0;
 		const MIN_DIMENSION = 24;
 		const smallImages = new Set<string>();
@@ -618,11 +619,11 @@ export class Defuddle {
 			}
 		});
 
-		this.#log('Found small images:', removedCount);
+		this._log('Found small images:', removedCount);
 		return smallImages;
 	}
 
-	private static removeSmallImages(doc: Document, smallImages: Set<string>) {
+	private removeSmallImages(doc: Document, smallImages: Set<string>) {
 		let removedCount = 0;
 		const images = doc.getElementsByTagName('img');
 		
@@ -634,10 +635,10 @@ export class Defuddle {
 			}
 		});
 
-		this.#log('Removed small images:', removedCount);
+		this._log('Removed small images:', removedCount);
 	}
 
-	private static getImageIdentifier(img: HTMLImageElement): string | null {
+	private getImageIdentifier(img: HTMLImageElement): string | null {
 		// Try to create a unique identifier using various attributes
 		const src = img.src || img.getAttribute('data-src') || '';
 		const srcset = img.srcset || img.getAttribute('data-srcset') || '';
@@ -653,7 +654,7 @@ export class Defuddle {
 		return null;
 	}
 
-	private static findMainContent(doc: Document): Element | null {
+	private findMainContent(doc: Document): Element | null {
 		// Priority list of content markers
 		const contentSelectors = [
 			'article',
@@ -693,8 +694,8 @@ export class Defuddle {
 		// Sort by score descending
 		candidates.sort((a, b) => b.score - a.score);
 		
-		if (this.#debug) {
-			this.#log('Content candidates:', candidates.map(c => ({
+		if (this.debug) {
+			this._log('Content candidates:', candidates.map(c => ({
 				element: c.element.tagName,
 				selector: this.getElementSelector(c.element),
 				score: c.score
@@ -704,12 +705,12 @@ export class Defuddle {
 		return candidates[0].element;
 	}
 
-	private static findContentByScoring(doc: Document): Element | null {
+	private findContentByScoring(doc: Document): Element | null {
 		const candidates = this.scoreElements(doc);
 		return candidates.length > 0 ? candidates[0].element : null;
 	}
 
-	private static getElementSelector(element: Element): string {
+	private getElementSelector(element: Element): string {
 		const parts: string[] = [];
 		let current: Element | null = element;
 		
@@ -717,7 +718,7 @@ export class Defuddle {
 			let selector = current.tagName.toLowerCase();
 			if (current.id) {
 				selector += '#' + current.id;
-			} else if (current.className) {
+			} else if (current.className && typeof current.className === 'string') {
 				selector += '.' + current.className.trim().split(/\s+/).join('.');
 			}
 			parts.unshift(selector);
@@ -727,7 +728,7 @@ export class Defuddle {
 		return parts.join(' > ');
 	}
 
-	private static scoreElements(doc: Document): ContentScore[] {
+	private scoreElements(doc: Document): ContentScore[] {
 		const candidates: ContentScore[] = [];
 
 		BLOCK_ELEMENTS.forEach((tag: string) => {
@@ -742,12 +743,13 @@ export class Defuddle {
 		return candidates.sort((a, b) => b.score - a.score);
 	}
 
-	private static scoreElement(element: Element): number {
+	private scoreElement(element: Element): number {
 		let score = 0;
 
 		// Score based on element properties
-		const className = element.className.toLowerCase();
-		const id = element.id.toLowerCase();
+		const className = element.className && typeof element.className === 'string' ? 
+			element.className.toLowerCase() : '';
+		const id = element.id ? element.id.toLowerCase() : '';
 
 		// Check positive patterns
 		if (POSITIVE_PATTERNS.test(className) || POSITIVE_PATTERNS.test(id)) {
@@ -781,7 +783,4 @@ export class Defuddle {
 
 		return score;
 	}
-
-}
-
-window.Defuddle = Defuddle; 
+} 
