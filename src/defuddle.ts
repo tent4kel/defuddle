@@ -8,6 +8,7 @@ const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
 const MOBILE_WIDTH = 600;
 const HIDDEN_ELEMENTS_SELECTOR = [
 	'[hidden]',
+	'[aria-hidden="true"]',
 	'[style*="display: none"]',
 	'[style*="display:none"]',
 	'[style*="visibility: hidden"]',
@@ -75,6 +76,7 @@ const BASIC_SELECTORS = [
 	'[id^="ad-"]',
 	'[id$="-ad"]',
 	'[role="banner"]',
+	'[role="button"]',
 	'[role="dialog"]',
 	'[role="complementary"]',
 	'[role="navigation"]'
@@ -92,7 +94,7 @@ const CLUTTER_PATTERNS = [
 	'bottom-of-article',
 	'brand-bar',
 	'breadcrumb',
-	'button',
+	'button-wrapper',
 	'btn-',
 	'-btn',
 	'byline',
@@ -591,7 +593,7 @@ export class Defuddle {
 	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
 		let removedCount = 0;
-		const MIN_DIMENSION = 24;
+		const MIN_DIMENSION = 25;
 		const smallImages = new Set<string>();
 
 		const processElements = (elements: HTMLCollectionOf<Element>, type: 'img' | 'svg') => {
