@@ -16,23 +16,24 @@ const HIDDEN_ELEMENTS_SELECTOR = [
 	'.invisible'
 ].join(',');
 const ALLOWED_ATTRIBUTES = new Set([
-	'href',
-	'src',
-	'srcset',
+	'alt',
+	'aria-label',
+	'class',
+	'colspan',
 	'data-src',
 	'data-srcset',
-	'alt',
-	'title',
-	'id',
-	'class',
-	'width',
-	'height',
-	'colspan',
-	'rowspan',
+	'dir',
 	'headers',
-	'aria-label',
+	'height',
+	'href',
+	'id',
+	'lang',
 	'role',
-	'lang'
+	'rowspan',
+	'src',
+	'srcset',
+	'title',
+	'width'
 ]);
 
 // Basic selectors for removing clutter
@@ -483,6 +484,11 @@ export class Defuddle {
 		let attributeCount = 0;
 
 		const processElement = (el: Element) => {
+			// Skip SVG elements - preserve all their attributes
+			if (el instanceof SVGElement) {
+				return;
+			}
+
 			const attributes = Array.from(el.attributes);
 			
 			attributes.forEach(attr => {
@@ -511,23 +517,36 @@ export class Defuddle {
 			'audio',
 			'base',
 			'br',
+			'circle',
 			'col',
+			'defs',
+			'ellipse',
 			'embed',
 			'figure',
+			'g',
 			'hr',
 			'iframe',
 			'img',
 			'input',
+			'line',
 			'link',
+			'mask',
 			'meta',
 			'object',
 			'param',
+			'path',
+			'pattern',
 			'picture',
+			'polygon',
+			'polyline',
+			'rect',
 			'source',
+			'stop',
 			'svg',
 			'td',
 			'th',
 			'track',
+			'use',
 			'video',
 			'wbr'
 		]);
