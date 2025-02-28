@@ -37,14 +37,11 @@ const ALLOWED_ATTRIBUTES = new Set([
 
 // Basic selectors for removing clutter
 const BASIC_SELECTORS = [
-	'#toc',
-	'.toc',
-	'#comments',
-	'#siteSub',
 	'.ad',
 	'aside',
 	'button',
 	'canvas',
+	'#comments',
 	'dialog',
 	'fieldset',
 	'footer',
@@ -62,8 +59,13 @@ const BASIC_SELECTORS = [
 	'sidebar',
 	'.sidebar',
 	'#sidebar',
+	'#siteSub',
 	'style',
+	'#toc',
+	'.toc',
 	'textarea',
+	'.clickable-icon',
+	'a[href^="#"][class*="anchor"]',
 	'[data-link-name*="skip"]',
 	'[src*="author"]',
 	'[href="#site-content"]',
@@ -133,7 +135,7 @@ const CLUTTER_PATTERNS = [
 	'post-title',
 	'post_date',
 	'post_title',
-	'preview',
+//	'preview', used on Obsidian Publish
 	'prevnext',
 	'profile',
 	'promo',
@@ -148,6 +150,9 @@ const CLUTTER_PATTERNS = [
 	'screen-reader-text',
 	'share',
 	'site-index',
+	'site-header',
+	'site-logo',
+	'site-name',
 	'skip-',
 	'social',
 	'sponsor',
@@ -662,7 +667,7 @@ export class Defuddle {
 			'.content-article',
 			'main',
 			'[role="main"]',
-			'body'
+			'body' // this overrides the scoring for now, meaning there is always a match
 		];
 
 		// Find all potential content containers
