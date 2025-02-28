@@ -569,88 +569,129 @@ export class Defuddle {
 		});
 	}
 
+	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
 		let removedCount = 0;
 		const MIN_DIMENSION = 24;
 		const smallImages = new Set<string>();
 
-		const images = doc.getElementsByTagName('img');
-		Array.from(images).forEach(img => {
-			try {
-				const computedStyle = window.getComputedStyle(img);
-				
-				// Get all possible dimensions
-				const naturalWidth = img.naturalWidth || 0;
-				const naturalHeight = img.naturalHeight || 0;
-				const attrWidth = parseInt(img.getAttribute('width') || '0');
-				const attrHeight = parseInt(img.getAttribute('height') || '0');
-				const styleWidth = parseInt(computedStyle.width) || 0;
-				const styleHeight = parseInt(computedStyle.height) || 0;
-				const rect = img.getBoundingClientRect();
-				const displayWidth = rect.width;
-				const displayHeight = rect.height;
+		const processElements = (elements: HTMLCollectionOf<Element>, type: 'img' | 'svg') => {
+			Array.from(elements).forEach(element => {
+				try {
+					const computedStyle = window.getComputedStyle(element);
+					
+					if (type === 'img') {
+						const img = element as HTMLImageElement;
+						// Get all possible dimensions
+						const naturalWidth = img.naturalWidth || 0;
+						const naturalHeight = img.naturalHeight || 0;
+						const attrWidth = parseInt(img.getAttribute('width') || '0');
+						const attrHeight = parseInt(img.getAttribute('height') || '0');
+						const styleWidth = parseInt(computedStyle.width) || 0;
+						const styleHeight = parseInt(computedStyle.height) || 0;
+						const rect = img.getBoundingClientRect();
+						const displayWidth = rect.width;
+						const displayHeight = rect.height;
 
-				// Check if image is scaled down by CSS transform
-				const transform = computedStyle.transform;
-				const scale = transform ? parseFloat(transform.match(/scale\(([\d.]+)\)/)?.[1] || '1') : 1;
-				const scaledWidth = displayWidth * scale;
-				const scaledHeight = displayHeight * scale;
+						// Check if image is scaled down by CSS transform
+						const transform = computedStyle.transform;
+						const scale = transform ? parseFloat(transform.match(/scale\(([\d.]+)\)/)?.[1] || '1') : 1;
+						const scaledWidth = displayWidth * scale;
+						const scaledHeight = displayHeight * scale;
 
-				// Use the smallest non-zero dimensions we can find
-				const effectiveWidth = Math.min(
-					...[naturalWidth, attrWidth, styleWidth, scaledWidth]
-						.filter(dim => dim > 0)
-				);
-				const effectiveHeight = Math.min(
-					...[naturalHeight, attrHeight, styleHeight, scaledHeight]
-						.filter(dim => dim > 0)
-				);
+						// Use the smallest non-zero dimensions we can find
+						const effectiveWidth = Math.min(
+							...[naturalWidth, attrWidth, styleWidth, scaledWidth]
+								.filter(dim => dim > 0)
+						);
+						const effectiveHeight = Math.min(
+							...[naturalHeight, attrHeight, styleHeight, scaledHeight]
+								.filter(dim => dim > 0)
+						);
 
-				if (effectiveWidth > 0 && effectiveHeight > 0 && 
-					(effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION)) {
-					// Store unique identifier for the image
-					const identifier = this.getImageIdentifier(img);
-					if (identifier) {
-						smallImages.add(identifier);
-						removedCount++;
+						if (effectiveWidth > 0 && effectiveHeight > 0 && 
+							(effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION)) {
+							// Store unique identifier for the image
+							const identifier = this.getElementIdentifier(img);
+							if (identifier) {
+								smallImages.add(identifier);
+								removedCount++;
+							}
+						}
+					} else {
+						// Handle SVG elements
+						const svg = element as SVGElement;
+						const rect = svg.getBoundingClientRect();
+						const styleWidth = parseInt(computedStyle.width) || 0;
+						const styleHeight = parseInt(computedStyle.height) || 0;
+						const attrWidth = parseInt(svg.getAttribute('width') || '0');
+						const attrHeight = parseInt(svg.getAttribute('height') || '0');
+						
+						// Get effective dimensions
+						const effectiveWidth = Math.min(
+							...[rect.width, styleWidth, attrWidth]
+								.filter(dim => dim > 0)
+						);
+						const effectiveHeight = Math.min(
+							...[rect.height, styleHeight, attrHeight]
+								.filter(dim => dim > 0)
+						);
+
+						if (effectiveWidth > 0 && effectiveHeight > 0 && 
+							(effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION)) {
+							const identifier = this.getElementIdentifier(svg);
+							if (identifier) {
+								smallImages.add(identifier);
+								removedCount++;
+							}
+						}
 					}
+				} catch (e) {
+					console.error('Error processing element:', e);
 				}
-			} catch (e) {
-				console.error('Error processing image:', e);
-			}
-		});
+			});
+		};
 
-		this._log('Found small images:', removedCount);
+		processElements(doc.getElementsByTagName('img'), 'img');
+		processElements(doc.getElementsByTagName('svg'), 'svg');
+
+		this._log('Found small elements:', removedCount);
 		return smallImages;
 	}
 
 	private removeSmallImages(doc: Document, smallImages: Set<string>) {
 		let removedCount = 0;
-		const images = doc.getElementsByTagName('img');
-		
-		Array.from(images).forEach(img => {
-			const identifier = this.getImageIdentifier(img);
-			if (identifier && smallImages.has(identifier)) {
-				img.remove();
-				removedCount++;
-			}
+
+		['img', 'svg'].forEach(tag => {
+			const elements = doc.getElementsByTagName(tag);
+			Array.from(elements).forEach(element => {
+				const identifier = this.getElementIdentifier(element);
+				if (identifier && smallImages.has(identifier)) {
+					element.remove();
+					removedCount++;
+				}
+			});
 		});
 
-		this._log('Removed small images:', removedCount);
+		this._log('Removed small elements:', removedCount);
 	}
 
-	private getImageIdentifier(img: HTMLImageElement): string | null {
+	private getElementIdentifier(element: Element): string | null {
 		// Try to create a unique identifier using various attributes
-		const src = img.src || img.getAttribute('data-src') || '';
-		const srcset = img.srcset || img.getAttribute('data-srcset') || '';
-		const alt = img.alt || '';
-		const className = img.className || '';
-		const id = img.id || '';
+		if (element instanceof HTMLImageElement) {
+			const src = element.src || element.getAttribute('data-src') || '';
+			const srcset = element.srcset || element.getAttribute('data-srcset') || '';
+			if (src) return `src:${src}`;
+			if (srcset) return `srcset:${srcset}`;
+		}
+
+		const id = element.id || '';
+		const className = element.className || '';
+		const viewBox = element instanceof SVGElement ? element.getAttribute('viewBox') || '' : '';
 		
-		if (src) return `src:${src}`;
-		if (srcset) return `srcset:${srcset}`;
 		if (id) return `id:${id}`;
-		if (className && alt) return `class:${className};alt:${alt}`;
+		if (viewBox) return `viewBox:${viewBox}`;
+		if (className) return `class:${className}`;
 		
 		return null;
 	}
