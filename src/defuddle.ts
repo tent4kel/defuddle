@@ -119,7 +119,6 @@ const CLUTTER_PATTERNS = [
 	'interlude',
 	'link-box',
 	'loading',
-	'logo-',
 	'menu-',
 	'meta-',
 	'metadata',
@@ -593,7 +592,7 @@ export class Defuddle {
 	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
 		let removedCount = 0;
-		const MIN_DIMENSION = 25;
+		const MIN_DIMENSION = 33;
 		const smallImages = new Set<string>();
 
 		const processElements = (elements: HTMLCollectionOf<Element>, type: 'img' | 'svg') => {
