@@ -10,7 +10,10 @@
 		"build:types": "tsc --project tsconfig.declarations.json",
 		"build:js": "webpack",
 		"build": "npm run clean && npm run build:types && npm run build:js",
-		"prepublishOnly": "npm run build"
+		"prepublishOnly": "npm run build",
+		"dev:types": "tsc --project tsconfig.declarations.json --watch",
+		"dev:js": "webpack --watch --mode development",
+		"dev": "npm run clean && npm run build:types && concurrently \"npm run dev:types\" \"npm run dev:js\""
 	},
 	"keywords": [
 		"readability",
@@ -34,6 +37,7 @@
 	"homepage": "https://github.com/kepano/defuddle#readme",
 	"devDependencies": {
 		"@types/node": "^20.0.0",
+		"concurrently": "^8.2.2",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
 		"undici-types": "^5.0.0",
