@@ -9,8 +9,8 @@ const MOBILE_WIDTH = 600;
 const HIDDEN_ELEMENTS_SELECTOR = [
 	'[hidden]',
 	'[aria-hidden="true"]',
-	'[style*="display: none"]',
-	'[style*="display:none"]',
+//	'[style*="display: none"]', causes problems for math formulas
+//	'[style*="display:none"]',
 	'[style*="visibility: hidden"]',
 	'[style*="visibility:hidden"]',
 	'.hidden',
@@ -55,6 +55,7 @@ const BASIC_SELECTORS = [
 	'link',
 	'nav',
 	'noscript',
+	'.noprint',
 	'option',
 	'script',
 	'select',
@@ -113,6 +114,7 @@ const CLUTTER_PATTERNS = [
 	'fixed',
 	'footer',
 	'for-you',
+	'frontmatter',
 	'global',
 	'google',
 	'goog-',
