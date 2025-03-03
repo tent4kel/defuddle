@@ -1,3 +1,8 @@
+> de·​fud·dle (ˈ)dē-ˈfə-dᵊl  
+> defuddled; defuddling; defuddles  
+> *transitive verb*  
+> to remove unnecessary elements from a web page, and make it easily readable.
+
 **Beware! Defuddle is very much a work in progress!**
 
 Defuddle extracts the main content from web pages. It cleans up web pages by removing clutter like comments, sidebars, headers, footers, and other non-essential elements, leaving only the primary content.
