@@ -132,6 +132,7 @@ const CLUTTER_PATTERNS = [
 	'next-',
 //	'newsletter', used on Substack
 	'newsletter-signup',
+	'not-found',
 	'overlay',
 	'popular',
 	'popup',
