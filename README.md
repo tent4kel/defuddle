@@ -9,8 +9,6 @@ Defuddle aims to be a replacement for Mozilla Readability, with a few difference
 - More forgiving, removes fewer uncertain elements
 - Uses a page's mobile styles to guess at unnecessary elements
 - Extracts more metadata from the page, including schema.org data
-- Simpler scoring algorithm focused on content density and semantic markup
-- Better handling of modern web components and dynamic content
 
 ## Installation
 
