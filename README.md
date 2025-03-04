@@ -1,5 +1,4 @@
-> de·​fud·dle /diˈfʌdl/  
-> transitive verb  
+> de·​fud·dle /diˈfʌdl/ *transitive verb*  
 > to remove unnecessary elements from a web page, and make it easily readable.
 
 **Beware! Defuddle is very much a work in progress!**
