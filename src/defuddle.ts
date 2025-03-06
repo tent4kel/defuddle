@@ -53,6 +53,7 @@ const BASIC_SELECTORS = [
 	'iframe',
 	'label',
 	'link',
+	'.meta',
 	'nav',
 	'noscript',
 	'.noprint',
@@ -90,6 +91,7 @@ const CLUTTER_PATTERNS = [
 	'_ad_',
 	'article-end ',
 	'article-title',
+	'article--lede', // The Verge
 	'author',
 	'banner',
 	'bottom-of-article',
@@ -104,6 +106,7 @@ const CLUTTER_PATTERNS = [
 	'comments',
 	'comment-content',
 	'complementary',
+	'content-card', // The Verge
 	'-cta',
 	'cta-',	
 	'discussion',
@@ -118,7 +121,9 @@ const CLUTTER_PATTERNS = [
 	'global',
 	'google',
 	'goog-',
+	'header-pattern', // The Verge
 	'interlude',
+	'-ledes-', // The Verge
 	'link-box',
 	'loading',
 	'menu-',
@@ -134,6 +139,7 @@ const CLUTTER_PATTERNS = [
 	'newsletter-signup',
 	'not-found',
 	'overlay',
+	'pencraft', // Substack
 	'popular',
 	'popup',
 	'post-date',
@@ -165,6 +171,7 @@ const CLUTTER_PATTERNS = [
 	'-toc',
 	'table-of-contents',
 	'tabs-',
+	'teaser',
 	'toolbar',
 	'top-wrapper',
 	'tree-item',
