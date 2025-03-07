@@ -44,6 +44,7 @@ const BASIC_SELECTORS = [
 	'button',
 	'canvas',
 	'#comments',
+	'#description',
 	'dialog',
 	'fieldset',
 	'footer',
@@ -66,6 +67,7 @@ const BASIC_SELECTORS = [
 	'#sidebar',
 	'#siteSub',
 	'style',
+	'#title',
 	'#toc',
 	'.toc',
 	'textarea',
@@ -87,10 +89,16 @@ const BASIC_SELECTORS = [
 
 // Patterns for matching against class, id, data-testid, and data-qa
 const CLUTTER_PATTERNS = [
+	'activitypub',
+	'appendix',
 	'avatar',
 	'-ad-',
 	'_ad_',
+	'around-the-web',
+	'article__copy',
 	'article-end ',
+	'article_header',
+	'article__info',
 	'article-title',
 	'article--lede', // The Verge
 	'author',
@@ -102,33 +110,50 @@ const CLUTTER_PATTERNS = [
 	'btn-',
 	'-btn',
 	'byline',
+	'cat_header',
 	'catlinks',
 	'collections',
 	'comments',
 	'comment-content',
 	'complementary',
 	'content-card', // The Verge
+	'core-collateral',
+	'_cta',
 	'-cta',
 	'cta-',
+	'cta_',
 	'current-issue', // The Nation
+	'dateheader',
+	'dialog',
 	'discussion',
+	'disqus',
+	'donate',
+	'eletters',
 	'eyebrow',
 	'expand-reduce',
 	'facebook',
+	'favorite',
 	'feedback',
 	'fixed',
+	'follow',
 	'footer',
 	'for-you',
 	'frontmatter',
-	'global',
+//	'global',
 	'google',
 	'goog-',
+	'header-logo',
 	'header-pattern', // The Verge
 	'interlude',
+	'kicker',
+	'-labels',
 	'-ledes-', // The Verge
+	'-license',
 	'link-box',
 	'listing-dynamic-terms', // Boston Review
 	'loading',
+	'loa-info',
+	'marketing',
 	'menu-',
 	'meta-',
 	'metadata',
@@ -137,6 +162,7 @@ const CLUTTER_PATTERNS = [
 	'mw-jump-link',
 	'nav-',
 	'navbar',
+	'navigation',
 	'next-',
 //	'newsletter', used on Substack
 	'newsletter-signup',
@@ -145,44 +171,77 @@ const CLUTTER_PATTERNS = [
 	'originally-published', // Mercury News
 	'overlay',
 	'pencraft', // Substack
+	'plea',
 	'popular',
 	'popup',
+	'pop-up',
+	'post-bottom',
+	'post__category',
+	'postdate',
 	'post-date',
 	'post_date',
+	'postinfo',
 	'post-info',
 	'post_info',
+	'posttitle',
 	'post-title',
 	'post_title',
+	'posttax',
+	'post-tax',
+	'post_tax',
+	'post_tag',
+	'post-tag',
 //	'preview', used on Obsidian Publish
 	'prevnext',
+	'print-none',
 	'profile',
 	'promo',
+	'pubdate',
 	'pub_date',
+	'pub-date',
+	'publication-date',
 	'qr-code',
 	'qr_code',
 	'read-next',
 	'read_time',
 	'read-time',
+	'reading_time',
+	'reading-time',
 	'reading-list',
 	'recommend',
 	'recirc',
 	'register',
 	'related',
 	'screen-reader-text',
-	'share',
+//	'share',
+	'-share',
+	'share-icons',
+	'share-section',
+	'sidebartitle',
+	'similar-',
+	'similar_',
 	'site-index',
 	'site-header',
 	'site-logo',
 	'site-name',
-	'skip-',
+//	'skip-',
 	'social',
 	'sponsor',
+//	'-stats',
+	'_stats',
 	'subscribe',
-	'-toc',
+	'_tags',
+	'tags__item',
+	'taxonomy',
 	'table-of-contents',
 	'tabs-',
 	'teaser',
+	'terminaltout',
+	'time-rubric',
+	'tip_off',
+	'-toc',
 	'toolbar',
+	'tooltip',
 	'top-wrapper',
 	'tree-item',
 	'trending',
@@ -411,7 +470,7 @@ export class Defuddle {
 		const elementsToRemove = new Set<Element>();
 		
 		// Get all elements with class, id, or data-testid attributes for more targeted iteration
-		const elements = doc.querySelectorAll('[class], [id], [data-testid], [data-qa]');
+		const elements = doc.querySelectorAll('[class], [id], [data-testid], [data-qa], [data-cy]');
 		
 		elements.forEach(el => {
 			if (!el || !el.parentNode) return;
@@ -421,9 +480,10 @@ export class Defuddle {
 			const id = el.id ? el.id.toLowerCase() : '';
 			const testId = el.getAttribute('data-testid')?.toLowerCase() || '';
 			const testQa = el.getAttribute('data-qa')?.toLowerCase() || '';
-			
+			const testCy = el.getAttribute('data-cy')?.toLowerCase() || '';
+
 			// Combine all attributes into one string for single pass checking
-			const attributeText = `${className} ${id} ${testId} ${testQa}`;
+			const attributeText = `${className} ${id} ${testId} ${testQa} ${testCy}`;
 			
 			// Check if any pattern matches
 			const shouldRemove = patternRegexes.some(regex => regex.test(attributeText));
