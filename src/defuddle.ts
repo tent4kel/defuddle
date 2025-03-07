@@ -164,6 +164,7 @@ const CLUTTER_PATTERNS = [
 	'navbar',
 	'navigation',
 	'next-',
+	'news-story-title',
 //	'newsletter', used on Substack
 	'newsletter-signup',
 	'newsletterSignup',
@@ -177,6 +178,7 @@ const CLUTTER_PATTERNS = [
 	'pop-up',
 	'post-bottom',
 	'post__category',
+	'postcomment',
 	'postdate',
 	'post-date',
 	'post_date',
@@ -200,6 +202,7 @@ const CLUTTER_PATTERNS = [
 	'pub_date',
 	'pub-date',
 	'publication-date',
+	'publicationName', // Medium
 	'qr-code',
 	'qr_code',
 	'read-next',
@@ -226,9 +229,12 @@ const CLUTTER_PATTERNS = [
 	'site-name',
 //	'skip-',
 	'social',
+	'speechify-ignore',
 	'sponsor',
 //	'-stats',
 	'_stats',
+	'storyreadtime', // Medium
+	'storypublishdate', // Medium
 	'subscribe',
 	'_tags',
 	'tags__item',
