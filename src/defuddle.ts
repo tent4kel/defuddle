@@ -49,6 +49,7 @@ const BASIC_SELECTORS = [
 	'footer',
 	'form',
 	'header',
+	'#header',
 	'input',
 	'iframe',
 	'label',
@@ -108,7 +109,8 @@ const CLUTTER_PATTERNS = [
 	'complementary',
 	'content-card', // The Verge
 	'-cta',
-	'cta-',	
+	'cta-',
+	'current-issue', // The Nation
 	'discussion',
 	'eyebrow',
 	'expand-reduce',
@@ -125,6 +127,7 @@ const CLUTTER_PATTERNS = [
 	'interlude',
 	'-ledes-', // The Verge
 	'link-box',
+	'listing-dynamic-terms', // Boston Review
 	'loading',
 	'menu-',
 	'meta-',
@@ -137,22 +140,29 @@ const CLUTTER_PATTERNS = [
 	'next-',
 //	'newsletter', used on Substack
 	'newsletter-signup',
+	'newsletterSignup',
 	'not-found',
+	'originally-published', // Mercury News
 	'overlay',
 	'pencraft', // Substack
 	'popular',
 	'popup',
 	'post-date',
-	'post-title',
 	'post_date',
+	'post-info',
+	'post_info',
+	'post-title',
 	'post_title',
 //	'preview', used on Obsidian Publish
 	'prevnext',
 	'profile',
 	'promo',
+	'pub_date',
 	'qr-code',
 	'qr_code',
 	'read-next',
+	'read_time',
+	'read-time',
 	'reading-list',
 	'recommend',
 	'recirc',
