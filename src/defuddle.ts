@@ -586,52 +586,36 @@ export class Defuddle {
 	}
 
 	private removeClutter(doc: Document) {
+		const startTime = performance.now();
 		let exactSelectorCount = 0;
 		let partialSelectorCount = 0;
 
-		// Normalize and combine all exact selectors into a single selector string
-		const normalizedSelectors = EXACT_SELECTORS.map(selector => {
-			// Handle attribute selectors separately
-			if (selector.includes('[')) {
-				// Split attribute selectors into parts
-				const parts = selector.split(/(\[.*?\])/);
-				return parts.map(part => {
-					// Don't lowercase the attribute value if it's in quotes
-					if (part.startsWith('[') && part.includes('=')) {
-						const [attr, value] = part.slice(1, -1).split('=');
-						if (value.startsWith('"') || value.startsWith("'")) {
-							return `[${attr.toLowerCase()}=${value}]`;
-						}
-					}
-					return part.toLowerCase();
-				}).join('');
-			}
-			return selector.toLowerCase();
-		});
-
-		const combinedSelector = normalizedSelectors.join(',');
+		// Combine all exact selectors into a single selector string
+		const combinedExactSelector = EXACT_SELECTORS.join(',');
 		
-		// Query and remove elements
-		const exactElements = doc.querySelectorAll(combinedSelector);
-		exactElements.forEach(el => {
-			if (el?.parentNode) {
-				el.remove();
-				exactSelectorCount++;
-			}
-		});
+		// First pass: Remove elements matching exact selectors
+		const exactElements = doc.querySelectorAll(combinedExactSelector);
+		if (exactElements.length > 0) {
+			// Batch remove elements
+			const fragment = document.createDocumentFragment();
+			exactElements.forEach(el => {
+				if (el?.parentNode) {
+					fragment.appendChild(el);
+					exactSelectorCount++;
+				}
+			});
+		}
 
-		// Create RegExp objects once instead of creating them in each iteration
-		const patternRegexes = PARTIAL_SELECTORS.map(pattern => new RegExp(pattern, 'i'));
+		// Second pass: Handle partial selectors
+		// Pre-compile regexes for better performance
+		const partialRegexes = PARTIAL_SELECTORS.map(pattern => ({
+			pattern,
+			regex: new RegExp(pattern, 'i')
+		}));
 
-		// Use a DocumentFragment for batch removals
-		const elementsToRemove = new Set<Element>();
-		
-		// Get all elements with class, id, or data-testid attributes for more targeted iteration
-		const elements = doc.querySelectorAll('[class], [id], [data-testid], [data-qa], [data-cy]');
-		
-		elements.forEach(el => {
-			if (!el || !el.parentNode) return;
-
+		// Create an efficient lookup for partial matches
+		const shouldRemoveElement = (el: Element): boolean => {
+			// Get all relevant attributes once
 			const className = el.className && typeof el.className === 'string' ? 
 				el.className.toLowerCase() : '';
 			const id = el.id ? el.id.toLowerCase() : '';
@@ -639,25 +623,51 @@ export class Defuddle {
 			const testQa = el.getAttribute('data-qa')?.toLowerCase() || '';
 			const testCy = el.getAttribute('data-cy')?.toLowerCase() || '';
 
-			// Combine all attributes into one string for single pass checking
+			// Combine attributes for single-pass checking
 			const attributeText = `${className} ${id} ${testId} ${testQa} ${testCy}`;
 			
-			// Check if any pattern matches
-			const shouldRemove = patternRegexes.some(regex => regex.test(attributeText));
-			
-			if (shouldRemove) {
-				elementsToRemove.add(el);
-				partialSelectorCount++;
+			// Early return if no content to check
+			if (!attributeText.trim()) {
+				return false;
 			}
-		});
 
-		// Batch remove elements
-		elementsToRemove.forEach(el => el.remove());
+			// Use some() for early termination
+			return partialRegexes.some(({ regex }) => regex.test(attributeText));
+		};
 
+		// Process elements in batches to avoid long tasks
+		const BATCH_SIZE = 100;
+		const allElements = Array.from(doc.querySelectorAll('[class], [id], [data-testid], [data-qa], [data-cy]'));
+		
+		for (let i = 0; i < allElements.length; i += BATCH_SIZE) {
+			const batch = allElements.slice(i, i + BATCH_SIZE);
+			const elementsToRemove: Element[] = [];
+
+			// Read phase - identify elements to remove
+			batch.forEach(el => {
+				if (shouldRemoveElement(el)) {
+					elementsToRemove.push(el);
+					partialSelectorCount++;
+				}
+			});
+
+			// Write phase - batch remove elements
+			if (elementsToRemove.length > 0) {
+				const fragment = document.createDocumentFragment();
+				elementsToRemove.forEach(el => {
+					if (el?.parentNode) {
+						fragment.appendChild(el);
+					}
+				});
+			}
+		}
+
+		const endTime = performance.now();
 		this._log('Found clutter elements:', {
 			exactSelectors: exactSelectorCount,
 			partialSelectors: partialSelectorCount,
-			total: exactSelectorCount + partialSelectorCount
+			total: exactSelectorCount + partialSelectorCount,
+			processingTime: `${(endTime - startTime).toFixed(2)}ms`
 		});
 	}
 
@@ -793,125 +803,101 @@ export class Defuddle {
 
 	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
-		let removedCount = 0;
 		const MIN_DIMENSION = 33;
 		const smallImages = new Set<string>();
 		const transformRegex = /scale\(([\d.]+)\)/;
+		const startTime = performance.now();
+		let processedCount = 0;
 
-		const processElements = (elements: HTMLCollectionOf<Element>, type: 'img' | 'svg') => {
-			const elementArray = Array.from(elements);
-			if (elementArray.length === 0) return;
+		// 1. READ PHASE - Gather all elements in a single pass
+		const elements = [
+			...Array.from(doc.getElementsByTagName('img')),
+			...Array.from(doc.getElementsByTagName('svg'))
+		];
 
-			// First pass: collect all static dimensions
-			const dimensionsCache = new Map<Element, {
-				naturalWidth?: number;
-				naturalHeight?: number;
-				attrWidth?: number;
-				attrHeight?: number;
-				styleWidth?: number;
-				styleHeight?: number;
-				transform?: string;
-			}>();
+		if (elements.length === 0) {
+			return smallImages;
+		}
 
-			// Batch all static dimension reads
-			elementArray.forEach(element => {
-				const dimensions: any = {};
+		// 2. BATCH PROCESS - Collect all measurements in one go
+		const measurements = elements.map(element => ({
+			element,
+			// Static attributes (no reflow)
+			naturalWidth: element instanceof HTMLImageElement ? element.naturalWidth : 0,
+			naturalHeight: element instanceof HTMLImageElement ? element.naturalHeight : 0,
+			attrWidth: parseInt(element.getAttribute('width') || '0'),
+			attrHeight: parseInt(element.getAttribute('height') || '0')
+		}));
+
+		// 3. BATCH COMPUTE STYLES - Process in chunks to avoid long tasks
+		const BATCH_SIZE = 50;
+		for (let i = 0; i < measurements.length; i += BATCH_SIZE) {
+			const batch = measurements.slice(i, i + BATCH_SIZE);
+			
+			try {
+				// Read phase - compute all styles at once
+				const styles = batch.map(({ element }) => window.getComputedStyle(element));
+				const rects = batch.map(({ element }) => element.getBoundingClientRect());
 				
-				if (type === 'img') {
-					const img = element as HTMLImageElement;
-					dimensions.naturalWidth = img.naturalWidth || 0;
-					dimensions.naturalHeight = img.naturalHeight || 0;
-					dimensions.attrWidth = parseInt(img.getAttribute('width') || '0');
-					dimensions.attrHeight = parseInt(img.getAttribute('height') || '0');
-				} else {
-					const svg = element as SVGElement;
-					dimensions.attrWidth = parseInt(svg.getAttribute('width') || '0');
-					dimensions.attrHeight = parseInt(svg.getAttribute('height') || '0');
-				}
-
-				dimensionsCache.set(element, dimensions);
-			});
-
-			// Second pass: batch compute styles
-			const BATCH_SIZE = 50;
-			for (let i = 0; i < elementArray.length; i += BATCH_SIZE) {
-				const batch = elementArray.slice(i, i + BATCH_SIZE);
-				
-				// Compute styles
-				batch.forEach(element => {
-					const dimensions = dimensionsCache.get(element);
-					if (!dimensions) return;
-
-					const style = window.getComputedStyle(element);
-					dimensions.styleWidth = parseInt(style.width) || 0;
-					dimensions.styleHeight = parseInt(style.height) || 0;
-					dimensions.transform = style.transform;
-				});
-			}
-
-			// Third pass: batch getBoundingClientRect
-			for (let i = 0; i < elementArray.length; i += BATCH_SIZE) {
-				const batch = elementArray.slice(i, i + BATCH_SIZE);
-				
-				// Get bounding rects
-				const rects = batch.map(el => el.getBoundingClientRect());
-				
-				// Evaluate dimensions
-				batch.forEach((element, index) => {
+				// Process phase - no DOM operations
+				batch.forEach((measurement, index) => {
 					try {
-						const dimensions = dimensionsCache.get(element);
-						if (!dimensions) return;
-
+						const style = styles[index];
 						const rect = rects[index];
-						const transform = dimensions.transform;
+						
+						// Get transform scale in the same batch
+						const transform = style.transform;
 						const scale = transform ? 
 							parseFloat(transform.match(transformRegex)?.[1] || '1') : 1;
 
-						const displayWidth = rect.width;
-						const displayHeight = rect.height;
-						const scaledWidth = displayWidth * scale;
-						const scaledHeight = displayHeight * scale;
-
-						// Get all available dimensions
+						// Calculate effective dimensions
 						const widths = [
-							dimensions.naturalWidth,
-							dimensions.attrWidth,
-							dimensions.styleWidth,
-							scaledWidth
-						].filter((dim): dim is number => typeof dim === 'number' && dim > 0);
+							measurement.naturalWidth,
+							measurement.attrWidth,
+							parseInt(style.width) || 0,
+							rect.width * scale
+						].filter(dim => typeof dim === 'number' && dim > 0);
 
 						const heights = [
-							dimensions.naturalHeight,
-							dimensions.attrHeight,
-							dimensions.styleHeight,
-							scaledHeight
-						].filter((dim): dim is number => typeof dim === 'number' && dim > 0);
+							measurement.naturalHeight,
+							measurement.attrHeight,
+							parseInt(style.height) || 0,
+							rect.height * scale
+						].filter(dim => typeof dim === 'number' && dim > 0);
 
+						// Decision phase - no DOM operations
 						if (widths.length > 0 && heights.length > 0) {
 							const effectiveWidth = Math.min(...widths);
 							const effectiveHeight = Math.min(...heights);
 
 							if (effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION) {
-								const identifier = this.getElementIdentifier(element);
+								const identifier = this.getElementIdentifier(measurement.element);
 								if (identifier) {
 									smallImages.add(identifier);
-									removedCount++;
+									processedCount++;
 								}
 							}
 						}
 					} catch (e) {
 						if (this.debug) {
-							console.warn('Defuddle: Failed to process dimensions for element:', element, e);
+							console.warn('Defuddle: Failed to process element dimensions:', e);
 						}
 					}
 				});
+			} catch (e) {
+				if (this.debug) {
+					console.warn('Defuddle: Failed to process batch:', e);
+				}
 			}
-		};
+		}
 
-		processElements(doc.getElementsByTagName('img'), 'img');
-		processElements(doc.getElementsByTagName('svg'), 'svg');
+		const endTime = performance.now();
+		this._log('Found small elements:', {
+			count: processedCount,
+			totalElements: elements.length,
+			processingTime: `${(endTime - startTime).toFixed(2)}ms`
+		});
 
-		this._log('Found small elements:', removedCount);
 		return smallImages;
 	}
 
