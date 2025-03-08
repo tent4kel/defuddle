@@ -440,49 +440,68 @@ export class Defuddle {
 
 	private _evaluateMediaQueries(doc: Document): StyleChange[] {
 		const mobileStyles: StyleChange[] = [];
+		const maxWidthRegex = /max-width[^:]*:\s*(\d+)/;
 
 		try {
 			// Get all styles, including inline styles
 			const sheets = Array.from(doc.styleSheets).filter(sheet => {
 				try {
-					const rules = sheet.cssRules;
+					// Access rules once to check validity
+					sheet.cssRules;
 					return true;
 				} catch (e) {
-					return false;
+					// Expected error for cross-origin stylesheets
+					if (e instanceof DOMException && e.name === 'SecurityError') {
+						return false;
+					}
+					throw e;
 				}
 			});
 			
-			sheets.forEach(sheet => {
+			// Process all sheets in a single pass
+			const mediaRules = sheets.flatMap(sheet => {
 				try {
-					const rules = Array.from(sheet.cssRules);
-					rules.forEach(rule => {
-						if (rule instanceof CSSMediaRule) {
-							if (rule.conditionText.includes('max-width')) {
-								const maxWidth = parseInt(rule.conditionText.match(/\d+/)?.[0] || '0');
-								
-								if (MOBILE_WIDTH <= maxWidth) {
-									Array.from(rule.cssRules).forEach(cssRule => {
-										if (cssRule instanceof CSSStyleRule) {
-											try {
-												mobileStyles.push({
-													selector: cssRule.selectorText,
-													styles: cssRule.style.cssText
-												});
-											} catch (e) {
-												console.error('Defuddle', 'Error collecting styles for selector:', cssRule.selectorText, e);
-											}
-										}
-									});
+					return Array.from(sheet.cssRules)
+						.filter((rule): rule is CSSMediaRule => 
+							rule instanceof CSSMediaRule &&
+							rule.conditionText.includes('max-width')
+						);
+				} catch (e) {
+					if (this.debug) {
+						console.warn('Defuddle: Failed to process stylesheet:', e);
+					}
+					return [];
+				}
+			});
+
+			// Process all media rules in a single pass
+			mediaRules.forEach(rule => {
+				const match = rule.conditionText.match(maxWidthRegex);
+				if (match) {
+					const maxWidth = parseInt(match[1]);
+					
+					if (MOBILE_WIDTH <= maxWidth) {
+						// Batch process all style rules
+						const styleRules = Array.from(rule.cssRules)
+							.filter((r): r is CSSStyleRule => r instanceof CSSStyleRule);
+
+						styleRules.forEach(cssRule => {
+							try {
+								mobileStyles.push({
+									selector: cssRule.selectorText,
+									styles: cssRule.style.cssText
+								});
+							} catch (e) {
+								if (this.debug) {
+									console.warn('Defuddle: Failed to process CSS rule:', e);
 								}
 							}
-						}
-					});
-				} catch (e) {
-					console.error('Defuddle', 'Error processing stylesheet:', e);
+						});
+					}
 				}
 			});
 		} catch (e) {
-			console.error('Defuddle', 'Error evaluating media queries:', e);
+			console.error('Defuddle: Error evaluating media queries:', e);
 		}
 
 		return mobileStyles;
@@ -509,27 +528,59 @@ export class Defuddle {
 
 	private removeHiddenElements(doc: Document) {
 		let count = 0;
+		const elementsToRemove = new Set<Element>();
 
-		// Existing hidden elements selector
+		// First pass: Get all elements matching hidden selectors
 		const hiddenElements = doc.querySelectorAll(HIDDEN_ELEMENT_SELECTORS);
-		hiddenElements.forEach(el => {
-			el.remove();
-			count++;
-		});
+		hiddenElements.forEach(el => elementsToRemove.add(el));
+		count += hiddenElements.length;
 
-		// Also remove elements hidden by computed style
-		const allElements = doc.getElementsByTagName('*');
-		Array.from(allElements).forEach(element => {
-			const computedStyle = window.getComputedStyle(element);
-			if (
-				computedStyle.display === 'none' ||
-				computedStyle.visibility === 'hidden' ||
-				computedStyle.opacity === '0'
-			) {
-				element.remove();
-				count++;
+		// Second pass: Use TreeWalker for efficient traversal
+		const treeWalker = document.createTreeWalker(
+			doc.body,
+			NodeFilter.SHOW_ELEMENT,
+			{
+				acceptNode: (node: Element) => {
+					// Skip elements already marked for removal
+					if (elementsToRemove.has(node)) {
+						return NodeFilter.FILTER_REJECT;
+					}
+					return NodeFilter.FILTER_ACCEPT;
+				}
 			}
-		});
+		);
+
+		// Batch style computations
+		const elements: Element[] = [];
+		let currentNode: Element | null;
+		while (currentNode = treeWalker.nextNode() as Element) {
+			elements.push(currentNode);
+		}
+
+		// Process styles in batches to minimize layout thrashing
+		const BATCH_SIZE = 100;
+		for (let i = 0; i < elements.length; i += BATCH_SIZE) {
+			const batch = elements.slice(i, i + BATCH_SIZE);
+			
+			// Read phase - gather all computedStyles
+			const styles = batch.map(el => window.getComputedStyle(el));
+			
+			// Write phase - mark elements for removal
+			batch.forEach((element, index) => {
+				const computedStyle = styles[index];
+				if (
+					computedStyle.display === 'none' ||
+					computedStyle.visibility === 'hidden' ||
+					computedStyle.opacity === '0'
+				) {
+					elementsToRemove.add(element);
+					count++;
+				}
+			});
+		}
+
+		// Final pass: Batch remove all hidden elements
+		elementsToRemove.forEach(el => el.remove());
 
 		this._log('Removed hidden elements:', count);
 	}
@@ -713,7 +764,6 @@ export class Defuddle {
 				const hasNbsp = textContent.includes('\u00A0'); // Unicode non-breaking space
 				
 				// Check if element has no meaningful children
-				// Note: comments were already removed
 				const hasNoChildren = !el.hasChildNodes() || 
 					(Array.from(el.childNodes).every(node => {
 						if (node.nodeType === Node.TEXT_NODE) {
@@ -746,82 +796,116 @@ export class Defuddle {
 		let removedCount = 0;
 		const MIN_DIMENSION = 33;
 		const smallImages = new Set<string>();
+		const transformRegex = /scale\(([\d.]+)\)/;
 
 		const processElements = (elements: HTMLCollectionOf<Element>, type: 'img' | 'svg') => {
-			Array.from(elements).forEach(element => {
-				try {
-					const computedStyle = window.getComputedStyle(element);
-					
-					if (type === 'img') {
-						const img = element as HTMLImageElement;
-						// Get all possible dimensions
-						const naturalWidth = img.naturalWidth || 0;
-						const naturalHeight = img.naturalHeight || 0;
-						const attrWidth = parseInt(img.getAttribute('width') || '0');
-						const attrHeight = parseInt(img.getAttribute('height') || '0');
-						const styleWidth = parseInt(computedStyle.width) || 0;
-						const styleHeight = parseInt(computedStyle.height) || 0;
-						const rect = img.getBoundingClientRect();
+			const elementArray = Array.from(elements);
+			if (elementArray.length === 0) return;
+
+			// First pass: collect all static dimensions
+			const dimensionsCache = new Map<Element, {
+				naturalWidth?: number;
+				naturalHeight?: number;
+				attrWidth?: number;
+				attrHeight?: number;
+				styleWidth?: number;
+				styleHeight?: number;
+				transform?: string;
+			}>();
+
+			// Batch all static dimension reads
+			elementArray.forEach(element => {
+				const dimensions: any = {};
+				
+				if (type === 'img') {
+					const img = element as HTMLImageElement;
+					dimensions.naturalWidth = img.naturalWidth || 0;
+					dimensions.naturalHeight = img.naturalHeight || 0;
+					dimensions.attrWidth = parseInt(img.getAttribute('width') || '0');
+					dimensions.attrHeight = parseInt(img.getAttribute('height') || '0');
+				} else {
+					const svg = element as SVGElement;
+					dimensions.attrWidth = parseInt(svg.getAttribute('width') || '0');
+					dimensions.attrHeight = parseInt(svg.getAttribute('height') || '0');
+				}
+
+				dimensionsCache.set(element, dimensions);
+			});
+
+			// Second pass: batch compute styles
+			const BATCH_SIZE = 50;
+			for (let i = 0; i < elementArray.length; i += BATCH_SIZE) {
+				const batch = elementArray.slice(i, i + BATCH_SIZE);
+				
+				// Compute styles
+				batch.forEach(element => {
+					const dimensions = dimensionsCache.get(element);
+					if (!dimensions) return;
+
+					const style = window.getComputedStyle(element);
+					dimensions.styleWidth = parseInt(style.width) || 0;
+					dimensions.styleHeight = parseInt(style.height) || 0;
+					dimensions.transform = style.transform;
+				});
+			}
+
+			// Third pass: batch getBoundingClientRect
+			for (let i = 0; i < elementArray.length; i += BATCH_SIZE) {
+				const batch = elementArray.slice(i, i + BATCH_SIZE);
+				
+				// Get bounding rects
+				const rects = batch.map(el => el.getBoundingClientRect());
+				
+				// Evaluate dimensions
+				batch.forEach((element, index) => {
+					try {
+						const dimensions = dimensionsCache.get(element);
+						if (!dimensions) return;
+
+						const rect = rects[index];
+						const transform = dimensions.transform;
+						const scale = transform ? 
+							parseFloat(transform.match(transformRegex)?.[1] || '1') : 1;
+
 						const displayWidth = rect.width;
 						const displayHeight = rect.height;
-
-						// Check if image is scaled down by CSS transform
-						const transform = computedStyle.transform;
-						const scale = transform ? parseFloat(transform.match(/scale\(([\d.]+)\)/)?.[1] || '1') : 1;
 						const scaledWidth = displayWidth * scale;
 						const scaledHeight = displayHeight * scale;
 
-						// Use the smallest non-zero dimensions we can find
-						const effectiveWidth = Math.min(
-							...[naturalWidth, attrWidth, styleWidth, scaledWidth]
-								.filter(dim => dim > 0)
-						);
-						const effectiveHeight = Math.min(
-							...[naturalHeight, attrHeight, styleHeight, scaledHeight]
-								.filter(dim => dim > 0)
-						);
+						// Get all available dimensions
+						const widths = [
+							dimensions.naturalWidth,
+							dimensions.attrWidth,
+							dimensions.styleWidth,
+							scaledWidth
+						].filter((dim): dim is number => typeof dim === 'number' && dim > 0);
 
-						if (effectiveWidth > 0 && effectiveHeight > 0 && 
-							(effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION)) {
-							// Store unique identifier for the image
-							const identifier = this.getElementIdentifier(img);
-							if (identifier) {
-								smallImages.add(identifier);
-								removedCount++;
+						const heights = [
+							dimensions.naturalHeight,
+							dimensions.attrHeight,
+							dimensions.styleHeight,
+							scaledHeight
+						].filter((dim): dim is number => typeof dim === 'number' && dim > 0);
+
+						if (widths.length > 0 && heights.length > 0) {
+							const effectiveWidth = Math.min(...widths);
+							const effectiveHeight = Math.min(...heights);
+
+							if (effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION) {
+								const identifier = this.getElementIdentifier(element);
+								if (identifier) {
+									smallImages.add(identifier);
+									removedCount++;
+								}
 							}
 						}
-					} else {
-						// Handle SVG elements
-						const svg = element as SVGElement;
-						const rect = svg.getBoundingClientRect();
-						const styleWidth = parseInt(computedStyle.width) || 0;
-						const styleHeight = parseInt(computedStyle.height) || 0;
-						const attrWidth = parseInt(svg.getAttribute('width') || '0');
-						const attrHeight = parseInt(svg.getAttribute('height') || '0');
-						
-						// Get effective dimensions
-						const effectiveWidth = Math.min(
-							...[rect.width, styleWidth, attrWidth]
-								.filter(dim => dim > 0)
-						);
-						const effectiveHeight = Math.min(
-							...[rect.height, styleHeight, attrHeight]
-								.filter(dim => dim > 0)
-						);
-
-						if (effectiveWidth > 0 && effectiveHeight > 0 && 
-							(effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION)) {
-							const identifier = this.getElementIdentifier(svg);
-							if (identifier) {
-								smallImages.add(identifier);
-								removedCount++;
-							}
+					} catch (e) {
+						if (this.debug) {
+							console.warn('Defuddle: Failed to process dimensions for element:', element, e);
 						}
 					}
-				} catch (e) {
-					console.error('Error processing element:', e);
-				}
-			});
+				});
+			}
 		};
 
 		processElements(doc.getElementsByTagName('img'), 'img');
