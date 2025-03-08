@@ -1,21 +1,6 @@
 import { MetadataExtractor } from './metadata';
 import { DefuddleOptions, DefuddleResponse } from './types';
 
-// Patterns for scoring content
-const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
-const MOBILE_WIDTH = 600;
-
-const HIDDEN_ELEMENTS_SELECTOR = [
-	'[hidden]',
-	'[aria-hidden="true"]',
-//	'[style*="display: none"]', causes problems for math formulas
-//	'[style*="display:none"]',
-	'[style*="visibility: hidden"]',
-	'[style*="visibility:hidden"]',
-	'.hidden',
-	'.invisible'
-].join(',');
-
 // Entry point elements
 // These are the elements that will be used to find the main content
 const ENTRY_POINT_ELEMENTS = [
@@ -31,68 +16,20 @@ const ENTRY_POINT_ELEMENTS = [
 	'body' // ensures there is always a match
 ];
 
-// Delete all element attributes except these
-const ALLOWED_ATTRIBUTES = new Set([
-	'alt',
-	'aria-label',
-	'class',
-	'colspan',
-	'data-src',
-	'data-srcset',
-	'dir',
-	'headers',
-	'height',
-	'href',
-	'id',
-	'lang',
-	'role',
-	'rowspan',
-	'src',
-	'srcset',
-	'title',
-	'width'
-]);
+const MOBILE_WIDTH = 600;
+const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
 
-// Elements that are allowed to be empty
-// These are not removed even if they have no content
-const ALLOWED_EMPTY_ELEMENTS = new Set([
-	'area',
-	'audio',
-	'base',
-	'br',
-	'circle',
-	'col',
-	'defs',
-	'ellipse',
-	'embed',
-	'figure',
-	'g',
-	'hr',
-	'iframe',
-	'img',
-	'input',
-	'line',
-	'link',
-	'mask',
-	'meta',
-	'object',
-	'param',
-	'path',
-	'pattern',
-	'picture',
-	'polygon',
-	'polyline',
-	'rect',
-	'source',
-	'stop',
-	'svg',
-	'td',
-	'th',
-	'track',
-	'use',
-	'video',
-	'wbr'
-]);
+// Hidden elements that should be removed
+const HIDDEN_ELEMENT_SELECTORS = [
+	'[hidden]',
+	'[aria-hidden="true"]',
+//	'[style*="display: none"]', causes problems for math formulas
+//	'[style*="display:none"]',
+	'[style*="visibility: hidden"]',
+	'[style*="visibility:hidden"]',
+	'.hidden',
+	'.invisible'
+].join(',');
 
 // Selectors to be removed
 // Case insensitive, but matches must be exact
@@ -351,6 +288,69 @@ const PARTIAL_SELECTORS = [
 	'twitter'
 ];
 
+// Elements that are allowed to be empty
+// These are not removed even if they have no content
+const ALLOWED_EMPTY_ELEMENTS = new Set([
+	'area',
+	'audio',
+	'base',
+	'br',
+	'circle',
+	'col',
+	'defs',
+	'ellipse',
+	'embed',
+	'figure',
+	'g',
+	'hr',
+	'iframe',
+	'img',
+	'input',
+	'line',
+	'link',
+	'mask',
+	'meta',
+	'object',
+	'param',
+	'path',
+	'pattern',
+	'picture',
+	'polygon',
+	'polyline',
+	'rect',
+	'source',
+	'stop',
+	'svg',
+	'td',
+	'th',
+	'track',
+	'use',
+	'video',
+	'wbr'
+]);
+
+// Attributes to keep
+const ALLOWED_ATTRIBUTES = new Set([
+	'alt',
+	'aria-label',
+	'class',
+	'colspan',
+	'data-src',
+	'data-srcset',
+	'dir',
+	'headers',
+	'height',
+	'href',
+	'id',
+	'lang',
+	'role',
+	'rowspan',
+	'src',
+	'srcset',
+	'title',
+	'width'
+]);
+
 interface ContentScore {
 	score: number;
 	element: Element;
@@ -508,7 +508,7 @@ export class Defuddle {
 		let count = 0;
 
 		// Existing hidden elements selector
-		const hiddenElements = doc.querySelectorAll(HIDDEN_ELEMENTS_SELECTOR);
+		const hiddenElements = doc.querySelectorAll(HIDDEN_ELEMENT_SELECTORS);
 		hiddenElements.forEach(el => {
 			el.remove();
 			count++;
