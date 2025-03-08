@@ -704,17 +704,23 @@ export class Defuddle {
 					return false;
 				}
 				
-				// Check if element has only whitespace
-				const hasOnlyWhitespace = el.textContent?.trim().length === 0;
+				// Check if element has only whitespace or &nbsp;
+				const textContent = el.textContent || '';
+				const hasOnlyWhitespace = textContent.trim().length === 0;
+				const hasNbsp = textContent.includes('\u00A0'); // Unicode non-breaking space
 				
 				// Check if element has no meaningful children
 				// Note: comments were already removed
 				const hasNoChildren = !el.hasChildNodes() || 
-					(Array.from(el.childNodes).every(node => 
-						node.nodeType === Node.TEXT_NODE && node.textContent?.trim().length === 0
-					));
+					(Array.from(el.childNodes).every(node => {
+						if (node.nodeType === Node.TEXT_NODE) {
+							const nodeText = node.textContent || '';
+							return nodeText.trim().length === 0 && !nodeText.includes('\u00A0');
+						}
+						return false;
+					}));
 
-				return hasOnlyWhitespace && hasNoChildren;
+				return hasOnlyWhitespace && !hasNbsp && hasNoChildren;
 			});
 
 			if (emptyElements.length > 0) {
