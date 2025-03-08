@@ -2,10 +2,9 @@ import { MetadataExtractor } from './metadata';
 import { DefuddleOptions, DefuddleResponse } from './types';
 
 // Patterns for scoring content
-const POSITIVE_PATTERNS = /article|content|main|post|body|text|blog|story/i;
-const NEGATIVE_PATTERNS = /comment|meta|footer|footnote|foot|nav|sidebar|banner|ad|popup|menu/i;
 const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
 const MOBILE_WIDTH = 600;
+
 const HIDDEN_ELEMENTS_SELECTOR = [
 	'[hidden]',
 	'[aria-hidden="true"]',
@@ -16,6 +15,23 @@ const HIDDEN_ELEMENTS_SELECTOR = [
 	'.hidden',
 	'.invisible'
 ].join(',');
+
+// Entry point elements
+// These are the elements that will be used to find the main content
+const ENTRY_POINT_ELEMENTS = [
+	'article',
+	'[role="article"]',
+	'[itemprop="articleBody"]',
+	'.post-content',
+	'.article-content',
+	'#article-content',
+	'.content-article',
+	'main',
+	'[role="main"]',
+	'body' // ensures there is always a match
+];
+
+// Delete all element attributes except these
 const ALLOWED_ATTRIBUTES = new Set([
 	'alt',
 	'aria-label',
@@ -37,8 +53,50 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'width'
 ]);
 
-// Basic selectors for removing clutter
-const BASIC_SELECTORS = [
+// Elements that are allowed to be empty
+// These are not removed even if they have no content
+const ALLOWED_EMPTY_ELEMENTS = new Set([
+	'area',
+	'audio',
+	'base',
+	'br',
+	'circle',
+	'col',
+	'defs',
+	'ellipse',
+	'embed',
+	'figure',
+	'g',
+	'hr',
+	'iframe',
+	'img',
+	'input',
+	'line',
+	'link',
+	'mask',
+	'meta',
+	'object',
+	'param',
+	'path',
+	'pattern',
+	'picture',
+	'polygon',
+	'polyline',
+	'rect',
+	'source',
+	'stop',
+	'svg',
+	'td',
+	'th',
+	'track',
+	'use',
+	'video',
+	'wbr'
+]);
+
+// Selectors to be removed
+// Case insensitive, but matches must be exact
+const EXACT_SELECTORS = [
 	'.ad',
 	'aside',
 	'button',
@@ -93,8 +151,9 @@ const BASIC_SELECTORS = [
 	'[role="navigation"]'
 ];
 
-// Patterns for matching against class, id, data-testid, and data-qa
-const CLUTTER_PATTERNS = [
+// Removal patterns tested against attributes: class, id, data-testid, and data-qa
+// Case insensitive, partial matches allowed
+const PARTIAL_SELECTORS = [
 	'access-wall',
 	'activitypub',
 	'appendix',
@@ -473,11 +532,11 @@ export class Defuddle {
 	}
 
 	private removeClutter(doc: Document) {
-		let basicSelectorCount = 0;
-		let patternMatchCount = 0;
+		let exactSelectorCount = 0;
+		let partialSelectorCount = 0;
 
-		// Normalize and combine all basic selectors into a single selector string
-		const normalizedSelectors = BASIC_SELECTORS.map(selector => {
+		// Normalize and combine all exact selectors into a single selector string
+		const normalizedSelectors = EXACT_SELECTORS.map(selector => {
 			// Handle attribute selectors separately
 			if (selector.includes('[')) {
 				// Split attribute selectors into parts
@@ -499,16 +558,16 @@ export class Defuddle {
 		const combinedSelector = normalizedSelectors.join(',');
 		
 		// Query and remove elements
-		const basicElements = doc.querySelectorAll(combinedSelector);
-		basicElements.forEach(el => {
+		const exactElements = doc.querySelectorAll(combinedSelector);
+		exactElements.forEach(el => {
 			if (el?.parentNode) {
 				el.remove();
-				basicSelectorCount++;
+				exactSelectorCount++;
 			}
 		});
 
 		// Create RegExp objects once instead of creating them in each iteration
-		const patternRegexes = CLUTTER_PATTERNS.map(pattern => new RegExp(pattern, 'i'));
+		const patternRegexes = PARTIAL_SELECTORS.map(pattern => new RegExp(pattern, 'i'));
 
 		// Use a DocumentFragment for batch removals
 		const elementsToRemove = new Set<Element>();
@@ -534,7 +593,7 @@ export class Defuddle {
 			
 			if (shouldRemove) {
 				elementsToRemove.add(el);
-				patternMatchCount++;
+				partialSelectorCount++;
 			}
 		});
 
@@ -542,9 +601,9 @@ export class Defuddle {
 		elementsToRemove.forEach(el => el.remove());
 
 		this._log('Found clutter elements:', {
-			basicSelectors: basicSelectorCount,
-			patternMatches: patternMatchCount,
-			total: basicSelectorCount + patternMatchCount
+			exactSelectors: exactSelectorCount,
+			partialSelectors: partialSelectorCount,
+			total: exactSelectorCount + partialSelectorCount
 		});
 	}
 
@@ -636,52 +695,12 @@ export class Defuddle {
 		let iterations = 0;
 		let keepRemoving = true;
 
-		// Elements that are allowed to be empty
-		const allowEmpty = new Set([
-			'area',
-			'audio',
-			'base',
-			'br',
-			'circle',
-			'col',
-			'defs',
-			'ellipse',
-			'embed',
-			'figure',
-			'g',
-			'hr',
-			'iframe',
-			'img',
-			'input',
-			'line',
-			'link',
-			'mask',
-			'meta',
-			'object',
-			'param',
-			'path',
-			'pattern',
-			'picture',
-			'polygon',
-			'polyline',
-			'rect',
-			'source',
-			'stop',
-			'svg',
-			'td',
-			'th',
-			'track',
-			'use',
-			'video',
-			'wbr'
-		]);
-
 		while (keepRemoving) {
 			iterations++;
 			keepRemoving = false;
 			// Get all elements without children, working from deepest first
 			const emptyElements = Array.from(element.getElementsByTagName('*')).filter(el => {
-				if (allowEmpty.has(el.tagName.toLowerCase())) {
+				if (ALLOWED_EMPTY_ELEMENTS.has(el.tagName.toLowerCase())) {
 					return false;
 				}
 				
@@ -841,28 +860,15 @@ export class Defuddle {
 	}
 
 	private findMainContent(doc: Document): Element | null {
-		// Priority list of content markers
-		const contentSelectors = [
-			'article',
-			'[role="article"]',
-			'[itemprop="articleBody"]',
-			'.post-content',
-			'.article-content',
-			'#article-content',
-			'.content-article',
-			'main',
-			'[role="main"]',
-			'body' // this overrides the scoring for now, meaning there is always a match
-		];
 
 		// Find all potential content containers
 		const candidates: { element: Element; score: number }[] = [];
-		
-		contentSelectors.forEach((selector, index) => {
+
+		ENTRY_POINT_ELEMENTS.forEach((selector, index) => {
 			const elements = doc.querySelectorAll(selector);
 			elements.forEach(element => {
 				// Base score from selector priority (earlier = higher)
-				let score = (contentSelectors.length - index) * 10;
+				let score = (ENTRY_POINT_ELEMENTS.length - index) * 10;
 				
 				// Add score based on content analysis
 				score += this.scoreElement(element);
@@ -936,16 +942,6 @@ export class Defuddle {
 		const className = element.className && typeof element.className === 'string' ? 
 			element.className.toLowerCase() : '';
 		const id = element.id ? element.id.toLowerCase() : '';
-
-		// Check positive patterns
-		if (POSITIVE_PATTERNS.test(className) || POSITIVE_PATTERNS.test(id)) {
-			score += 25;
-		}
-
-		// Check negative patterns
-		if (NEGATIVE_PATTERNS.test(className) || NEGATIVE_PATTERNS.test(id)) {
-			score -= 25;
-		}
 
 		// Score based on content
 		const text = element.textContent || '';
