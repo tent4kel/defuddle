@@ -210,6 +210,7 @@ const PARTIAL_SELECTORS = [
 	'entry-meta',
 	'eyebrow',
 	'expand-reduce',
+	'externallinkembedwrapper', // The New Yorker
 	'facebook',
 	'favorite',
 	'feedback',
