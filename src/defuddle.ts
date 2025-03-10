@@ -334,6 +334,7 @@ const PARTIAL_SELECTORS = [
 	'sidebartitle',
 	'similar-',
 	'similar_',
+	'sideitems',
 	'site-index',
 	'site-header',
 	'site-logo',
@@ -369,7 +370,8 @@ const PARTIAL_SELECTORS = [
 	'tree-item',
 	'trending',
 	'trust-feat',
-	'twitter'
+	'twitter',
+	'welcomebox'
 ];
 
 // Selectors for footnotes and citations
@@ -401,6 +403,7 @@ const FOOTNOTE_LIST_SELECTORS = [
 	'div[role="doc-endnotes"]',
 	'div[role="doc-footnotes"]',
 	'ol.footnotes-list',
+	'ol.footnotes',
 	'ol.references',
 	'ol[class*="article-references"]',
 	'section.footnotes ol',
