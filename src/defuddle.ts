@@ -1338,6 +1338,8 @@ export class Defuddle {
 		return current;
 	}
 
+	// Every footnote reference should be a sup element with an anchor inside
+	// e.g. <sup id="fnref:1"><a href="#fn:1">1</a></sup>
 	private createFootnoteReference(footnoteNumber: string, refId: string): HTMLElement {
 		const sup = document.createElement('sup');
 		sup.id = refId;
