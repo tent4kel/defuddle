@@ -429,16 +429,6 @@ const FOOTNOTE_LIST_SELECTORS = [
 	'div.footnote[data-component-name="FootnoteToDOM"]' // Substack
 ].join(',');
 
-interface FootnoteData {
-	content: Element | string;
-	originalId: string;
-	refs: string[];
-}
-
-interface FootnoteCollection {
-	[footnoteNumber: number]: FootnoteData;
-}
-
 // Elements that are allowed to be empty
 // These are not removed even if they have no content
 const ALLOWED_EMPTY_ELEMENTS = new Set([
@@ -506,6 +496,118 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'type',
 	'width'
 ]);
+
+// Element standardization rules
+// Maps selectors to their target HTML element name
+interface StandardizationRule {
+	selector: string;
+	element: string;
+	transform?: (el: Element) => Element;
+}
+
+const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
+	// Convert divs with paragraph role to actual paragraphs
+	{ selector: 'div[role="paragraph"]', element: 'p' },
+	// Convert divs with list roles to actual lists
+	{ 
+		selector: 'div[role="list"]', 
+		element: 'ul',
+		// Custom handler for list type detection and transformation
+		transform: (el: Element): Element => {
+			// First determine if this is an ordered list
+			const firstItem = el.querySelector('div[role="listitem"] .label');
+			const label = firstItem?.textContent?.trim() || '';
+			const isOrdered = label.match(/^\d+\)/);
+			
+			// Create the appropriate list type
+			const list = document.createElement(isOrdered ? 'ol' : 'ul');
+			
+			// Process each list item
+			const items = el.querySelectorAll('div[role="listitem"]');
+			items.forEach(item => {
+				const li = document.createElement('li');
+				const content = item.querySelector('.content');
+				
+				if (content) {
+					// Convert any paragraph divs inside content
+					const paragraphDivs = content.querySelectorAll('div[role="paragraph"]');
+					paragraphDivs.forEach(div => {
+						const p = document.createElement('p');
+						p.innerHTML = div.innerHTML;
+						div.replaceWith(p);
+					});
+					
+					// Convert any nested lists recursively
+					const nestedLists = content.querySelectorAll('div[role="list"]');
+					nestedLists.forEach(nestedList => {
+						const firstNestedItem = nestedList.querySelector('div[role="listitem"] .label');
+						const nestedLabel = firstNestedItem?.textContent?.trim() || '';
+						const isNestedOrdered = nestedLabel.match(/^\d+\)/);
+						
+						const newNestedList = document.createElement(isNestedOrdered ? 'ol' : 'ul');
+						
+						// Process nested items
+						const nestedItems = nestedList.querySelectorAll('div[role="listitem"]');
+						nestedItems.forEach(nestedItem => {
+							const nestedLi = document.createElement('li');
+							const nestedContent = nestedItem.querySelector('.content');
+							
+							if (nestedContent) {
+								// Convert paragraph divs in nested items
+								const nestedParagraphs = nestedContent.querySelectorAll('div[role="paragraph"]');
+								nestedParagraphs.forEach(div => {
+									const p = document.createElement('p');
+									p.innerHTML = div.innerHTML;
+									div.replaceWith(p);
+								});
+								nestedLi.innerHTML = nestedContent.innerHTML;
+							}
+							
+							newNestedList.appendChild(nestedLi);
+						});
+						
+						nestedList.replaceWith(newNestedList);
+					});
+					
+					li.innerHTML = content.innerHTML;
+				}
+				
+				list.appendChild(li);
+			});
+			
+			return list;
+		}
+	},
+	{ 
+		selector: 'div[role="listitem"]', 
+		element: 'li',
+		// Custom handler for list item content
+		transform: (el: Element): Element => {
+			const content = el.querySelector('.content');
+			if (!content) return el;
+			
+			// Convert any paragraph divs inside content
+			const paragraphDivs = content.querySelectorAll('div[role="paragraph"]');
+			paragraphDivs.forEach(div => {
+				const p = document.createElement('p');
+				p.innerHTML = div.innerHTML;
+				div.replaceWith(p);
+			});
+			
+			return content;
+		}
+	}
+];
+
+interface FootnoteData {
+	content: Element | string;
+	originalId: string;
+	refs: string[];
+}
+
+interface FootnoteCollection {
+	[footnoteNumber: number]: FootnoteData;
+}
 
 interface ContentScore {
 	score: number;
@@ -840,7 +942,7 @@ export class Defuddle {
 		this.handleLazyImages(element);
 
 		// Convert embedded content to standard formats
-		this.standardizeEmbeds(element);
+		this.standardizeElements(element);
 		
 		// Strip unwanted attributes
 		this.stripUnwantedAttributes(element);
@@ -1114,7 +1216,7 @@ export class Defuddle {
 
 				// Handle citations with .citations class
 				const citationsDiv = li.querySelector('.citations');
-				if (citationsDiv?.id?.startsWith('R')) {
+				if (citationsDiv?.id?.toLowerCase().startsWith('r')) {
 					id = citationsDiv.id;
 					// Look for citation content within the citations div
 					const citationContent = citationsDiv.querySelector('.citation-content');
@@ -1123,9 +1225,9 @@ export class Defuddle {
 					}
 				} else {
 					// Extract ID from various formats
-					if (li.id.startsWith('bib.bib')) {
+					if (li.id.toLowerCase().startsWith('bib.bib')) {
 						id = li.id.replace('bib.bib', '');
-					} else if (li.id.startsWith('fn:')) {
+					} else if (li.id.toLowerCase().startsWith('fn:')) {
 						id = li.id.replace('fn:', '');
 					// Nature.com
 					} else if (li.hasAttribute('data-counter')) {
@@ -1365,8 +1467,21 @@ export class Defuddle {
 		this._log('Processed lazy images:', processedCount);
 	}
 
-	private standardizeEmbeds(element: Element) {
+	private standardizeElements(element: Element) {
 		let processedCount = 0;
+
+		// Convert elements based on standardization rules
+		ELEMENT_STANDARDIZATION_RULES.forEach(rule => {
+			const elements = element.querySelectorAll(rule.selector);
+			elements.forEach(el => {
+				if (rule.transform) {
+					// If there's a transform function, use it to create the new element
+					const transformed = rule.transform(el);
+					el.replaceWith(transformed);
+					processedCount++;
+				}
+			});
+		});
 
 		// Convert lite-youtube elements
 		const liteYoutubeElements = element.querySelectorAll('lite-youtube');

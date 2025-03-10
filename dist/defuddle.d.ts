@@ -30,7 +30,7 @@ export declare class Defuddle {
     private createFootnoteReference;
     private standardizeFootnotes;
     private handleLazyImages;
-    private standardizeEmbeds;
+    private standardizeElements;
     private findSmallImages;
     private removeSmallImages;
     private getElementIdentifier;
