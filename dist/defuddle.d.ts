@@ -25,6 +25,7 @@ export declare class Defuddle {
     private removeEmptyElements;
     private standardizeFootnotes;
     private handleLazyImages;
+    private standardizeEmbeds;
     private findSmallImages;
     private removeSmallImages;
     private getElementIdentifier;

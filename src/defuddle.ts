@@ -46,7 +46,7 @@ const EXACT_SELECTORS = [
 	'header',
 	'#header',
 	'input',
-	'iframe',
+//	'iframe', maybe narrow this down to only allow iframes for video
 	'label',
 	'link',
 	'.logo',
@@ -380,12 +380,15 @@ const ALLOWED_EMPTY_ELEMENTS = new Set([
 // Attributes to keep
 const ALLOWED_ATTRIBUTES = new Set([
 	'alt',
+	'allow',
+	'allowfullscreen',
 	'aria-label',
 	'class',
 	'colspan',
 	'data-src',
 	'data-srcset',
 	'dir',
+	'frameborder',
 	'headers',
 	'height',
 	'href',
@@ -730,6 +733,9 @@ export class Defuddle {
 
 		// Handle lazy-loaded images
 		this.handleLazyImages(element);
+
+		// Convert embedded content to standard formats
+		this.standardizeEmbeds(element);
 		
 		// Strip unwanted attributes
 		this.stripUnwantedAttributes(element);
@@ -1066,6 +1072,33 @@ export class Defuddle {
 		});
 
 		this._log('Processed lazy images:', processedCount);
+	}
+
+	private standardizeEmbeds(element: Element) {
+		let processedCount = 0;
+
+		// Convert lite-youtube elements
+		const liteYoutubeElements = element.querySelectorAll('lite-youtube');
+		liteYoutubeElements.forEach(el => {
+			const videoId = el.getAttribute('videoid');
+			if (!videoId) return;
+
+			const iframe = document.createElement('iframe');
+			iframe.width = '560';
+			iframe.height = '315';
+			iframe.src = `https://www.youtube.com/embed/${videoId}`;
+			iframe.title = el.getAttribute('videotitle') || 'YouTube video player';
+			iframe.frameBorder = '0';
+			iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+			iframe.setAttribute('allowfullscreen', '');
+
+			el.replaceWith(iframe);
+			processedCount++;
+		});
+
+		// Add future embed conversions (Twitter, Instagram, etc.)
+
+		this._log('Converted embedded elements:', processedCount);
 	}
 
 	// Find small IMG and SVG elements
