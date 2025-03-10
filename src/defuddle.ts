@@ -386,19 +386,30 @@ const FOOTNOTE_SELECTORS = [
 ].join(',');
 
 const FOOTNOTE_LIST_SELECTORS = [
-	'ol.references',
-	'ol.footnotes-list',
-	'ul.footnotes-list',
-	'div.footnotes ol',
 	'div.footnote ol',
-	'section.footnotes ol',
-	'ul.ltx_biblist',
+	'div.footnotes ol',
 	'div[role="doc-endnotes"]',
-	'section[role="doc-endnotes"]',
 	'div[role="doc-footnotes"]',
+	'ol.footnotes-list',
+	'ol.references',
+	'section.footnotes ol',
+	'section[role="doc-endnotes"]',
 	'section[role="doc-footnotes"]',
+	'section[role="doc-bibliography"]',
+	'ul.footnotes-list',
+	'ul.ltx_biblist',
 	'div.footnote[data-component-name="FootnoteToDOM"]' // Substack
 ].join(',');
+
+interface FootnoteData {
+	content: Element | string;
+	originalId: string;
+	refs: string[];
+}
+
+interface FootnoteCollection {
+	[footnoteNumber: number]: FootnoteData;
+}
 
 // Elements that are allowed to be empty
 // These are not removed even if they have no content
@@ -958,7 +969,7 @@ export class Defuddle {
 			}
 		}
 
-		// Add backlinks to the last paragraph
+		// Add backlink(s) to the last paragraph
 		const lastParagraph = newItem.querySelector('p:last-of-type') || newItem;
 		refs.forEach((refId, index) => {
 			const backlink = document.createElement('a');
@@ -975,31 +986,32 @@ export class Defuddle {
 		return newItem;
 	}
 
-	private standardizeFootnotes(element: Element) {
-		// Map to store footnote IDs and their corresponding number
-		const footnotes = new Map<string, number>();
-		// Map to store all reference IDs for each footnote number
-		const footnoteRefs = new Map<number, string[]>();
+	private collectFootnotes(element: Element): FootnoteCollection {
+		const footnotes: FootnoteCollection = {};
 		let footnoteCount = 1;
 
-		// First pass: collect all footnotes and their numbers
+		// Collect all footnotes and their numbers
 		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
 		footnoteLists.forEach(list => {
-			// Handle Substack format which has individual footnote divs
+			// Substack has individual footnote divs with no parent
 			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
 				const anchor = list.querySelector('a.footnote-number');
-				if (anchor) {
+				const content = list.querySelector('.footnote-content');
+				if (anchor && content) {
 					const id = anchor.id.replace('footnote-', '');
-					if (id && !footnotes.has(id.toLowerCase())) {
-						const num = footnoteCount++;
-						footnotes.set(id.toLowerCase(), num);
-						footnoteRefs.set(num, []);
+					if (id && !footnotes[footnoteCount]) {
+						footnotes[footnoteCount] = {
+							content: content,
+							originalId: id.toLowerCase(),
+							refs: []
+						};
+						footnoteCount++;
 					}
 				}
 				return;
 			}
 
-			// Handle other formats
+			// Common format using OL/UL and LI elements
 			const items = list.querySelectorAll('li');
 			items.forEach(li => {
 				let id = '';
@@ -1014,17 +1026,25 @@ export class Defuddle {
 					id = match ? match[1] : li.id;
 				}
 
-				if (id && !footnotes.has(id.toLowerCase())) {
-					const num = footnoteCount++;
-					footnotes.set(id.toLowerCase(), num);
-					footnoteRefs.set(num, []);
+				if (id && !footnotes[footnoteCount]) {
+					footnotes[footnoteCount] = {
+						content: li,
+						originalId: id.toLowerCase(),
+						refs: []
+					};
+					footnoteCount++;
 				}
 			});
 		});
 
-		// Second pass: standardize inline footnotes using the collected numbers
+		return footnotes;
+	}
+
+	private standardizeFootnotes(element: Element) {
+		const footnotes = this.collectFootnotes(element);
+
+		// Standardize inline footnotes using the collected numbers
 		const footnoteElements = element.querySelectorAll(FOOTNOTE_SELECTORS);
-		let refCounter = 0;
 		footnoteElements.forEach(el => {
 			if (!(el instanceof HTMLElement)) return;
 
@@ -1078,87 +1098,53 @@ export class Defuddle {
 			}
 
 			if (footnoteId) {
-				const footnoteNumber = footnotes.get(footnoteId);
-				if (footnoteNumber) {
-					// Store footnote reference ID for this footnote number
-					const refs = footnoteRefs.get(footnoteNumber) || [];
+				// Find the footnote number by matching the original ID
+				const footnoteEntry = Object.entries(footnotes).find(
+					([_, data]) => data.originalId === footnoteId.toLowerCase()
+				);
+
+				if (footnoteEntry) {
+					const [footnoteNumber, footnoteData] = footnoteEntry;
 					
 					// Create footnote reference ID - only add suffix if this is a duplicate reference
-					const refId = refs.length > 0 ? 
-						`fnref:${footnoteNumber}-${refs.length + 1}` : 
+					const refId = footnoteData.refs.length > 0 ? 
+						`fnref:${footnoteNumber}-${footnoteData.refs.length + 1}` : 
 						`fnref:${footnoteNumber}`;
 					
-					refs.push(refId);
-					footnoteRefs.set(footnoteNumber, refs);
+					footnoteData.refs.push(refId);
 
 					// Create standardized footnote reference
 					const sup = document.createElement('sup');
 					sup.id = refId;
 					const link = document.createElement('a');
 					link.href = `#fn:${footnoteNumber}`;
-					link.textContent = footnoteNumber.toString();
+					link.textContent = footnoteNumber;
 					sup.appendChild(link);
 					el.replaceWith(sup);
 				}
 			}
 		});
 
-		// Third pass: standardize reference lists using the collected numbers
+		// Create the standardized footnote list
 		const newList = document.createElement('div');
 		newList.className = 'footnotes';
 		const orderedList = document.createElement('ol');
 
-		footnoteLists.forEach(list => {
-			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
-				// Handle Substack format
-				const anchor = list.querySelector('a.footnote-number');
-				const content = list.querySelector('.footnote-content');
-				if (anchor && content) {
-					const id = anchor.id.replace('footnote-', '');
-					const footnoteNumber = footnotes.get(id.toLowerCase());
-					if (footnoteNumber) {
-						const refs = footnoteRefs.get(footnoteNumber) || [];
-						const newItem = this.createFootnoteItem(footnoteNumber, content, refs);
-						orderedList.appendChild(newItem);
-					}
-				}
-				list.remove(); // Remove original Substack footnote
-				return;
-			}
-
-			// Handle other formats
-			const items = list.querySelectorAll('li');
-			items.forEach(li => {
-				let id = '';
-
-				// Extract ID from various formats
-				if (li.id.startsWith('bib.bib')) {
-					id = li.id.replace('bib.bib', '');
-				} else if (li.id.startsWith('fn:')) {
-					id = li.id.replace('fn:', '');
-				} else {
-					const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
-					id = match ? match[1] : li.id;
-				}
-
-				const footnoteNumber = footnotes.get(id.toLowerCase());
-				if (footnoteNumber) {
-					// Remove sup elements that just contain the reference number
-					const sup = li.querySelector('sup');
-					if (sup && sup.textContent?.trim() === id) {
-						sup.remove();
-					}
-
-					const refs = footnoteRefs.get(footnoteNumber) || [];
-					const newItem = this.createFootnoteItem(footnoteNumber, li, refs);
-					orderedList.appendChild(newItem);
-				}
-			});
-
-			list.replaceWith(newList);
+		// Create footnote items in order
+		Object.entries(footnotes).forEach(([number, data]) => {
+			const newItem = this.createFootnoteItem(
+				parseInt(number),
+				data.content,
+				data.refs
+			);
+			orderedList.appendChild(newItem);
 		});
 
-		// If we have any footnotes, add the list to the document
+		// Remove original footnote lists
+		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
+		footnoteLists.forEach(list => list.remove());
+
+		// If we have any footnotes, add the new list to the document
 		if (orderedList.children.length > 0) {
 			newList.appendChild(orderedList);
 			element.appendChild(newList);

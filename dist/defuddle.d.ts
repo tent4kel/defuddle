@@ -24,6 +24,7 @@ export declare class Defuddle {
     private stripUnwantedAttributes;
     private removeEmptyElements;
     private createFootnoteItem;
+    private collectFootnotes;
     private standardizeFootnotes;
     private handleLazyImages;
     private standardizeEmbeds;
