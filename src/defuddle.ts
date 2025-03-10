@@ -46,31 +46,33 @@ const EXACT_SELECTORS = [
 	'[id^="ad-" i]',
 	'[id$="-ad" i]',
 	'[role="banner" i]',
-	'[class*="promo" i]',
+	'[class="promo" i]',
 
 	// comments
-	'[id*="comments" i]',
+	'[id="comments" i]',
 
 	// header, nav
 	'header',
 	'nav',
-	'[id*="header" i]',
+	'[id="header" i]',
 	'[role="navigation" i]',
 	'[role="dialog" i]',
 	'[role="complementary" i]',
+	'[class="pagination" i]',
 
 	// metadata
-	'[class*="date" i]',
-	'[class*="meta" i]',
-	'[class*="toc" i]',
+	'[class*="author" i]',
+	'[class="date" i]',
+	'[class="meta" i]',
+	'[class="toc" i]',
 	'[href*="/category" i]',
 	'[href*="/tag/" i]',
 	'[href*="/tags/" i]',
 	'[href*="/topics" i]',
 	'[href*="author" i]',
 	'[href="#site-content" i]',
-	'[id*="title" i]',
-	'[id*="toc" i]',
+	'[id="title" i]',
+	'[id="toc" i]',
 	'[src*="author" i]',
 
 	// footer
@@ -94,14 +96,14 @@ const EXACT_SELECTORS = [
 		// '[role="button"]', Medium images
 
 	// logos
-	'[class*="logo" i]',
-	'[id*="logo" i]',
+	'[class="logo" i]',
+	'[id="logo" i]',
 
 	// newsletter
-	'[id*="newsletter" i]',
+	'[id="newsletter" i]',
 
 	// hidden for print
-	'[class*="noprint" i]',
+	'[class="noprint" i]',
 	'[data-link-name*="skip" i]',
 	'[data-print-layout="hide" i]',
 
@@ -115,9 +117,9 @@ const EXACT_SELECTORS = [
 	'[data-container*="most-viewed" i]',
 
 	// sidebar
-	'[class*="sidebar" i]',
-	'[id*="sidebar" i]',
-	'[id*="sitesub" i]',
+	'[class="sidebar" i]',
+	'[id="sidebar" i]',
+	'[id="sitesub" i]',
 	
 	// other
 	'[data-optimizely="related-articles-section" i]' // The Economist
@@ -179,6 +181,7 @@ const PARTIAL_SELECTORS = [
 	'cta-',
 	'cta_',
 	'current-issue', // The Nation
+	'dateline',
 	'dateheader',
 	'dialog',
 	'disclaimer',
@@ -366,6 +369,7 @@ const PARTIAL_SELECTORS = [
 const FOOTNOTE_SELECTORS = [
 	'sup.reference',
 	'cite.ltx_cite',
+	'sup[id^="fnr"]',
 	'sup[id^="fnref:"]',
 	'span.footnote-link',
 	'a.citation',
