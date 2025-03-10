@@ -19,6 +19,7 @@ export declare class Defuddle {
     private removeHiddenElements;
     private removeClutter;
     private cleanContent;
+    private removeTrailingHeadings;
     private handleHeadings;
     private removeHtmlComments;
     private stripUnwantedAttributes;

@@ -847,6 +847,62 @@ export class Defuddle {
 
 		// Remove empty elements
 		this.removeEmptyElements(element);
+
+		// Remove trailing headings
+		this.removeTrailingHeadings(element);
+	}
+
+	private removeTrailingHeadings(element: Element) {
+		let removedCount = 0;
+
+		const hasContentAfter = (el: Element): boolean => {
+			// Check if there's any meaningful content after this element
+			let nextContent = '';
+			let sibling = el.nextSibling;
+
+			// First check direct siblings
+			while (sibling) {
+				if (sibling.nodeType === Node.TEXT_NODE) {
+					nextContent += sibling.textContent || '';
+				} else if (sibling.nodeType === Node.ELEMENT_NODE) {
+					// If we find an element sibling, check its content
+					nextContent += (sibling as Element).textContent || '';
+				}
+				sibling = sibling.nextSibling;
+			}
+
+			// If we found meaningful content at this level, return true
+			if (nextContent.trim()) {
+				return true;
+			}
+
+			// If no content found at this level and we have a parent,
+			// check for content after the parent
+			const parent = el.parentElement;
+			if (parent && parent !== element) {
+				return hasContentAfter(parent);
+			}
+
+			return false;
+		};
+
+		// Process all headings from bottom to top
+		const headings = Array.from(element.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+			.reverse();
+
+		headings.forEach(heading => {
+			if (!hasContentAfter(heading)) {
+				heading.remove();
+				removedCount++;
+			} else {
+				// Stop processing once we find a heading with content after it
+				return;
+			}
+		});
+
+		if (removedCount > 0) {
+			this._log('Removed trailing headings:', removedCount);
+		}
 	}
 
 	private handleHeadings(element: Element, title: string) {
