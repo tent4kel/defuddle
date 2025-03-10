@@ -39,6 +39,7 @@ const EXACT_SELECTORS = [
 	'button',
 	'canvas',
 	'#comments',
+	'.date',
 	'dialog',
 	'fieldset',
 	'footer',
@@ -101,6 +102,7 @@ const PARTIAL_SELECTORS = [
 	'advert',
 	'-ad-',
 	'_ad_',
+	'allterms',
 	'around-the-web',
 	'article__copy',
 	'article-end ',
@@ -235,6 +237,7 @@ const PARTIAL_SELECTORS = [
 	'posttax',
 	'post-tax',
 	'post_tax',
+	'posttag',
 	'post_tag',
 	'post-tag',
 //	'preview', used on Obsidian Publish
@@ -265,6 +268,7 @@ const PARTIAL_SELECTORS = [
 //	'share',
 	'-share',
 	'share-icons',
+	'sharelinks',
 	'share-section',
 	'sidebartitle',
 	'similar-',
@@ -385,6 +389,7 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'aria-label',
 	'class',
 	'colspan',
+	'controls',
 	'data-src',
 	'data-srcset',
 	'dir',
@@ -399,6 +404,7 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'src',
 	'srcset',
 	'title',
+	'type',
 	'width'
 ]);
 
@@ -1026,7 +1032,7 @@ export class Defuddle {
 							backlink.href = `#${refId}`;
 							backlink.title = 'return to article';
 							backlink.className = 'footnote-backref';
-							backlink.innerHTML = ' ↩';
+							backlink.innerHTML = '↩';
 							if (index < refs.length - 1) {
 								backlink.innerHTML += ' ';
 							}
