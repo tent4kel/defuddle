@@ -1070,11 +1070,41 @@ export class Defuddle {
 		return footnotes;
 	}
 
+	private findOuterFootnoteContainer(el: Element): Element {
+		let current: Element | null = el;
+		let parent: Element | null = el.parentElement;
+		
+		// Keep going up until we find an element that's not a span or sup
+		while (parent && (
+			parent.tagName.toLowerCase() === 'span' || 
+			parent.tagName.toLowerCase() === 'sup'
+		)) {
+			current = parent;
+			parent = parent.parentElement;
+		}
+		
+		return current;
+	}
+
+	private createFootnoteReference(footnoteNumber: string, refId: string): HTMLElement {
+		const sup = document.createElement('sup');
+		sup.id = refId;
+		const link = document.createElement('a');
+		link.href = `#fn:${footnoteNumber}`;
+		link.textContent = footnoteNumber;
+		sup.appendChild(link);
+		return sup;
+	}
+
 	private standardizeFootnotes(element: Element) {
 		const footnotes = this.collectFootnotes(element);
 
 		// Standardize inline footnotes using the collected IDs
 		const footnoteInlineReferences = element.querySelectorAll(FOOTNOTE_INLINE_REFERENCES);
+		
+		// Group references by their parent sup element
+		const supGroups = new Map<Element, Element[]>();
+		
 		footnoteInlineReferences.forEach(el => {
 			if (!(el instanceof HTMLElement)) return;
 
@@ -1151,22 +1181,63 @@ export class Defuddle {
 				if (footnoteEntry) {
 					const [footnoteNumber, footnoteData] = footnoteEntry;
 					
-					// Create footnote reference ID - only add suffix if this is a duplicate reference
+					// Create footnote reference ID
 					const refId = footnoteData.refs.length > 0 ? 
 						`fnref:${footnoteNumber}-${footnoteData.refs.length + 1}` : 
 						`fnref:${footnoteNumber}`;
 					
 					footnoteData.refs.push(refId);
 
-					// Create standardized footnote reference
-					const sup = document.createElement('sup');
-					sup.id = refId;
-					const link = document.createElement('a');
-					link.href = `#fn:${footnoteNumber}`;
-					link.textContent = footnoteNumber;
-					sup.appendChild(link);
-					el.replaceWith(sup);
+					// Find the outermost container (span or sup)
+					const container = this.findOuterFootnoteContainer(el);
+					
+					// If container is a sup, group references
+					if (container.tagName.toLowerCase() === 'sup') {
+						if (!supGroups.has(container)) {
+							supGroups.set(container, []);
+						}
+						const group = supGroups.get(container)!;
+						group.push(this.createFootnoteReference(footnoteNumber, refId));
+					} else {
+						// Replace the container directly
+						container.replaceWith(this.createFootnoteReference(footnoteNumber, refId));
+					}
 				}
+			}
+		});
+
+		// Handle grouped references
+		supGroups.forEach((references, container) => {
+			if (references.length > 0) {
+				const newSup = document.createElement('sup');
+				
+				// If there's only one reference, use its ID
+				if (references.length === 1) {
+					const singleRef = references[0];
+					newSup.id = singleRef.id;
+					const link = singleRef.querySelector('a');
+					if (link) {
+						newSup.appendChild(link);
+					}
+				} else {
+					// For multiple references, use the first reference's ID
+					// and create a compound reference
+					const firstRef = references[0];
+					newSup.id = firstRef.id;
+					
+					// Add all references with commas between them
+					references.forEach((ref, index) => {
+						if (index > 0) {
+							newSup.appendChild(document.createTextNode(','));
+						}
+						const link = ref.querySelector('a');
+						if (link) {
+							newSup.appendChild(link.cloneNode(true));
+						}
+					});
+				}
+				
+				container.replaceWith(newSup);
 			}
 		});
 
