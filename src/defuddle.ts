@@ -1010,24 +1010,17 @@ export class Defuddle {
 
 	private handleHeadings(element: Element, title: string) {
 		const h1s = element.getElementsByTagName('h1');
-		let isFirstH1 = true;
 
 		Array.from(h1s).forEach(h1 => {
-			if (isFirstH1) {
-				h1.remove();
-				isFirstH1 = false;
-			} else {
-				// Convert subsequent H1s to H2s
-				const h2 = document.createElement('h2');
-				h2.innerHTML = h1.innerHTML;
-				// Copy allowed attributes
-				Array.from(h1.attributes).forEach(attr => {
-					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
-						h2.setAttribute(attr.name, attr.value);
-					}
-				});
-				h1.parentNode?.replaceChild(h2, h1);
-			}
+			const h2 = document.createElement('h2');
+			h2.innerHTML = h1.innerHTML;
+			// Copy allowed attributes
+			Array.from(h1.attributes).forEach(attr => {
+				if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+					h2.setAttribute(attr.name, attr.value);
+				}
+			});
+			h1.parentNode?.replaceChild(h2, h1);
 		});
 
 		// Remove first H2 if it matches title
