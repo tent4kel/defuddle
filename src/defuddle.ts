@@ -373,7 +373,7 @@ const PARTIAL_SELECTORS = [
 ];
 
 // Selectors for footnotes and citations
-const FOOTNOTE_SELECTORS = [
+const FOOTNOTE_INLINE_REFERENCES = [
 	'sup.reference',
 	'cite.ltx_cite',
 	'sup[id^="fnr"]',
@@ -1071,8 +1071,8 @@ export class Defuddle {
 		const footnotes = this.collectFootnotes(element);
 
 		// Standardize inline footnotes using the collected IDs
-		const footnoteElements = element.querySelectorAll(FOOTNOTE_SELECTORS);
-		footnoteElements.forEach(el => {
+		const footnoteInlineReferences = element.querySelectorAll(FOOTNOTE_INLINE_REFERENCES);
+		footnoteInlineReferences.forEach(el => {
 			if (!(el instanceof HTMLElement)) return;
 
 			let footnoteId = '';
