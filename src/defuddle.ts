@@ -71,6 +71,7 @@ const EXACT_SELECTORS = [
 	'.toc',
 	'textarea',
 	'.clickable-icon',
+	'li span.ltx_tag.ltx_tag_item',
 	'a[href^="#"][class*="anchor"]',
 	'a[href^="#"][class*="ref"]',
 	'[data-link-name*="skip"]',
@@ -86,7 +87,8 @@ const EXACT_SELECTORS = [
 	'[role="button"]',
 	'[role="dialog"]',
 	'[role="complementary"]',
-	'[role="navigation"]'
+	'[role="navigation"]',
+	'[data-optimizely="related-articles-section"]' // The Economist
 ];
 
 // Removal patterns tested against attributes: class, id, data-testid, and data-qa
@@ -122,6 +124,7 @@ const PARTIAL_SELECTORS = [
 	'byline',
 	'cat_header',
 	'catlinks',
+	'chapter-list', // The Economist
 	'collections',
 	'comments',
 	'comment-count',
@@ -131,6 +134,7 @@ const PARTIAL_SELECTORS = [
 	'comment-thread',
 	'complementary',
 	'content-card', // The Verge
+	'contentpromo',
 	'core-collateral',
 	'_cta',
 	'-cta',
@@ -161,6 +165,7 @@ const PARTIAL_SELECTORS = [
 	'goog-',
 	'header-logo',
 	'header-pattern', // The Verge
+	'hero-list',
 	'hide-print',
 	'interlude',
 	'interaction',
@@ -176,12 +181,15 @@ const PARTIAL_SELECTORS = [
 	'logo_container',
 	'ltx_role_refnum', // Arxiv
 	'ltx_tag_bibitem',
+	'ltx_error',
 	'marketing',
 	'media-inquiry',
 	'menu-',
 	'meta-',
 	'metadata',
 	'might-like',
+	'_modal',
+	'-modal',
 	'more-',
 	'mw-editsection',
 	'mw-cite-backlink',
@@ -424,12 +432,14 @@ export class Defuddle {
 		try {
 			// Evaluate styles and sizes on original document
 			const mobileStyles = this._evaluateMediaQueries(this.doc);
+			
+			// Check for small images in original document, excluding lazy-loaded ones
 			const smallImages = this.findSmallImages(this.doc);
 			
-			// Clone after evaluation
+			// Clone document
 			const clone = this.doc.cloneNode(true) as Document;
 			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
-
+			
 			// Apply mobile style to clone
 			this.applyMobileStyles(clone, mobileStyles);
 
@@ -717,6 +727,9 @@ export class Defuddle {
 		
 		// Standardize footnotes and citations
 		this.standardizeFootnotes(element);
+
+		// Handle lazy-loaded images
+		this.handleLazyImages(element);
 		
 		// Strip unwanted attributes
 		this.stripUnwantedAttributes(element);
@@ -1024,6 +1037,37 @@ export class Defuddle {
 		});
 	}
 
+	private handleLazyImages(element: Element) {
+		let processedCount = 0;
+		const lazyImages = element.querySelectorAll('img[data-src], img[data-srcset]');
+
+		lazyImages.forEach(img => {
+			if (!(img instanceof HTMLImageElement)) return;
+
+			// Handle data-src
+			const dataSrc = img.getAttribute('data-src');
+			if (dataSrc && !img.src) {
+				img.src = dataSrc;
+				processedCount++;
+			}
+
+			// Handle data-srcset
+			const dataSrcset = img.getAttribute('data-srcset');
+			if (dataSrcset && !img.srcset) {
+				img.srcset = dataSrcset;
+				processedCount++;
+			}
+
+			// Remove lazy loading related classes and attributes
+			img.classList.remove('lazy', 'lazyload');
+			img.removeAttribute('data-ll-status');
+			img.removeAttribute('data-src');
+			img.removeAttribute('data-srcset');
+		});
+
+		this._log('Processed lazy images:', processedCount);
+	}
+
 	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
 		const MIN_DIMENSION = 33;
@@ -1036,7 +1080,17 @@ export class Defuddle {
 		const elements = [
 			...Array.from(doc.getElementsByTagName('img')),
 			...Array.from(doc.getElementsByTagName('svg'))
-		];
+		].filter(element => {
+			// Skip lazy-loaded images that haven't been processed yet
+			if (element instanceof HTMLImageElement) {
+				const isLazy = element.classList.contains('lazy') || 
+					element.classList.contains('lazyload') ||
+					element.hasAttribute('data-src') ||
+					element.hasAttribute('data-srcset');
+				return !isLazy;
+			}
+			return true;
+		});
 
 		if (elements.length === 0) {
 			return smallImages;
@@ -1144,10 +1198,17 @@ export class Defuddle {
 	private getElementIdentifier(element: Element): string | null {
 		// Try to create a unique identifier using various attributes
 		if (element instanceof HTMLImageElement) {
-			const src = element.src || element.getAttribute('data-src') || '';
-			const srcset = element.srcset || element.getAttribute('data-srcset') || '';
+			// For lazy-loaded images, use data-src as identifier if available
+			const dataSrc = element.getAttribute('data-src');
+			if (dataSrc) return `src:${dataSrc}`;
+			
+			const src = element.src || '';
+			const srcset = element.srcset || '';
+			const dataSrcset = element.getAttribute('data-srcset');
+			
 			if (src) return `src:${src}`;
 			if (srcset) return `srcset:${srcset}`;
+			if (dataSrcset) return `srcset:${dataSrcset}`;
 		}
 
 		const id = element.id || '';
