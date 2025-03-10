@@ -142,10 +142,13 @@ const PARTIAL_SELECTORS = [
 	'article__header',
 	'article__info',
 	'article__meta',
+	'article-subject',
+	'article_subject',
 	'article-title',
 	'article_title',
 	'articletopics',
 	'article-topics',
+	'article-type',
 	'article--lede', // The Verge
 	'author',
 	'back-to-top',
@@ -209,6 +212,7 @@ const PARTIAL_SELECTORS = [
 	'header-logo',
 	'header-pattern', // The Verge
 	'hero-list',
+	'hide-for-print',
 	'hide-print',
 	'interlude',
 	'interaction',
@@ -219,6 +223,8 @@ const PARTIAL_SELECTORS = [
 	'-ledes-', // The Verge
 	'-license',
 	'link-box',
+	'links-grid', // BBC
+	'links-title', // BBC
 	'listing-dynamic-terms', // Boston Review
 	'loading',
 	'loa-info',
@@ -331,6 +337,7 @@ const PARTIAL_SELECTORS = [
 	'_stats',
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
+	'subject-label',
 	'subscribe',
 	'_tags',
 	'tags__item',
@@ -374,7 +381,7 @@ const FOOTNOTE_SELECTORS = [
 	'span.footnote-hovercard-target a' // Substack
 ].join(',');
 
-const REFERENCE_LIST_SELECTORS = [
+const FOOTNOTE_LIST_SELECTORS = [
 	'ol.references',
 	'ol.footnotes-list',
 	'ul.footnotes-list',
@@ -972,8 +979,8 @@ export class Defuddle {
 		let footnoteCount = 1;
 
 		// First pass: collect all footnotes and their numbers
-		const referenceLists = element.querySelectorAll(REFERENCE_LIST_SELECTORS);
-		referenceLists.forEach(list => {
+		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
+		footnoteLists.forEach(list => {
 			// Handle Substack format which has individual footnote divs
 			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
 				const anchor = list.querySelector('a.footnote-number');
@@ -1011,7 +1018,7 @@ export class Defuddle {
 			});
 		});
 
-		// Second pass: standardize inline references using the collected numbers
+		// Second pass: standardize inline footnotes using the collected numbers
 		const footnoteElements = element.querySelectorAll(FOOTNOTE_SELECTORS);
 		let refCounter = 0;
 		footnoteElements.forEach(el => {
@@ -1069,10 +1076,10 @@ export class Defuddle {
 			if (footnoteId) {
 				const footnoteNumber = footnotes.get(footnoteId);
 				if (footnoteNumber) {
-					// Store reference ID for this footnote number
+					// Store footnote reference ID for this footnote number
 					const refs = footnoteRefs.get(footnoteNumber) || [];
 					
-					// Create reference ID - only add suffix if this is a duplicate reference
+					// Create footnote reference ID - only add suffix if this is a duplicate reference
 					const refId = refs.length > 0 ? 
 						`fnref:${footnoteNumber}-${refs.length + 1}` : 
 						`fnref:${footnoteNumber}`;
@@ -1097,7 +1104,7 @@ export class Defuddle {
 		newList.className = 'footnotes';
 		const orderedList = document.createElement('ol');
 
-		referenceLists.forEach(list => {
+		footnoteLists.forEach(list => {
 			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
 				// Handle Substack format
 				const anchor = list.querySelector('a.footnote-number');
@@ -1220,7 +1227,7 @@ export class Defuddle {
 		const startTime = performance.now();
 		let processedCount = 0;
 
-		// 1. READ PHASE - Gather all elements in a single pass
+		// 1. Read phase - Gather all elements in a single pass
 		const elements = [
 			...Array.from(doc.getElementsByTagName('img')),
 			...Array.from(doc.getElementsByTagName('svg'))
@@ -1240,7 +1247,7 @@ export class Defuddle {
 			return smallImages;
 		}
 
-		// 2. BATCH PROCESS - Collect all measurements in one go
+		// 2. Batch process - Collect all measurements in one go
 		const measurements = elements.map(element => ({
 			element,
 			// Static attributes (no reflow)
@@ -1250,7 +1257,7 @@ export class Defuddle {
 			attrHeight: parseInt(element.getAttribute('height') || '0')
 		}));
 
-		// 3. BATCH COMPUTE STYLES - Process in chunks to avoid long tasks
+		// 3. Batch compute styles - Process in chunks to avoid long tasks
 		const BATCH_SIZE = 50;
 		for (let i = 0; i < measurements.length; i += BATCH_SIZE) {
 			const batch = measurements.slice(i, i + BATCH_SIZE);
