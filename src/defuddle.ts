@@ -386,6 +386,7 @@ const PARTIAL_SELECTORS = [
 	'tree-item',
 	'trending',
 	'trust-feat',
+	'trust-badge',
 	'twitter',
 	'welcomebox'
 ];
@@ -509,7 +510,25 @@ interface StandardizationRule {
 
 const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 	// Convert divs with paragraph role to actual paragraphs
-	{ selector: 'div[role="paragraph"]', element: 'p' },
+	{ 
+		selector: 'div[data-testid^="paragraph"], div[role="paragraph"]', 
+		element: 'p',
+		transform: (el: Element): Element => {
+			const p = document.createElement('p');
+			
+			// Copy innerHTML
+			p.innerHTML = el.innerHTML;
+			
+			// Copy allowed attributes
+			Array.from(el.attributes).forEach(attr => {
+				if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+					p.setAttribute(attr.name, attr.value);
+				}
+			});
+			
+			return p;
+		}
+	},
 	// Convert divs with list roles to actual lists
 	{ 
 		selector: 'div[role="list"]', 
