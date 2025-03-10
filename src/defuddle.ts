@@ -158,6 +158,7 @@ const PARTIAL_SELECTORS = [
 	'article--lede', // The Verge
 	'author',
 	'back-to-top',
+	'backlinks-section',
 	'banner',
 	'bio-block',
 	'blog-pager',
@@ -233,6 +234,7 @@ const PARTIAL_SELECTORS = [
 	'hero-list',
 	'hide-for-print',
 	'hide-print',
+	'hidden-sidenote',
 	'interlude',
 	'interaction',
 	'jumplink',
@@ -286,7 +288,7 @@ const PARTIAL_SELECTORS = [
 	'pencraft', // Substack
 	'plea',
 	'popular',
-	'popup',
+//	'popup', gwern
 	'pop-up',
 	'popover',
 	'post-bottom',
@@ -350,6 +352,7 @@ const PARTIAL_SELECTORS = [
 	'sidebar_',
 	'similar-',
 	'similar_',
+	'similars-',
 	'sideitems',
 	'site-index',
 	'site-header',
@@ -509,6 +512,54 @@ interface StandardizationRule {
 }
 
 const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
+	// Simplify headings by removing internal navigation elements
+	{
+		selector: 'h1, h2, h3, h4, h5, h6',
+		element: 'keep',
+		transform: (el: Element): Element => {
+			// If heading only contains a single anchor with internal link
+			if (el.children.length === 1 && 
+				el.firstElementChild?.tagName === 'A' &&
+				(el.firstElementChild.getAttribute('href')?.includes('#') || 
+				 el.firstElementChild.getAttribute('href')?.startsWith('#'))) {
+				
+				// Create new heading of same level
+				const newHeading = document.createElement(el.tagName);
+				
+				// Copy allowed attributes from original heading
+				Array.from(el.attributes).forEach(attr => {
+					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+						newHeading.setAttribute(attr.name, attr.value);
+					}
+				});
+				
+				// Just use the text content
+				newHeading.textContent = el.textContent?.trim() || '';
+				
+				return newHeading;
+			}
+			
+			// If heading contains navigation buttons or other utility elements
+			const buttons = el.querySelectorAll('button');
+			if (buttons.length > 0) {
+				const newHeading = document.createElement(el.tagName);
+				
+				// Copy allowed attributes
+				Array.from(el.attributes).forEach(attr => {
+					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+						newHeading.setAttribute(attr.name, attr.value);
+					}
+				});
+				
+				// Just use the text content
+				newHeading.textContent = el.textContent?.trim() || '';
+				
+				return newHeading;
+			}
+			
+			return el;
+		}
+	},
 	// Convert divs with paragraph role to actual paragraphs
 	{ 
 		selector: 'div[data-testid^="paragraph"], div[role="paragraph"]', 
