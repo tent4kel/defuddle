@@ -7,11 +7,14 @@ Defuddle extracts the main content from web pages. It cleans up web pages by rem
 
 ## Key features
 
-Defuddle aims to be a replacement for Mozilla Readability, with a few differences:
+Defuddle aims to output clean and consistent HTML documents. It was written for [Obsidian Web Clipper](https://github.com/obsidianmd/obsidian-clipper) with the goal of creating a more useful input for HTML-to-Markdown converters like [Turndown](https://github.com/mixmark-io/turndown).
+
+Defuddle can be used as a replacement for Mozilla Readability with a few differences:
 
 - More forgiving, removes fewer uncertain elements
 - Uses a page's mobile styles to guess at unnecessary elements
 - Extracts more metadata from the page, including schema.org data
+- Standardizes footnotes and citations
 
 ## Installation
 
