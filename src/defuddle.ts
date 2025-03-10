@@ -341,7 +341,9 @@ const FOOTNOTE_SELECTORS = [
 	'a[href^="#r"]', // Common in academic papers
 	'a[href^="#b"]', // Common for bibliography references
 	'a[href*="cite_note"]',
-	'a[href*="cite_ref"]'
+	'a[href*="cite_ref"]',
+	'a.footnote-anchor', // Substack
+	'span.footnote-hovercard-target a' // Substack
 ].join(',');
 
 const REFERENCE_LIST_SELECTORS = [
@@ -355,7 +357,8 @@ const REFERENCE_LIST_SELECTORS = [
 	'div[role="doc-endnotes"]',
 	'section[role="doc-endnotes"]',
 	'div[role="doc-footnotes"]',
-	'section[role="doc-footnotes"]'
+	'section[role="doc-footnotes"]',
+	'div.footnote[data-component-name="FootnoteToDOM"]' // Substack
 ].join(',');
 
 // Elements that are allowed to be empty
@@ -884,6 +887,55 @@ export class Defuddle {
 		});
 	}
 
+	private createFootnoteItem(
+		footnoteNumber: number,
+		content: string | Element,
+		refs: string[]
+	): HTMLLIElement {
+		const newItem = document.createElement('li');
+		newItem.className = 'footnote';
+		newItem.id = `fn:${footnoteNumber}`;
+
+		// Handle content
+		if (typeof content === 'string') {
+			const paragraph = document.createElement('p');
+			paragraph.innerHTML = content;
+			newItem.appendChild(paragraph);
+		} else {
+			// Get all paragraphs from the content
+			const paragraphs = Array.from(content.querySelectorAll('p'));
+			if (paragraphs.length === 0) {
+				// If no paragraphs, wrap content in a paragraph
+				const paragraph = document.createElement('p');
+				paragraph.innerHTML = content.innerHTML;
+				newItem.appendChild(paragraph);
+			} else {
+				// Copy existing paragraphs
+				paragraphs.forEach(p => {
+					const newP = document.createElement('p');
+					newP.innerHTML = p.innerHTML;
+					newItem.appendChild(newP);
+				});
+			}
+		}
+
+		// Add backlinks to the last paragraph
+		const lastParagraph = newItem.querySelector('p:last-of-type') || newItem;
+		refs.forEach((refId, index) => {
+			const backlink = document.createElement('a');
+			backlink.href = `#${refId}`;
+			backlink.title = 'return to article';
+			backlink.className = 'footnote-backref';
+			backlink.innerHTML = '↩';
+			if (index < refs.length - 1) {
+				backlink.innerHTML += ' ';
+			}
+			lastParagraph.appendChild(backlink);
+		});
+
+		return newItem;
+	}
+
 	private standardizeFootnotes(element: Element) {
 		// Map to store footnote IDs and their corresponding number
 		const footnotes = new Map<string, number>();
@@ -894,6 +946,21 @@ export class Defuddle {
 		// First pass: collect all footnotes and their numbers
 		const referenceLists = element.querySelectorAll(REFERENCE_LIST_SELECTORS);
 		referenceLists.forEach(list => {
+			// Handle Substack format which has individual footnote divs
+			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
+				const anchor = list.querySelector('a.footnote-number');
+				if (anchor) {
+					const id = anchor.id.replace('footnote-', '');
+					if (id && !footnotes.has(id.toLowerCase())) {
+						const num = footnoteCount++;
+						footnotes.set(id.toLowerCase(), num);
+						footnoteRefs.set(num, []);
+					}
+				}
+				return;
+			}
+
+			// Handle other formats
 			const items = list.querySelectorAll('li');
 			items.forEach(li => {
 				let id = '';
@@ -926,7 +993,13 @@ export class Defuddle {
 			let footnoteContent = '';
 
 			// Extract footnote ID based on element type
-			if (el.matches('sup.reference')) {
+			if (el.matches('a.footnote-anchor, span.footnote-hovercard-target a')) {
+				// Handle Substack format
+				const id = el.id?.replace('footnote-anchor-', '') || '';
+				if (id) {
+					footnoteId = id.toLowerCase();
+				}
+			} else if (el.matches('sup.reference')) {
 				const links = el.querySelectorAll('a');
 				Array.from(links).forEach(link => {
 					const href = link.getAttribute('href');
@@ -992,12 +1065,30 @@ export class Defuddle {
 		});
 
 		// Third pass: standardize reference lists using the collected numbers
-		referenceLists.forEach(list => {
-			const items = list.querySelectorAll('li');
-			const newList = document.createElement('div');
-			newList.className = 'footnotes';
-			const orderedList = document.createElement('ol');
+		const newList = document.createElement('div');
+		newList.className = 'footnotes';
+		const orderedList = document.createElement('ol');
 
+		referenceLists.forEach(list => {
+			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
+				// Handle Substack format
+				const anchor = list.querySelector('a.footnote-number');
+				const content = list.querySelector('.footnote-content');
+				if (anchor && content) {
+					const id = anchor.id.replace('footnote-', '');
+					const footnoteNumber = footnotes.get(id.toLowerCase());
+					if (footnoteNumber) {
+						const refs = footnoteRefs.get(footnoteNumber) || [];
+						const newItem = this.createFootnoteItem(footnoteNumber, content, refs);
+						orderedList.appendChild(newItem);
+					}
+				}
+				list.remove(); // Remove original Substack footnote
+				return;
+			}
+
+			// Handle other formats
+			const items = list.querySelectorAll('li');
 			items.forEach(li => {
 				let id = '';
 
@@ -1019,52 +1110,20 @@ export class Defuddle {
 						sup.remove();
 					}
 
-					// Create standardized footnote item
-					const newItem = document.createElement('li');
-					newItem.className = 'footnote';
-					newItem.id = `fn:${footnoteNumber}`;
-
-					// Get all paragraphs from the content
-					const paragraphs = Array.from(li.querySelectorAll('p'));
-					if (paragraphs.length === 0) {
-						// If no paragraphs, wrap content in a paragraph
-						const paragraph = document.createElement('p');
-						paragraph.innerHTML = li.innerHTML;
-						paragraphs.push(paragraph);
-						newItem.appendChild(paragraph);
-					} else {
-						// Copy existing paragraphs
-						paragraphs.forEach(p => {
-							const newP = document.createElement('p');
-							newP.innerHTML = p.innerHTML;
-							newItem.appendChild(newP);
-						});
-					}
-
-					// Add backlinks to the last paragraph for each reference
-					const lastParagraph = newItem.querySelector('p:last-of-type');
-					if (lastParagraph) {
-						const refs = footnoteRefs.get(footnoteNumber) || [];
-						refs.forEach((refId, index) => {
-							const backlink = document.createElement('a');
-							backlink.href = `#${refId}`;
-							backlink.title = 'return to article';
-							backlink.className = 'footnote-backref';
-							backlink.innerHTML = '↩';
-							if (index < refs.length - 1) {
-								backlink.innerHTML += ' ';
-							}
-							lastParagraph.appendChild(backlink);
-						});
-					}
-
+					const refs = footnoteRefs.get(footnoteNumber) || [];
+					const newItem = this.createFootnoteItem(footnoteNumber, li, refs);
 					orderedList.appendChild(newItem);
 				}
 			});
 
-			newList.appendChild(orderedList);
 			list.replaceWith(newList);
 		});
+
+		// If we have any footnotes, add the list to the document
+		if (orderedList.children.length > 0) {
+			newList.appendChild(orderedList);
+			element.appendChild(newList);
+		}
 	}
 
 	private handleLazyImages(element: Element) {
