@@ -382,7 +382,8 @@ const FOOTNOTE_SELECTORS = [
 	'a[href*="cite_note"]',
 	'a[href*="cite_ref"]',
 	'a.footnote-anchor', // Substack
-	'span.footnote-hovercard-target a' // Substack
+	'span.footnote-hovercard-target a', // Substack
+	'a[role="doc-biblioref"]' // Science.org
 ].join(',');
 
 const FOOTNOTE_LIST_SELECTORS = [
@@ -802,7 +803,7 @@ export class Defuddle {
 		// Remove HTML comments
 		this.removeHtmlComments(element);
 		
-		// Handle h1 elements - remove first one and convert others to h2
+		// Handle H1 elements - remove first one and convert others to H2
 		this.handleHeadings(element);
 		
 		// Standardize footnotes and citations
@@ -990,7 +991,7 @@ export class Defuddle {
 		const footnotes: FootnoteCollection = {};
 		let footnoteCount = 1;
 
-		// Collect all footnotes and their numbers
+		// Collect all footnotes and their IDs from footnote lists
 		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
 		footnoteLists.forEach(list => {
 			// Substack has individual footnote divs with no parent
@@ -1012,23 +1013,36 @@ export class Defuddle {
 			}
 
 			// Common format using OL/UL and LI elements
-			const items = list.querySelectorAll('li');
+			const items = list.querySelectorAll('li, div[role="listitem"]');
 			items.forEach(li => {
 				let id = '';
+				let content: Element | null = null;
 
-				// Extract ID from various formats
-				if (li.id.startsWith('bib.bib')) {
-					id = li.id.replace('bib.bib', '');
-				} else if (li.id.startsWith('fn:')) {
-					id = li.id.replace('fn:', '');
+				// Handle citations with .citations class
+				const citationsDiv = li.querySelector('.citations');
+				if (citationsDiv?.id?.startsWith('R')) {
+					id = citationsDiv.id;
+					// Look for citation content within the citations div
+					const citationContent = citationsDiv.querySelector('.citation-content');
+					if (citationContent) {
+						content = citationContent;
+					}
 				} else {
-					const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
-					id = match ? match[1] : li.id;
+					// Extract ID from various formats
+					if (li.id.startsWith('bib.bib')) {
+						id = li.id.replace('bib.bib', '');
+					} else if (li.id.startsWith('fn:')) {
+						id = li.id.replace('fn:', '');
+					} else {
+						const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
+						id = match ? match[1] : li.id;
+					}
+					content = li;
 				}
 
 				if (id && !footnotes[footnoteCount]) {
 					footnotes[footnoteCount] = {
-						content: li,
+						content: content || li,
 						originalId: id.toLowerCase(),
 						refs: []
 					};
@@ -1043,7 +1057,7 @@ export class Defuddle {
 	private standardizeFootnotes(element: Element) {
 		const footnotes = this.collectFootnotes(element);
 
-		// Standardize inline footnotes using the collected numbers
+		// Standardize inline footnotes using the collected IDs
 		const footnoteElements = element.querySelectorAll(FOOTNOTE_SELECTORS);
 		footnoteElements.forEach(el => {
 			if (!(el instanceof HTMLElement)) return;
@@ -1052,8 +1066,19 @@ export class Defuddle {
 			let footnoteContent = '';
 
 			// Extract footnote ID based on element type
-			if (el.matches('a.footnote-anchor, span.footnote-hovercard-target a')) {
-				// Handle Substack format
+			// Science.org
+			if (el.matches('a[role="doc-biblioref"]')) {
+				const xmlRid = el.getAttribute('data-xml-rid');
+				if (xmlRid) {
+					footnoteId = xmlRid;
+				} else {
+					const href = el.getAttribute('href');
+					if (href?.startsWith('#core-R')) {
+						footnoteId = href.replace('#core-', '');
+					}
+				}
+			// Substack
+			} else if (el.matches('a.footnote-anchor, span.footnote-hovercard-target a')) {
 				const id = el.id?.replace('footnote-anchor-', '') || '';
 				if (id) {
 					footnoteId = id.toLowerCase();
@@ -1069,6 +1094,7 @@ export class Defuddle {
 						}
 					}
 				});
+			// Arxiv
 			} else if (el.matches('cite.ltx_cite')) {
 				const link = el.querySelector('a');
 				if (link) {
@@ -1089,7 +1115,7 @@ export class Defuddle {
 				footnoteId = el.textContent?.trim() || '';
 				footnoteContent = el.getAttribute('href') || '';
 			} else {
-				// Handle other citation types
+				// Other citation types
 				const href = el.getAttribute('href');
 				if (href) {
 					const id = href.replace(/^[#]/, '');
