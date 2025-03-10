@@ -1209,35 +1209,21 @@ export class Defuddle {
 		// Handle grouped references
 		supGroups.forEach((references, container) => {
 			if (references.length > 0) {
-				const newSup = document.createElement('sup');
+				// Create a document fragment to hold all the references
+				const fragment = document.createDocumentFragment();
 				
-				// If there's only one reference, use its ID
-				if (references.length === 1) {
-					const singleRef = references[0];
-					newSup.id = singleRef.id;
-					const link = singleRef.querySelector('a');
+				// Add each reference as its own sup element
+				references.forEach((ref, index) => {
+					const link = ref.querySelector('a');
 					if (link) {
-						newSup.appendChild(link);
+						const sup = document.createElement('sup');
+						sup.id = ref.id;
+						sup.appendChild(link.cloneNode(true));
+						fragment.appendChild(sup);
 					}
-				} else {
-					// For multiple references, use the first reference's ID
-					// and create a compound reference
-					const firstRef = references[0];
-					newSup.id = firstRef.id;
-					
-					// Add all references with commas between them
-					references.forEach((ref, index) => {
-						if (index > 0) {
-							newSup.appendChild(document.createTextNode(','));
-						}
-						const link = ref.querySelector('a');
-						if (link) {
-							newSup.appendChild(link.cloneNode(true));
-						}
-					});
-				}
+				});
 				
-				container.replaceWith(newSup);
+				container.replaceWith(fragment);
 			}
 		});
 
