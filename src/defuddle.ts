@@ -144,6 +144,7 @@ const PARTIAL_SELECTORS = [
 	'article_header',
 	'article__header',
 	'article__info',
+	'article-info',
 	'article__meta',
 	'article-subject',
 	'article_subject',
@@ -183,6 +184,7 @@ const PARTIAL_SELECTORS = [
 	'cta-',
 	'cta_',
 	'current-issue', // The Nation
+	'custom-list-number',
 	'dateline',
 	'dateheader',
 	'dialog',
@@ -210,6 +212,7 @@ const PARTIAL_SELECTORS = [
 	'footnoteback',
 	'for-you',
 	'frontmatter',
+	'further-reading',
 	'gist-meta',
 //	'global',
 	'google',
@@ -324,6 +327,7 @@ const PARTIAL_SELECTORS = [
 	'screen-reader-text',
 //	'share',
 //	'-share', scitechdaily.com
+	'share-box',
 	'share-icons',
 	'sharelinks',
 	'share-section',
@@ -376,6 +380,7 @@ const FOOTNOTE_SELECTORS = [
 	'sup[id^="fnref:"]',
 	'span.footnote-link',
 	'a.citation',
+	'a[id^="ref-link"]',
 	'a[href^="#fn"]',
 	'a[href^="#cite"]',
 	'a[href^="#reference"]',
@@ -386,7 +391,8 @@ const FOOTNOTE_SELECTORS = [
 	'a[href*="cite_ref"]',
 	'a.footnote-anchor', // Substack
 	'span.footnote-hovercard-target a', // Substack
-	'a[role="doc-biblioref"]' // Science.org
+	'a[role="doc-biblioref"]', // Science.org
+	'a[id^="ref-link"]', // Nature.com
 ].join(',');
 
 const FOOTNOTE_LIST_SELECTORS = [
@@ -396,6 +402,7 @@ const FOOTNOTE_LIST_SELECTORS = [
 	'div[role="doc-footnotes"]',
 	'ol.footnotes-list',
 	'ol.references',
+	'ol[class*="article-references"]',
 	'section.footnotes ol',
 	'section[role="doc-endnotes"]',
 	'section[role="doc-footnotes"]',
@@ -1036,6 +1043,9 @@ export class Defuddle {
 						id = li.id.replace('bib.bib', '');
 					} else if (li.id.startsWith('fn:')) {
 						id = li.id.replace('fn:', '');
+					// Nature.com
+					} else if (li.hasAttribute('data-counter')) {
+						id = li.getAttribute('data-counter')?.replace(/\.$/, '') || '';
 					} else {
 						const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
 						id = match ? match[1] : li.id;
@@ -1069,8 +1079,11 @@ export class Defuddle {
 			let footnoteContent = '';
 
 			// Extract footnote ID based on element type
+			// Nature.com
+			if (el.matches('a[id^="ref-link"]')) {
+				footnoteId = el.textContent?.trim() || '';
 			// Science.org
-			if (el.matches('a[role="doc-biblioref"]')) {
+			} else if (el.matches('a[role="doc-biblioref"]')) {
 				const xmlRid = el.getAttribute('data-xml-rid');
 				if (xmlRid) {
 					footnoteId = xmlRid;
@@ -1086,17 +1099,6 @@ export class Defuddle {
 				if (id) {
 					footnoteId = id.toLowerCase();
 				}
-			} else if (el.matches('sup.reference')) {
-				const links = el.querySelectorAll('a');
-				Array.from(links).forEach(link => {
-					const href = link.getAttribute('href');
-					if (href) {
-						const match = href.split('/').pop()?.match(/(?:cite_note|cite_ref)-(.+)/);
-						if (match) {
-							footnoteId = match[1].toLowerCase();
-						}
-					}
-				});
 			// Arxiv
 			} else if (el.matches('cite.ltx_cite')) {
 				const link = el.querySelector('a');
@@ -1109,6 +1111,17 @@ export class Defuddle {
 						}
 					}
 				}
+			} else if (el.matches('sup.reference')) {
+				const links = el.querySelectorAll('a');
+				Array.from(links).forEach(link => {
+					const href = link.getAttribute('href');
+					if (href) {
+						const match = href.split('/').pop()?.match(/(?:cite_note|cite_ref)-(.+)/);
+						if (match) {
+							footnoteId = match[1].toLowerCase();
+						}
+					}
+				});
 			} else if (el.matches('sup[id^="fnref:"]')) {
 				footnoteId = el.id.replace('fnref:', '').toLowerCase();
 			} else if (el.matches('span.footnote-link')) {
