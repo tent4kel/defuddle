@@ -1,5 +1,5 @@
 import { MetadataExtractor } from './metadata';
-import { DefuddleOptions, DefuddleResponse } from './types';
+import { DefuddleOptions, DefuddleResponse, DefuddleMetadata } from './types';
 
 // Entry point elements
 // These are the elements that will be used to find the main content
@@ -173,6 +173,7 @@ const PARTIAL_SELECTORS = [
 	'chapter-list', // The Economist
 	'collections',
 	'comments',
+	'-comment',
 	'comment-count',
 	'comment-content',
 	'comment-form',
@@ -536,6 +537,10 @@ export class Defuddle {
 	 * Parse the document and extract its main content
 	 */
 	parse(): DefuddleResponse {
+		// Extract metadata first since we'll need it in multiple places
+		const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
+		const metadata = MetadataExtractor.extract(this.doc, schemaOrgData);
+
 		try {
 			// Evaluate styles and sizes on original document
 			const mobileStyles = this._evaluateMediaQueries(this.doc);
@@ -545,7 +550,6 @@ export class Defuddle {
 			
 			// Clone document
 			const clone = this.doc.cloneNode(true) as Document;
-			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
 			
 			// Apply mobile style to clone
 			this.applyMobileStyles(clone, mobileStyles);
@@ -555,7 +559,7 @@ export class Defuddle {
 			if (!mainContent) {
 				return {
 					content: this.doc.body.innerHTML,
-					...MetadataExtractor.extract(this.doc, schemaOrgData)
+					...metadata
 				};
 			}
 
@@ -567,9 +571,7 @@ export class Defuddle {
 			this.removeClutter(clone);
 
 			// Clean up the main content
-			this.cleanContent(mainContent);
-
-			const metadata = MetadataExtractor.extract(this.doc, schemaOrgData);
+			this.cleanContent(mainContent, metadata);
 
 			return {
 				content: mainContent ? mainContent.outerHTML : this.doc.body.innerHTML,
@@ -577,10 +579,9 @@ export class Defuddle {
 			};
 		} catch (error) {
 			console.error('Defuddle', 'Error processing document:', error);
-			const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
 			return {
 				content: this.doc.body.innerHTML,
-				...MetadataExtractor.extract(this.doc, schemaOrgData)
+				...metadata
 			};
 		}
 	}
@@ -825,12 +826,12 @@ export class Defuddle {
 		});
 	}
 
-	private cleanContent(element: Element) {
+	private cleanContent(element: Element, metadata: DefuddleMetadata) {
 		// Remove HTML comments
 		this.removeHtmlComments(element);
 		
 		// Handle H1 elements - remove first one and convert others to H2
-		this.handleHeadings(element);
+		this.handleHeadings(element, metadata.title);
 		
 		// Standardize footnotes and citations
 		this.standardizeFootnotes(element);
@@ -848,7 +849,7 @@ export class Defuddle {
 		this.removeEmptyElements(element);
 	}
 
-	private handleHeadings(element: Element) {
+	private handleHeadings(element: Element, title: string) {
 		const h1s = element.getElementsByTagName('h1');
 		let isFirstH1 = true;
 
@@ -857,7 +858,7 @@ export class Defuddle {
 				h1.remove();
 				isFirstH1 = false;
 			} else {
-				// Convert subsequent h1s to h2s
+				// Convert subsequent H1s to H2s
 				const h2 = document.createElement('h2');
 				h2.innerHTML = h1.innerHTML;
 				// Copy allowed attributes
@@ -869,6 +870,17 @@ export class Defuddle {
 				h1.parentNode?.replaceChild(h2, h1);
 			}
 		});
+
+		// Remove first H2 if it matches title
+		const h2s = element.getElementsByTagName('h2');
+		if (h2s.length > 0) {
+			const firstH2 = h2s[0];
+			const firstH2Text = firstH2.textContent?.trim().toLowerCase() || '';
+			const normalizedTitle = title.toLowerCase().trim();
+			if (normalizedTitle && normalizedTitle === firstH2Text) {
+				firstH2.remove();
+			}
+		}
 	}
 
 	private removeHtmlComments(element: Element) {
