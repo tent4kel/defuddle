@@ -34,67 +34,93 @@ const HIDDEN_ELEMENT_SELECTORS = [
 // Selectors to be removed
 // Case insensitive, but matches must be exact
 const EXACT_SELECTORS = [
-	'.ad',
+	// scripts, styles
+	'noscript',
+	'script',
+	'style',
+
+	// ads
+	'.ad:not([class*="gradient"])',
+	'[class^="ad-" i]',
+	'[class$="-ad" i]',
+	'[id^="ad-" i]',
+	'[id$="-ad" i]',
+	'[role="banner" i]',
+	'[class*="promo" i]',
+
+	// comments
+	'[id*="comments" i]',
+
+	// header, nav
+	'header',
+	'nav',
+	'[id*="header" i]',
+	'[role="navigation" i]',
+	'[role="dialog" i]',
+	'[role="complementary" i]',
+
+	// metadata
+	'[class*="date" i]',
+	'[class*="meta" i]',
+	'[class*="toc" i]',
+	'[href*="/category" i]',
+	'[href*="/tag/" i]',
+	'[href*="/tags/" i]',
+	'[href*="/topics" i]',
+	'[href*="author" i]',
+	'[href="#site-content" i]',
+	'[id*="title" i]',
+	'[id*="toc" i]',
+	'[src*="author" i]',
+
+	// footer
+	'footer',
+
+	// inputs, forms, elements
 	'aside',
 	'button',
 	'canvas',
-	'#comments',
-	'.date',
 	'dialog',
 	'fieldset',
-	'footer',
 	'form',
-	'header',
-	'#header',
 	'input',
-//	'iframe', maybe narrow this down to only allow iframes for video
 	'label',
 	'link',
-	'.logo',
-	'#logo',
-	'.meta',
-	'nav',
-	'#newsletter',
-	'noscript',
-	'.noprint',
 	'option',
-	'.promo',
-	'script',
 	'select',
-	'sidebar',
-	'.sidebar',
-	'#sidebar',
-	'#siteSub',
-	'style',
-	'time',
-	'#title',
-	'#toc',
-	'.toc',
 	'textarea',
-	'.clickable-icon',
-	'li span.ltx_tag.ltx_tag_item',
-	'a[href^="#"][class*="anchor"]',
-	'a[href^="#"][class*="ref"]',
-	'[data-link-name*="skip"]',
-	'[data-print-layout="hide"]',
-	'[data-container*="most-viewed"]',
-	'[src*="author"]',
-	'[href*="author"]',
-	'[href*="/category"]',
-	'[href*="/tag/"]',
-	'[href*="/tags/"]',
-	'[href*="/topics"]',
-	'[href="#site-content"]',
-	'[class^="ad-"]',
-	'[class$="-ad"]',
-	'[id^="ad-"]',
-	'[id$="-ad"]',
-	'[role="banner"]',
-	'[role="button"]',
-	'[role="dialog"]',
-	'[role="complementary"]',
-	'[role="navigation"]',
-	'[data-optimizely="related-articles-section"]' // The Economist
+	'time',
+		// 'iframe' maybe narrow this down to only allow iframes for video
+		// '[role="button"]', Medium images
+
+	// logos
+	'[class*="logo" i]',
+	'[id*="logo" i]',
+
+	// newsletter
+	'[id*="newsletter" i]',
+
+	// hidden for print
+	'[class*="noprint" i]',
+	'[data-link-name*="skip" i]',
+	'[data-print-layout="hide" i]',
+
+	// footnotes, citations
+	'[class*="clickable-icon" i]',
+	'li span[class*="ltx_tag" i][class*="ltx_tag_item" i]',
+	'a[href^="#"][class*="anchor" i]',
+	'a[href^="#"][class*="ref" i]',
+
+	// link lists
+	'[data-container*="most-viewed" i]',
+
+	// sidebar
+	'[class*="sidebar" i]',
+	'[id*="sidebar" i]',
+	'[id*="sitesub" i]',
+	
+	// other
+	'[data-optimizely="related-articles-section" i]' // The Economist
 ];
 
 // Removal patterns tested against attributes: class, id, data-testid, and data-qa
@@ -172,7 +198,8 @@ const PARTIAL_SELECTORS = [
 	'fixed',
 	'follow',
 	'footer',
-	'footnote-backref',
+	'footnote-back',
+	'footnoteback',
 	'for-you',
 	'frontmatter',
 	'gist-meta',
@@ -260,6 +287,7 @@ const PARTIAL_SELECTORS = [
 	'post-tag',
 //	'preview', used on Obsidian Publish
 	'prevnext',
+	'previousnext',
 	'print-none',
 	'profile',
 //	'promo',
