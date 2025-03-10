@@ -168,12 +168,13 @@ const PARTIAL_SELECTORS = [
 	'btn-',
 	'-btn',
 	'byline',
+	'captcha',
 	'cat_header',
 	'catlinks',
 	'chapter-list', // The Economist
 	'collections',
 	'comments',
-	'-comment',
+//	'-comment', // Syntax highlighting
 	'comment-count',
 	'comment-content',
 	'comment-form',
@@ -1186,6 +1187,7 @@ export class Defuddle {
 	private collectFootnotes(element: Element): FootnoteCollection {
 		const footnotes: FootnoteCollection = {};
 		let footnoteCount = 1;
+		const processedIds = new Set<string>(); // Track processed IDs
 
 		// Collect all footnotes and their IDs from footnote lists
 		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
@@ -1195,13 +1197,14 @@ export class Defuddle {
 				const anchor = list.querySelector('a.footnote-number');
 				const content = list.querySelector('.footnote-content');
 				if (anchor && content) {
-					const id = anchor.id.replace('footnote-', '');
-					if (id && !footnotes[footnoteCount]) {
+					const id = anchor.id.replace('footnote-', '').toLowerCase();
+					if (id && !processedIds.has(id)) {
 						footnotes[footnoteCount] = {
 							content: content,
-							originalId: id.toLowerCase(),
+							originalId: id,
 							refs: []
 						};
+						processedIds.add(id);
 						footnoteCount++;
 					}
 				}
@@ -1217,7 +1220,7 @@ export class Defuddle {
 				// Handle citations with .citations class
 				const citationsDiv = li.querySelector('.citations');
 				if (citationsDiv?.id?.toLowerCase().startsWith('r')) {
-					id = citationsDiv.id;
+					id = citationsDiv.id.toLowerCase();
 					// Look for citation content within the citations div
 					const citationContent = citationsDiv.querySelector('.citation-content');
 					if (citationContent) {
@@ -1226,25 +1229,26 @@ export class Defuddle {
 				} else {
 					// Extract ID from various formats
 					if (li.id.toLowerCase().startsWith('bib.bib')) {
-						id = li.id.replace('bib.bib', '');
+						id = li.id.replace('bib.bib', '').toLowerCase();
 					} else if (li.id.toLowerCase().startsWith('fn:')) {
-						id = li.id.replace('fn:', '');
+						id = li.id.replace('fn:', '').toLowerCase();
 					// Nature.com
 					} else if (li.hasAttribute('data-counter')) {
-						id = li.getAttribute('data-counter')?.replace(/\.$/, '') || '';
+						id = li.getAttribute('data-counter')?.replace(/\.$/, '')?.toLowerCase() || '';
 					} else {
 						const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
-						id = match ? match[1] : li.id;
+						id = match ? match[1].toLowerCase() : li.id.toLowerCase();
 					}
 					content = li;
 				}
 
-				if (id && !footnotes[footnoteCount]) {
+				if (id && !processedIds.has(id)) {
 					footnotes[footnoteCount] = {
 						content: content || li,
-						originalId: id.toLowerCase(),
+						originalId: id,
 						refs: []
 					};
+					processedIds.add(id);
 					footnoteCount++;
 				}
 			});
