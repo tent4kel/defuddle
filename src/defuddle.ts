@@ -288,7 +288,7 @@ const PARTIAL_SELECTORS = [
 	'pencraft', // Substack
 	'plea',
 	'popular',
-//	'popup', gwern
+//	'popup', Gwern
 	'pop-up',
 	'popover',
 	'post-bottom',
@@ -414,6 +414,7 @@ const FOOTNOTE_INLINE_REFERENCES = [
 	'a.footnote-anchor', // Substack
 	'span.footnote-hovercard-target a', // Substack
 	'a[role="doc-biblioref"]', // Science.org
+	'a[id^="fnref"]',
 	'a[id^="ref-link"]', // Nature.com
 ].join(',');
 
@@ -1414,6 +1415,8 @@ export class Defuddle {
 			} else if (el.matches('a.citation')) {
 				footnoteId = el.textContent?.trim() || '';
 				footnoteContent = el.getAttribute('href') || '';
+			} else if (el.matches('a[id^="fnref"]')) {
+				footnoteId = el.id.replace('fnref', '').toLowerCase();
 			} else {
 				// Other citation types
 				const href = el.getAttribute('href');
