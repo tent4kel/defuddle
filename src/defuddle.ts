@@ -32,7 +32,6 @@ const HIDDEN_ELEMENT_SELECTORS = [
 ].join(',');
 
 // Selectors to be removed
-// Case insensitive, but matches must be exact
 const EXACT_SELECTORS = [
 	// scripts, styles
 	'noscript',
@@ -53,29 +52,33 @@ const EXACT_SELECTORS = [
 
 	// header, nav
 	'header',
+	'#header',
 	'nav',
-	'[id="header" i]',
-	'[class="navigation" i]',
+	'.navigation',
+	'#navigation',
 	'[role="navigation" i]',
 	'[role="dialog" i]',
-	'[role="complementary" i]',
-	'[class="pagination" i]',
+	'[role*="complementary" i]',
+	'[class*="pagination" i]',
 
 	// metadata
-	'[class="author" i]',
-	'[class="date" i]',
-	'[class="meta" i]',
-	'[class="toc" i]',
-	'[href*="/category" i]',
-	'[href*="/categories" i]',
-	'[href*="/tag/" i]',
-	'[href*="/tags/" i]',
-	'[href*="/topics" i]',
-	'[href*="author" i]',
-	'[href="#site-content" i]',
-	'[id="title" i]',
-	'[id="toc" i]',
-	'[src*="author" i]',
+	'.author',
+	'.Author',
+	'.contributor',
+	'.date',
+	'.meta',
+	'.toc',
+	'.Toc',
+	'#title',
+	'#Title',
+	'[href*="/category"]',
+	'[href*="/categories"]',
+	'[href*="/tag/"]',
+	'[href*="/tags/"]',
+	'[href*="/topics"]',
+	'[href*="author"]',
+	'[href="#site-content"]',
+	'[src*="author"]',
 
 	// footer
 	'footer',
@@ -96,20 +99,21 @@ const EXACT_SELECTORS = [
 	'textarea',
 	'time',
 
-	// iframes — maybe narrow this down to a few vendors
-		// 'iframe' 
+	// iframes
 	'instaread-player',
-	'iframe[id*="audio-player"]',
+	'iframe:not([src*="youtube"]):not([src*="youtu.be"]):not([src*="vimeo"]):not([src*="twitter"])',
 
 	// logos
 	'[class="logo" i]',
-	'[id="logo" i]',
+	'#logo',
+	'#Logo',
 
 	// newsletter
-	'[id="newsletter" i]',
+	'#newsletter',
+	'#Newsletter',
 
 	// hidden for print
-	'[class="noprint" i]',
+	'.noprint',
 	'[data-link-name*="skip" i]',
 	'[data-print-layout="hide" i]',
 	'[data-block="donotprint" i]',
@@ -124,13 +128,14 @@ const EXACT_SELECTORS = [
 	'[data-container*="most-viewed" i]',
 
 	// sidebar
-	'[class="sidebar" i]',
-	'[id="sidebar" i]',
-	'[id="sitesub" i]',
+	'.sidebar',
+	'.Sidebar',
+	'#sidebar',
+	'#Sidebar',
+	'#sitesub',
 	
-	'table.infobox',
-
 	// other
+	'table.infobox',
 	'.pencraft:not(.pc-display-contents)', // Substack
 	'[data-optimizely="related-articles-section" i]' // The Economist
 ];
@@ -348,6 +353,7 @@ const PARTIAL_SELECTORS = [
 	'publicationName', // Medium
 	'qr-code',
 	'qr_code',
+	'_rail',
 	'readmore',
 	'read-next',
 	'read_next',
@@ -387,6 +393,7 @@ const PARTIAL_SELECTORS = [
 	'sponsor',
 //	'-stats',
 	'_stats',
+	'sticky',
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
