@@ -62,7 +62,7 @@ const EXACT_SELECTORS = [
 	'[class="pagination" i]',
 
 	// metadata
-	'[class*="author" i]',
+	'[class="author" i]',
 	'[class="date" i]',
 	'[class="meta" i]',
 	'[class="toc" i]',
@@ -83,6 +83,7 @@ const EXACT_SELECTORS = [
 	// inputs, forms, elements
 	'aside',
 	'button',
+		// '[role="button"]', Medium images
 	'canvas',
 	'dialog',
 	'fieldset',
@@ -94,8 +95,11 @@ const EXACT_SELECTORS = [
 	'select',
 	'textarea',
 	'time',
-		// 'iframe' maybe narrow this down to only allow iframes for video
-		// '[role="button"]', Medium images
+
+	// iframes — maybe narrow this down to a few vendors
+		// 'iframe' 
+	'instaread-player',
+	'iframe[id*="audio-player"]',
 
 	// logos
 	'[class="logo" i]',
@@ -108,6 +112,7 @@ const EXACT_SELECTORS = [
 	'[class="noprint" i]',
 	'[data-link-name*="skip" i]',
 	'[data-print-layout="hide" i]',
+	'[data-block="donotprint" i]',
 
 	// footnotes, citations
 	'[class*="clickable-icon" i]',
@@ -123,7 +128,10 @@ const EXACT_SELECTORS = [
 	'[id="sidebar" i]',
 	'[id="sitesub" i]',
 	
+	'table.infobox',
+
 	// other
+	'.pencraft:not(.pc-display-contents)', // Substack
 	'[data-optimizely="related-articles-section" i]' // The Economist
 ];
 
@@ -149,6 +157,7 @@ const PARTIAL_SELECTORS = [
 	'article__meta',
 	'article-subject',
 	'article_subject',
+	'article-snippet',
 	'article-tags',
 	'article_tags',
 	'article-title',
@@ -157,6 +166,7 @@ const PARTIAL_SELECTORS = [
 	'article-topics',
 	'article-type',
 	'article--lede', // The Verge
+	'associated-people',
 //	'author', Gwern
 	'back-to-top',
 	'backlinks-section',
@@ -185,6 +195,7 @@ const PARTIAL_SELECTORS = [
 	'complementary',
 	'consent',
 	'content-card', // The Verge
+	'content-topics',
 	'contentpromo',
 	'core-collateral',
 	'_cta',
@@ -208,8 +219,11 @@ const PARTIAL_SELECTORS = [
 	'eletters',
 	'emailsignup',
 	'engagement-widget',
+	'entry-author-info',
 	'entry-date',
 	'entry-meta',
+	'entry-title',
+	'entry-utility',
 	'eyebrow',
 	'expand-reduce',
 	'externallinkembedwrapper', // The New Yorker
@@ -268,6 +282,7 @@ const PARTIAL_SELECTORS = [
 	'morestories',
 	'mw-editsection',
 	'mw-cite-backlink',
+	'mw-indicators',
 	'mw-jump-link',
 	'nav-',
 	'nav_',
@@ -282,11 +297,12 @@ const PARTIAL_SELECTORS = [
 	'newsletterwidget',
 	'newsletterwrapper',
 	'not-found',
+	'nomobile',
+	'noprint',
 	'originally-published', // Mercury News
 	'overlay',
 	'page-title',
 	'-partners',
-	'pencraft', // Substack
 	'plea',
 	'popular',
 //	'popup', Gwern
@@ -339,6 +355,7 @@ const PARTIAL_SELECTORS = [
 	'reading-time',
 	'reading-list',
 	'recommend',
+	'redirectedfrom',
 	'recirc',
 	'register',
 	'related',
@@ -355,6 +372,7 @@ const PARTIAL_SELECTORS = [
 	'similar_',
 	'similars-',
 	'sideitems',
+	'side-box',
 	'site-index',
 	'site-header',
 	'site-logo',
@@ -392,6 +410,7 @@ const PARTIAL_SELECTORS = [
 	'trust-feat',
 	'trust-badge',
 	'twitter',
+	'visually-hidden',
 	'welcomebox'
 ];
 
@@ -921,83 +940,62 @@ export class Defuddle {
 		let exactSelectorCount = 0;
 		let partialSelectorCount = 0;
 
-		// Combine all exact selectors into a single selector string
-		const combinedExactSelector = EXACT_SELECTORS.join(',');
-		
-		// First pass: Remove elements matching exact selectors
-		const exactElements = doc.querySelectorAll(combinedExactSelector);
-		if (exactElements.length > 0) {
-			// Batch remove elements
-			const fragment = document.createDocumentFragment();
-			exactElements.forEach(el => {
-				if (el?.parentNode) {
-					fragment.appendChild(el);
-					exactSelectorCount++;
-				}
-			});
-		}
+		// Track all elements to be removed
+		const elementsToRemove = new Set<Element>();
 
-		// Second pass: Handle partial selectors
-		// Pre-compile regexes for better performance
-		const partialRegexes = PARTIAL_SELECTORS.map(pattern => ({
-			pattern,
-			regex: new RegExp(pattern, 'i')
-		}));
+		// First collect elements matching exact selectors
+		const exactElements = doc.querySelectorAll(EXACT_SELECTORS.join(','));
+		exactElements.forEach(el => {
+			if (el?.parentNode) {
+				elementsToRemove.add(el);
+				exactSelectorCount++;
+			}
+		});
 
-		// Create an efficient lookup for partial matches
-		const shouldRemoveElement = (el: Element): boolean => {
-			// Get all relevant attributes once
-			const className = el.className && typeof el.className === 'string' ? 
-				el.className.toLowerCase() : '';
-			const id = el.id ? el.id.toLowerCase() : '';
-			const testId = el.getAttribute('data-testid')?.toLowerCase() || '';
-			const testQa = el.getAttribute('data-qa')?.toLowerCase() || '';
-			const testCy = el.getAttribute('data-cy')?.toLowerCase() || '';
+		// Pre-compile regexes and combine into a single regex for better performance
+		const combinedPattern = PARTIAL_SELECTORS.join('|');
+		const partialRegex = new RegExp(combinedPattern, 'i');
 
-			// Combine attributes for single-pass checking
-			const attributeText = `${className} ${id} ${testId} ${testQa} ${testCy}`;
-			
-			// Early return if no content to check
-			if (!attributeText.trim()) {
-				return false;
+		// Create an efficient attribute selector for elements we care about
+		const attributeSelector = '[class],[id],[data-testid],[data-qa],[data-cy]';
+		const allElements = doc.querySelectorAll(attributeSelector);
+
+		// Process elements for partial matches
+		allElements.forEach(el => {
+			// Skip if already marked for removal
+			if (elementsToRemove.has(el)) {
+				return;
 			}
 
-			// Use some() for early termination
-			return partialRegexes.some(({ regex }) => regex.test(attributeText));
-		};
+			// Get all relevant attributes and combine into a single string
+			const attrs = [
+				el.className && typeof el.className === 'string' ? el.className : '',
+				el.id || '',
+				el.getAttribute('data-testid') || '',
+				el.getAttribute('data-qa') || '',
+				el.getAttribute('data-cy') || ''
+			].join(' ').toLowerCase();
 
-		// Process elements in batches to avoid long tasks
-		const BATCH_SIZE = 100;
-		const allElements = Array.from(doc.querySelectorAll('[class], [id], [data-testid], [data-qa], [data-cy]'));
-		
-		for (let i = 0; i < allElements.length; i += BATCH_SIZE) {
-			const batch = allElements.slice(i, i + BATCH_SIZE);
-			const elementsToRemove: Element[] = [];
-
-			// Read phase - identify elements to remove
-			batch.forEach(el => {
-				if (shouldRemoveElement(el)) {
-					elementsToRemove.push(el);
-					partialSelectorCount++;
-				}
-			});
-
-			// Write phase - batch remove elements
-			if (elementsToRemove.length > 0) {
-				const fragment = document.createDocumentFragment();
-				elementsToRemove.forEach(el => {
-					if (el?.parentNode) {
-						fragment.appendChild(el);
-					}
-				});
+			// Skip if no attributes to check
+			if (!attrs.trim()) {
+				return;
 			}
-		}
+
+			// Check for partial match using single regex test
+			if (partialRegex.test(attrs)) {
+				elementsToRemove.add(el);
+				partialSelectorCount++;
+			}
+		});
+
+		// Remove all collected elements in a single pass
+		elementsToRemove.forEach(el => el.remove());
 
 		const endTime = performance.now();
-		this._log('Found clutter elements:', {
+		this._log('Removed clutter elements:', {
 			exactSelectors: exactSelectorCount,
 			partialSelectors: partialSelectorCount,
-			total: exactSelectorCount + partialSelectorCount,
+			total: elementsToRemove.size,
 			processingTime: `${(endTime - startTime).toFixed(2)}ms`
 		});
 	}
@@ -1414,6 +1412,10 @@ export class Defuddle {
 				});
 			} else if (el.matches('sup[id^="fnref:"]')) {
 				footnoteId = el.id.replace('fnref:', '').toLowerCase();
+			} else if (el.matches('sup[id^="fnr"]')) {
+				footnoteId = el.id.replace('fnr', '').toLowerCase();
+			} else if (el.matches('span.footnote-reference')) {
+				footnoteId = el.getAttribute('data-footnote-id') || '';
 			} else if (el.matches('span.footnote-link')) {
 				footnoteId = el.getAttribute('data-footnote-id') || '';
 				footnoteContent = el.getAttribute('data-footnote-content') || '';
