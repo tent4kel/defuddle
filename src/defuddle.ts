@@ -55,6 +55,7 @@ const EXACT_SELECTORS = [
 	'header',
 	'nav',
 	'[id="header" i]',
+	'[class="navigation" i]',
 	'[role="navigation" i]',
 	'[role="dialog" i]',
 	'[role="complementary" i]',
@@ -156,7 +157,7 @@ const PARTIAL_SELECTORS = [
 	'article-topics',
 	'article-type',
 	'article--lede', // The Verge
-	'author',
+//	'author', Gwern
 	'back-to-top',
 	'backlinks-section',
 	'banner',
@@ -175,7 +176,7 @@ const PARTIAL_SELECTORS = [
 	'chapter-list', // The Economist
 	'collections',
 	'comments',
-//	'-comment', // Syntax highlighting
+//	'-comment', Syntax highlighting
 	'comment-count',
 	'comment-content',
 	'comment-form',
@@ -1297,6 +1298,8 @@ export class Defuddle {
 						id = li.id.replace('bib.bib', '').toLowerCase();
 					} else if (li.id.toLowerCase().startsWith('fn:')) {
 						id = li.id.replace('fn:', '').toLowerCase();
+					} else if (li.id.toLowerCase().startsWith('fn')) {
+						id = li.id.replace('fn', '').toLowerCase();
 					// Nature.com
 					} else if (li.hasAttribute('data-counter')) {
 						id = li.getAttribute('data-counter')?.replace(/\.$/, '')?.toLowerCase() || '';
