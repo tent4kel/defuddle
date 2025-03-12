@@ -962,6 +962,112 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 			
 			return content;
 		}
+	},
+	// Code blocks with syntax highlighting
+	{
+		selector: '.wp-block-syntaxhighlighter-code, .syntaxhighlighter, .highlight, .highlight-source, .wp-block-code, pre[class*="language-"], pre[class*="brush:"]',
+		element: 'pre',
+		transform: (el: Element): Element => {
+			if (!(el instanceof HTMLElement)) return el;
+
+			// Create new pre element
+			const newPre = document.createElement('pre');
+			
+			// Try to detect language
+			let language = '';
+			
+			// Check for WordPress syntax highlighter specific format
+			const syntaxEl = el.querySelector('.syntaxhighlighter');
+			if (syntaxEl) {
+				// Get language from syntaxhighlighter class
+				const classes = Array.from(syntaxEl.classList);
+				const langClass = classes.find(c => !['syntaxhighlighter', 'nogutter'].includes(c));
+				if (langClass && SUPPORTED_LANGUAGES.has(langClass.toLowerCase())) {
+					language = langClass.toLowerCase();
+				}
+			}
+
+			// If no language found yet, check other common patterns
+			if (!language) {
+				const classNames = Array.from(el.classList);
+				const languagePatterns = [
+					/(?:^|\s)(?:language|lang|brush|syntax)-(\w+)(?:\s|$)/i,
+					/(?:^|\s)(\w+)(?:\s|$)/i
+				];
+
+				for (const className of classNames) {
+					for (const pattern of languagePatterns) {
+						const match = className.match(pattern);
+						if (match && match[1] && SUPPORTED_LANGUAGES.has(match[1].toLowerCase())) {
+							language = match[1].toLowerCase();
+							break;
+						}
+					}
+					if (language) break;
+				}
+			}
+
+			// Extract code content, handling various formats
+			let codeContent = '';
+
+			// Handle WordPress syntax highlighter table format
+			const codeContainer = el.querySelector('.syntaxhighlighter table .code .container');
+			if (codeContainer) {
+				// Process each line
+				const lines = Array.from(codeContainer.children);
+				codeContent = lines
+					.map(line => {
+						// Get all code elements in this line
+						const codeParts = Array.from(line.querySelectorAll('code'))
+							.map(code => {
+								// Get the text content, preserving spaces
+								let text = code.textContent || '';
+								// If this is a 'spaces' class element, convert to actual spaces
+								if (code.classList.contains('spaces')) {
+									text = ' '.repeat(text.length);
+								}
+								return text;
+							})
+							.join('');
+						return codeParts || line.textContent || '';
+					})
+					.join('\n');
+			} else {
+				// Handle WordPress syntax highlighter non-table format
+				const codeLines = el.querySelectorAll('.code .line');
+				if (codeLines.length > 0) {
+					codeContent = Array.from(codeLines)
+						.map(line => {
+							const codeParts = Array.from(line.querySelectorAll('code'))
+								.map(code => code.textContent || '')
+								.join('');
+							return codeParts || line.textContent || '';
+						})
+						.join('\n');
+				} else {
+					// Fallback to regular text content
+					codeContent = el.textContent || '';
+				}
+			}
+
+			// Clean up the content
+			codeContent = codeContent
+				.replace(/^\s+|\s+$/g, '') // Trim start/end whitespace
+				.replace(/\t/g, '    ') // Convert tabs to spaces
+				.replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
+				.replace(/\u00a0/g, ' '); // Replace non-breaking spaces with regular spaces
+
+			// Create code element with language class if detected
+			const code = document.createElement('code');
+			if (language) {
+				code.setAttribute('data-lang', language);
+				code.setAttribute('class', `language-${language}`);
+			}
+			code.textContent = codeContent;
+			
+			newPre.appendChild(code);
+			return newPre;
+		}
 	}
 ];
 
