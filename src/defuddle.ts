@@ -45,7 +45,8 @@ const EXACT_SELECTORS = [
 	'[id^="ad-" i]',
 	'[id$="-ad" i]',
 	'[role="banner" i]',
-	'[class="promo" i]',
+	'.promo',
+	'.Promo',
 
 	// comments
 	'[id="comments" i]',
@@ -69,6 +70,7 @@ const EXACT_SELECTORS = [
 	'.meta',
 	'.toc',
 	'.Toc',
+	'#toc',
 	'#title',
 	'#Title',
 	'[href*="/category"]',
@@ -363,6 +365,9 @@ const PARTIAL_SELECTORS = [
 	'reading_time',
 	'reading-time',
 	'reading-list',
+	'recentpost',
+	'recent_post',
+	'recent-post',
 	'recommend',
 	'redirectedfrom',
 	'recirc',
