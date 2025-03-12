@@ -8,6 +8,18 @@ export class MetadataExtractor {
 		try {
 			// Try to get URL from document location
 			url = doc.location?.href || '';
+			
+			// If no URL from location, try other sources
+			if (!url) {
+				url = this.getMetaContent(doc, "property", "og:url") ||
+					this.getMetaContent(doc, "property", "twitter:url") ||
+					this.getSchemaProperty(schemaOrgData, 'url') ||
+					this.getSchemaProperty(schemaOrgData, 'mainEntityOfPage.url') ||
+					this.getSchemaProperty(schemaOrgData, 'mainEntity.url') ||
+					this.getSchemaProperty(schemaOrgData, 'WebSite.url') ||
+					doc.querySelector('link[rel="canonical"]')?.getAttribute('href') || '';
+			}
+
 			if (url) {
 				domain = new URL(url).hostname.replace(/^www\./, '');
 			}
