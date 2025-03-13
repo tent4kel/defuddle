@@ -1267,7 +1267,7 @@ export class Defuddle {
 		count += hiddenElements.length;
 
 		// Second pass: Use TreeWalker for efficient traversal
-		const treeWalker = document.createTreeWalker(
+		const treeWalker = doc.createTreeWalker(
 			doc.body,
 			NodeFilter.SHOW_ELEMENT,
 			{
@@ -2167,7 +2167,7 @@ export class Defuddle {
 		const parts: string[] = [];
 		let current: Element | null = element;
 		
-		while (current && current !== document.documentElement) {
+		while (current && current !== this.doc.documentElement) {
 			let selector = current.tagName.toLowerCase();
 			if (current.id) {
 				selector += '#' + current.id;

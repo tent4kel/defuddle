@@ -34,6 +34,25 @@ console.log(article.content);  // HTML string of the main content
 console.log(article.title);    // Title of the article
 ```
 
+### Server-side usage
+
+When using Defuddle in a Node.js environment, you can use JSDOM to create a DOM document:
+
+```typescript
+import { Defuddle } from 'defuddle';
+import { JSDOM } from 'jsdom';
+
+const html = '...'; // Your HTML string
+const dom = new JSDOM(html, {
+  url: "https://www.example.com/page-url" // Optional: helps resolve relative URLs
+});
+
+const article = new Defuddle(dom.window.document).parse();
+console.log(article.content);
+```
+
+Providing `url` in the JSDOM constructor helps convert relative URLs (images, links, etc.) to absolute URLs.
+
 ## Response
 
 The `parse()` method returns an object with the following properties:

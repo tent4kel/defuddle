@@ -13,10 +13,10 @@ export class MetadataExtractor {
 			if (!url) {
 				url = this.getMetaContent(doc, "property", "og:url") ||
 					this.getMetaContent(doc, "property", "twitter:url") ||
-					this.getSchemaProperty(schemaOrgData, 'url') ||
-					this.getSchemaProperty(schemaOrgData, 'mainEntityOfPage.url') ||
-					this.getSchemaProperty(schemaOrgData, 'mainEntity.url') ||
-					this.getSchemaProperty(schemaOrgData, 'WebSite.url') ||
+					this.getSchemaProperty(doc, schemaOrgData, 'url') ||
+					this.getSchemaProperty(doc, schemaOrgData, 'mainEntityOfPage.url') ||
+					this.getSchemaProperty(doc, schemaOrgData, 'mainEntity.url') ||
+					this.getSchemaProperty(doc, schemaOrgData, 'WebSite.url') ||
 					doc.querySelector('link[rel="canonical"]')?.getAttribute('href') || '';
 			}
 
@@ -52,17 +52,17 @@ export class MetadataExtractor {
 	private static getAuthor(doc: Document, schemaOrgData: any): string {
 		return (
 			this.getMetaContent(doc, "name", "sailthru.author") ||
-			this.getSchemaProperty(schemaOrgData, 'author.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'author.name') ||
 			this.getMetaContent(doc, "property", "author") ||
 			this.getMetaContent(doc, "name", "byl") ||
 			this.getMetaContent(doc, "name", "author") ||
 			this.getMetaContent(doc, "name", "authorList") ||
 			this.getMetaContent(doc, "name", "copyright") ||
-			this.getSchemaProperty(schemaOrgData, 'copyrightHolder.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'copyrightHolder.name') ||
 			this.getMetaContent(doc, "property", "og:site_name") ||
-			this.getSchemaProperty(schemaOrgData, 'publisher.name') ||
-			this.getSchemaProperty(schemaOrgData, 'sourceOrganization.name') ||
-			this.getSchemaProperty(schemaOrgData, 'isPartOf.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'publisher.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'sourceOrganization.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'isPartOf.name') ||
 			this.getMetaContent(doc, "name", "twitter:creator") ||
 			this.getMetaContent(doc, "name", "application-name") ||
 			''
@@ -71,12 +71,12 @@ export class MetadataExtractor {
 
 	private static getSite(doc: Document, schemaOrgData: any): string {
 		return (
-			this.getSchemaProperty(schemaOrgData, 'publisher.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'publisher.name') ||
 			this.getMetaContent(doc, "property", "og:site_name") ||
-			this.getSchemaProperty(schemaOrgData, 'sourceOrganization.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'sourceOrganization.name') ||
 			this.getMetaContent(doc, "name", "copyright") ||
-			this.getSchemaProperty(schemaOrgData, 'copyrightHolder.name') ||
-			this.getSchemaProperty(schemaOrgData, 'isPartOf.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'copyrightHolder.name') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'isPartOf.name') ||
 			this.getMetaContent(doc, "name", "application-name") ||
 			''
 		);
@@ -86,7 +86,7 @@ export class MetadataExtractor {
 		return (
 			this.getMetaContent(doc, "property", "og:title") ||
 			this.getMetaContent(doc, "name", "twitter:title") ||
-			this.getSchemaProperty(schemaOrgData, 'headline') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'headline') ||
 			this.getMetaContent(doc, "name", "title") ||
 			this.getMetaContent(doc, "name", "sailthru.title") ||
 			doc.querySelector('title')?.textContent?.trim() ||
@@ -99,7 +99,7 @@ export class MetadataExtractor {
 			this.getMetaContent(doc, "name", "description") ||
 			this.getMetaContent(doc, "property", "description") ||
 			this.getMetaContent(doc, "property", "og:description") ||
-			this.getSchemaProperty(schemaOrgData, 'description') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'description') ||
 			this.getMetaContent(doc, "name", "twitter:description") ||
 			this.getMetaContent(doc, "name", "sailthru.description") ||
 			''
@@ -110,7 +110,7 @@ export class MetadataExtractor {
 		return (
 			this.getMetaContent(doc, "property", "og:image") ||
 			this.getMetaContent(doc, "name", "twitter:image") ||
-			this.getSchemaProperty(schemaOrgData, 'image.url') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'image.url') ||
 			this.getMetaContent(doc, "name", "sailthru.image.full") ||
 			''
 		);
@@ -140,7 +140,7 @@ export class MetadataExtractor {
 
 	private static getPublished(doc: Document, schemaOrgData: any): string {
 		return (
-			this.getSchemaProperty(schemaOrgData, 'datePublished') ||
+			this.getSchemaProperty(doc, schemaOrgData, 'datePublished') ||
 			this.getMetaContent(doc, "name", "publishDate") ||
 			this.getMetaContent(doc, "property", "article:published_time") ||
 			this.getTimeElement(doc) ||
@@ -154,23 +154,23 @@ export class MetadataExtractor {
 		const element = Array.from(doc.querySelectorAll(selector))
 			.find(el => el.getAttribute(attr)?.toLowerCase() === value.toLowerCase());
 		const content = element ? element.getAttribute("content")?.trim() ?? "" : "";
-		return this.decodeHTMLEntities(content);
+		return this.decodeHTMLEntities(content, doc);
 	}
 
 	private static getTimeElement(doc: Document): string {
 		const selector = `time`;
 		const element = Array.from(doc.querySelectorAll(selector))[0];
 		const content = element ? (element.getAttribute("datetime")?.trim() ?? element.textContent?.trim() ?? "") : "";
-		return this.decodeHTMLEntities(content);
+		return this.decodeHTMLEntities(content, doc);
 	}
 
-	private static decodeHTMLEntities(text: string): string {
-		const textarea = document.createElement('textarea');
+	private static decodeHTMLEntities(text: string, doc: Document): string {
+		const textarea = doc.createElement('textarea');
 		textarea.innerHTML = text;
 		return textarea.value;
 	}
 
-	private static getSchemaProperty(schemaOrgData: any, property: string, defaultValue: string = ''): string {
+	private static getSchemaProperty(doc: Document, schemaOrgData: any, property: string, defaultValue: string = ''): string {
 		if (!schemaOrgData) return defaultValue;
 
 		const searchSchema = (data: any, props: string[], fullPath: string, isExactMatch: boolean = true): string[] => {
@@ -237,7 +237,7 @@ export class MetadataExtractor {
 				results = searchSchema(schemaOrgData, property.split('.'), '', false);
 			}
 			const result = results.length > 0 ? results.filter(Boolean).join(', ') : defaultValue;
-			return this.decodeHTMLEntities(result);
+			return this.decodeHTMLEntities(result, doc);
 		} catch (error) {
 			console.error(`Error in getSchemaProperty for ${property}:`, error);
 			return defaultValue;
