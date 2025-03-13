@@ -53,6 +53,7 @@ const EXACT_SELECTORS = [
 
 	// header, nav
 	'header',
+	'.header',
 	'#header',
 	'nav',
 	'.navigation',

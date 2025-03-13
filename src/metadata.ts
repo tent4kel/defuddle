@@ -81,7 +81,7 @@ export class MetadataExtractor {
 			this.getSchemaProperty(doc, schemaOrgData, 'copyrightHolder.name') ||
 			this.getSchemaProperty(doc, schemaOrgData, 'isPartOf.name') ||
 			this.getMetaContent(doc, "name", "application-name") ||
-			''
+			this.getAuthor(doc, schemaOrgData)
 		);
 	}
 
