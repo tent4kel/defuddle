@@ -235,6 +235,7 @@ const PARTIAL_SELECTORS = [
 	'eyebrow',
 	'expand-reduce',
 	'externallinkembedwrapper', // The New Yorker
+	'extra-title',
 	'facebook',
 	'favorite',
 	'feedback',
@@ -252,6 +253,7 @@ const PARTIAL_SELECTORS = [
 //	'global',
 	'google',
 	'goog-',
+	'graph-view',
 	'header-logo',
 	'header-pattern', // The Verge
 	'hero-list',
@@ -296,7 +298,7 @@ const PARTIAL_SELECTORS = [
 	'nav-',
 	'nav_',
 	'navbar',
-	'navigation',
+//	'navigation',
 	'next-',
 	'news-story-title',
 //	'newsletter', used on Substack
@@ -309,6 +311,7 @@ const PARTIAL_SELECTORS = [
 	'nomobile',
 	'noprint',
 	'originally-published', // Mercury News
+	'outline-view',
 	'overlay',
 	'page-title',
 	'-partners',
