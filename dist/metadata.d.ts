@@ -4,6 +4,7 @@ export declare class MetadataExtractor {
     private static getAuthor;
     private static getSite;
     private static getTitle;
+    private static cleanTitle;
     private static getDescription;
     private static getImage;
     private static getFavicon;
