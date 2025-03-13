@@ -13,6 +13,7 @@ export declare class Defuddle {
      * Parse the document and extract its main content
      */
     parse(): DefuddleResponse;
+    private countWords;
     private _log;
     private _evaluateMediaQueries;
     private applyMobileStyles;

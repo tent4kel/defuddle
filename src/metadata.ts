@@ -45,7 +45,9 @@ export class MetadataExtractor {
 			published: this.getPublished(doc, schemaOrgData),
 			author: this.getAuthor(doc, schemaOrgData),
 			site: this.getSite(doc, schemaOrgData),
-			schemaOrgData
+			schemaOrgData,
+			wordCount: 0,
+			parseTime: 0
 		};
 	}
 

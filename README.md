@@ -65,10 +65,12 @@ The `parse()` method returns an object with the following properties:
 | `domain` | string | Domain name of the website |
 | `favicon` | string | URL of the website's favicon |
 | `image` | string | URL of the article's main image |
+| `parseTime` | number | Time taken to parse the page in milliseconds |
 | `published` | string | Publication date of the article |
 | `author` | string | Author of the article |
 | `site` | string | Name of the website |
 | `schemaOrgData` | object | Raw schema.org data extracted from the page |
+| `wordCount` | number | Total number of words in the extracted content |
 
 ## HTML standardization
 

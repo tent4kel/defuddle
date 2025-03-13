@@ -1113,6 +1113,8 @@ export class Defuddle {
 	 * Parse the document and extract its main content
 	 */
 	parse(): DefuddleResponse {
+		const startTime = performance.now();
+
 		// Extract metadata first since we'll need it in multiple places
 		const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
 		const metadata = MetadataExtractor.extract(this.doc, schemaOrgData);
@@ -1133,9 +1135,12 @@ export class Defuddle {
 			// Find main content
 			const mainContent = this.findMainContent(clone);
 			if (!mainContent) {
+				const endTime = performance.now();
 				return {
 					content: this.doc.body.innerHTML,
-					...metadata
+					...metadata,
+					wordCount: this.countWords(this.doc.body.innerHTML),
+					parseTime: Math.round(endTime - startTime)
 				};
 			}
 
@@ -1149,17 +1154,41 @@ export class Defuddle {
 			// Clean up the main content
 			this.cleanContent(mainContent, metadata);
 
+			const content = mainContent ? mainContent.outerHTML : this.doc.body.innerHTML;
+			const endTime = performance.now();
+
 			return {
-				content: mainContent ? mainContent.outerHTML : this.doc.body.innerHTML,
-				...metadata
+				content,
+				...metadata,
+				wordCount: this.countWords(content),
+				parseTime: Math.round(endTime - startTime)
 			};
 		} catch (error) {
 			console.error('Defuddle', 'Error processing document:', error);
+			const endTime = performance.now();
 			return {
 				content: this.doc.body.innerHTML,
-				...metadata
+				...metadata,
+				wordCount: this.countWords(this.doc.body.innerHTML),
+				parseTime: Math.round(endTime - startTime)
 			};
 		}
+	}
+
+	private countWords(content: string): number {
+		// Create a temporary div to parse HTML content
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = content;
+
+		// Get text content, removing extra whitespace
+		const text = tempDiv.textContent || '';
+		const words = text
+			.trim()
+			.replace(/\s+/g, ' ') // Replace multiple spaces with single space
+			.split(' ')
+			.filter(word => word.length > 0); // Filter out empty strings
+
+		return words.length;
 	}
 
 	// Make all other methods private by removing the static keyword and using private

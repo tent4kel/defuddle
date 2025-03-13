@@ -5,10 +5,12 @@ export interface DefuddleMetadata {
 	domain: string;
 	favicon: string;
 	image: string;
+	parseTime: number;
 	published: string;
 	author: string;
 	site: string;
 	schemaOrgData: any;
+	wordCount: number;
 }
 
 // Define the DefuddleResponse interface
