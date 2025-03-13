@@ -61,7 +61,7 @@ Anchor links in `<h1>` to `<h6>` elements are removed and become plain headings.
 
 ### Code blocks
 
-Inline references and footnotes are converted to a standard format:
+Code block are standardized to the following output. If present, line numbers and syntax highlighting are removed, but the language is retained and added as a data attribute and class.
 
 ```html
 <pre>
