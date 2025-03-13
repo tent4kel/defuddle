@@ -11,10 +11,10 @@ Defuddle aims to output clean and consistent HTML documents. It was written for 
 
 Defuddle can be used as a replacement for [Mozilla Readability](https://github.com/mozilla/readability) with a few differences:
 
-- More forgiving, removes fewer uncertain elements
-- Uses a page's mobile styles to guess at unnecessary elements
-- Extracts more metadata from the page, including schema.org data
-- Standardizes footnotes and citations
+- More forgiving, removes fewer uncertain elements.
+- Provides a consistent output for footnotes, citations, code blocks.
+- Uses a page's mobile styles to guess at unnecessary elements.
+- Extracts more metadata from the page, including schema.org data.
 
 ## Installation
 
@@ -50,6 +50,44 @@ The `parse()` method returns an object with the following properties:
 | `author` | string | Author of the article |
 | `site` | string | Name of the website |
 | `schemaOrgData` | object | Raw schema.org data extracted from the page |
+
+## HTML standardization
+
+Defuddle attempts to standardize HTML elements to provide a consistent input for subsequent manipulation such as conversion to Markdown.
+
+### Headings
+
+Anchor links in `<h1>` to `<h6>` elements are removed and become plain headings.
+
+### Code blocks
+
+Inline references and footnotes are converted to a standard format:
+
+```html
+<pre>
+  <code data-lang="js" class="language-js">
+    // code
+  </code>
+</pre>
+```
+
+### Footnotes
+
+Inline references and footnotes are converted to a standard format:
+
+```html
+Inline reference<sup id="fnref:1"><a href="#fn:1">1</a></sup>.
+
+<div class="footnotes">
+  <ol>
+    <li class="footnote" id="fn:1">
+      <p>
+        Footnote content.&nbsp;<a href="#fnref:1" class="footnote-backref">↩</a>
+      </p>
+    </li>
+    </ol>
+</div>
+```
 
 ## Development
 
