@@ -100,12 +100,7 @@ export class MetadataExtractor {
 	}
 
 	private static cleanTitle(title: string, siteName: string): string {
-		if (!title || !siteName) {
-			console.log('cleanTitle: Empty title or siteName', { title, siteName });
-			return title;
-		}
-
-		console.log('cleanTitle: Starting with', { title, siteName });
+		if (!title || !siteName) return title;
 
 		// Remove site name if it exists
 		const siteNameEscaped = siteName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -114,21 +109,15 @@ export class MetadataExtractor {
 			`^\\s*${siteNameEscaped}\\s*[\\|\\-–—]\\s*`, // Site Name | Title
 		];
 		
-		console.log('cleanTitle: Using patterns', patterns);
-		
 		for (const pattern of patterns) {
 			const regex = new RegExp(pattern, 'i');
-			console.log('cleanTitle: Testing pattern', pattern);
 			if (regex.test(title)) {
-				console.log('cleanTitle: Pattern matched');
 				title = title.replace(regex, '');
 				break;
 			}
 		}
 
-		const finalTitle = title.trim();
-		console.log('cleanTitle: Final result', finalTitle);
-		return finalTitle;
+		return title.trim();
 	}
 
 	private static getDescription(doc: Document, schemaOrgData: any): string {
@@ -210,12 +199,6 @@ export class MetadataExtractor {
 	private static getSchemaProperty(doc: Document, schemaOrgData: any, property: string, defaultValue: string = ''): string {
 		if (!schemaOrgData) return defaultValue;
 
-		console.log('getSchemaProperty called with property:', property);
-		console.log('Schema data type:', Array.isArray(schemaOrgData) ? 'array' : typeof schemaOrgData);
-
-		// If schemaOrgData is an array but doesn't have @graph, wrap it in a @graph structure
-		const data = Array.isArray(schemaOrgData) ? { '@graph': schemaOrgData } : schemaOrgData;
-
 		const searchSchema = (data: any, props: string[], fullPath: string, isExactMatch: boolean = true): string[] => {
 			if (typeof data === 'string') {
 				return props.length === 0 ? [data] : [];
@@ -225,39 +208,23 @@ export class MetadataExtractor {
 				return [];
 			}
 
-			// Special handling for type-based properties (e.g. 'WebSite.name')
-			const typeMatch = property.match(/^([^.]+)\.(.+)$/);
-			if (typeMatch) {
-				const [_, type, remainingProp] = typeMatch;
-				console.log('Type match found:', { type, remainingProp });
-
-				// If we're at an object with the matching @type, return its property
-				if (data['@type'] === type && data[remainingProp]) {
-					console.log('Found direct match:', data[remainingProp]);
-					return [data[remainingProp]];
-				}
-
-				// Look for matching type in @graph array
-				if (Array.isArray(data['@graph'])) {
-					const matchingItems = data['@graph'].filter(item => item['@type'] === type);
-					console.log('Matching items in @graph:', matchingItems);
-					return matchingItems.flatMap(item => item[remainingProp] ? [item[remainingProp]] : []);
-				}
-
-				// Look for matching type in regular arrays
-				if (Array.isArray(data)) {
-					const matchingItems = data.filter(item => item['@type'] === type);
-					console.log('Matching items in array:', matchingItems);
-					return matchingItems.flatMap(item => item[remainingProp] ? [item[remainingProp]] : []);
-				}
-			}
-
-			// Handle arrays
 			if (Array.isArray(data)) {
+				const currentProp = props[0];
+				if (/^\[\d+\]$/.test(currentProp)) {
+					const index = parseInt(currentProp.slice(1, -1));
+					if (data[index]) {
+						return searchSchema(data[index], props.slice(1), fullPath, isExactMatch);
+					}
+					return [];
+				}
+				
+				if (props.length === 0 && data.every(item => typeof item === 'string' || typeof item === 'number')) {
+					return data.map(String);
+				}
+				
 				return data.flatMap(item => searchSchema(item, props, fullPath, isExactMatch));
 			}
 
-			// Handle objects
 			const [currentProp, ...remainingProps] = props;
 			
 			if (!currentProp) {
@@ -291,9 +258,11 @@ export class MetadataExtractor {
 		};
 
 		try {
-			const results = searchSchema(data, property.split('.'), '', true);
+			let results = searchSchema(schemaOrgData, property.split('.'), '', true);
+			if (results.length === 0) {
+				results = searchSchema(schemaOrgData, property.split('.'), '', false);
+			}
 			const result = results.length > 0 ? results.filter(Boolean).join(', ') : defaultValue;
-			console.log(`Result for ${property}:`, result);
 			return this.decodeHTMLEntities(result, doc);
 		} catch (error) {
 			console.error(`Error in getSchemaProperty for ${property}:`, error);
