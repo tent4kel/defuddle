@@ -61,6 +61,8 @@ const EXACT_SELECTORS = [
 	'[role="dialog" i]',
 	'[role*="complementary" i]',
 	'[class*="pagination" i]',
+	'.menu',
+	'#menu',
 
 	// metadata
 	'.author',
