@@ -218,6 +218,7 @@ export const PARTIAL_SELECTORS = [
 	'collections',
 	'comments',
 //	'-comment', Syntax highlighting
+    'commentbox',
 	'comment-count',
 	'comment-content',
 	'comment-form',
