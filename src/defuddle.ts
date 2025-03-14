@@ -80,6 +80,7 @@ const EXACT_SELECTORS = [
 	'[class*="pagination" i]',
 	'.menu',
 	'#menu',
+	'#siteSub',
 
 	// metadata
 	'.author',
@@ -293,6 +294,7 @@ const PARTIAL_SELECTORS = [
 	'interlude',
 	'interaction',
 	'jumplink',
+	'jump-to-',
 //	'keyword', // used in syntax highlighting
 	'kicker',
 	'labstab', // Arxiv
@@ -437,6 +439,7 @@ const PARTIAL_SELECTORS = [
 	'social',
 	'speechify-ignore',
 	'sponsor',
+	'springercitation',
 //	'-stats',
 	'_stats',
 	'sticky',
