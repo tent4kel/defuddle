@@ -60,6 +60,7 @@ export const EXACT_SELECTORS = [
 	'[role="banner" i]',
 	'.promo',
 	'.Promo',
+    '#barrier-page', // ft.com
 
 	// comments
 	'[id="comments" i]',
@@ -202,11 +203,15 @@ export const PARTIAL_SELECTORS = [
 //	'author', Gwern
     'author-box',
 	'author-name',
+    'author-bio',
+    'author-mini-bio',
 	'back-to-top',
 	'backlinks-section',
 	'banner',
 	'bio-block',
 	'blog-pager',
+    'bookmark-',
+    '-bookmark',
 	'bottom-of-article',
 	'brand-bar',
 	'breadcrumb',
@@ -437,6 +442,7 @@ export const PARTIAL_SELECTORS = [
 	'site-name',
 //	'skip-',
 //	'skip-link', TechCrunch
+    '_skip-link',
 	'social',
 	'speechify-ignore',
 	'sponsor',
