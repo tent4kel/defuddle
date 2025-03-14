@@ -281,6 +281,7 @@ const PARTIAL_SELECTORS = [
 	'links-grid', // BBC
 	'links-title', // BBC
 	'listing-dynamic-terms', // Boston Review
+	'list-tags',
 	'loading',
 	'loa-info',
 	'logo_container',
@@ -430,6 +431,7 @@ const PARTIAL_SELECTORS = [
 	'timestamp',
 	'tip_off',
 	'tiptout',
+	'-tout-',
 	'-toc',
 	'topic-list',
 	'toolbar',
