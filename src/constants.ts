@@ -198,6 +198,7 @@ export const PARTIAL_SELECTORS = [
 	'article--lede', // The Verge
 	'associated-people',
 //	'author', Gwern
+    'author-box',
 	'author-name',
 	'back-to-top',
 	'backlinks-section',
@@ -469,7 +470,8 @@ export const PARTIAL_SELECTORS = [
 	'trust-badge',
 	'twitter',
 	'visually-hidden',
-	'welcomebox'
+	'welcomebox',
+    'widget-'
 ];
 
 // Selectors for footnotes and citations
