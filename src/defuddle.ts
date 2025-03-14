@@ -19,6 +19,22 @@ const ENTRY_POINT_ELEMENTS = [
 const MOBILE_WIDTH = 600;
 const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
 
+// Elements that should not be unwrapped
+const PRESERVE_ELEMENTS = new Set([
+	'pre', 'code', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
+	'ul', 'ol', 'li', 'dl', 'dt', 'dd',
+	'figure', 'figcaption', 'picture',
+	'details', 'summary',
+	'blockquote',
+	'form', 'fieldset'
+]);
+
+// Inline elements that should not be unwrapped
+const INLINE_ELEMENTS = new Set([
+	'a', 'span', 'strong', 'em', 'i', 'b', 'u', 'code', 'br', 'small',
+	'sub', 'sup', 'mark', 'del', 'ins', 'q', 'abbr', 'cite', 'time'
+]);
+
 // Hidden elements that should be removed
 const HIDDEN_ELEMENT_SELECTORS = [
 	'[hidden]',
@@ -544,7 +560,6 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'allow',
 	'allowfullscreen',
 	'aria-label',
-	'class',
 	'checked',
 	'colspan',
 	'controls',
@@ -556,7 +571,6 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'headers',
 	'height',
 	'href',
-	'id',
 	'lang',
 	'role',
 	'rowspan',
@@ -565,6 +579,10 @@ const ALLOWED_ATTRIBUTES = new Set([
 	'title',
 	'type',
 	'width'
+]);
+const ALLOWED_ATTRIBUTES_DEBUG = new Set([
+	'class',
+	'id',
 ]);
 
 // Supported languages for code blocks
@@ -1434,6 +1452,268 @@ export class Defuddle {
 		});
 	}
 
+	private flattenDivs(element: Element) {
+		let processedCount = 0;
+		const startTime = performance.now();
+
+		// Process in batches to maintain performance
+		let keepProcessing = true;
+
+		const shouldPreserveElement = (el: Element): boolean => {
+			const tagName = el.tagName.toLowerCase();
+			
+			// Check if element should be preserved
+			if (PRESERVE_ELEMENTS.has(tagName)) return true;
+			
+			// Check for semantic roles
+			const role = el.getAttribute('role');
+			if (role && ['article', 'main', 'navigation', 'banner', 'contentinfo'].includes(role)) {
+				return true;
+			}
+			
+			// Check for semantic classes
+			const className = el.className.toLowerCase();
+			if (className.match(/(?:article|main|content|footnote|reference|bibliography)/)) {
+				return true;
+			}
+
+			// Check if div contains mixed content types that should be preserved
+			if (tagName === 'div') {
+				const children = Array.from(el.children);
+				const hasPreservedElements = children.some(child => 
+					PRESERVE_ELEMENTS.has(child.tagName.toLowerCase()) ||
+					child.getAttribute('role') === 'article' ||
+					child.className.toLowerCase().includes('article')
+				);
+				if (hasPreservedElements) return true;
+			}
+			
+			return false;
+		};
+
+		const isWrapperDiv = (div: Element): boolean => {
+			// Check if it's just empty space
+			if (!div.textContent?.trim()) return true;
+
+			// Check if it only contains other divs or block elements
+			const children = Array.from(div.children);
+			if (children.length === 0) return true;
+			
+			// Check if all children are block elements
+			const allBlockElements = children.every(child => {
+				const tag = child.tagName.toLowerCase();
+				return tag === 'div' || tag === 'p' || tag === 'h1' || tag === 'h2' || 
+					   tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6' ||
+					   tag === 'ul' || tag === 'ol' || tag === 'pre' || tag === 'blockquote' ||
+					   tag === 'figure';
+			});
+			if (allBlockElements) return true;
+
+			// Check for common wrapper patterns
+			const className = div.className.toLowerCase();
+			const isWrapper = /(?:wrapper|container|layout|row|col|grid|flex|outer|inner|content-area)/i.test(className);
+			if (isWrapper) return true;
+
+			// Check if it has excessive whitespace or empty text nodes
+			const textNodes = Array.from(div.childNodes).filter(node => 
+				node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+			);
+			if (textNodes.length === 0) return true;
+
+			// Check if it's a div that only contains block elements
+			const hasOnlyBlockElements = children.length > 0 && !children.some(child => {
+				const tag = child.tagName.toLowerCase();
+				return INLINE_ELEMENTS.has(tag);
+			});
+			if (hasOnlyBlockElements) return true;
+
+			return false;
+		};
+
+		// Function to process a single div
+		const processDiv = (div: Element): boolean => {
+			// Skip processing if div has been removed or should be preserved
+			if (!div.isConnected || shouldPreserveElement(div)) return false;
+
+			// Case 1: Empty div or div with only whitespace
+			if (!div.hasChildNodes() || !div.textContent?.trim()) {
+				div.remove();
+				processedCount++;
+				return true;
+			}
+
+			// Case 2: Top-level div - be more aggressive
+			if (div.parentElement === element) {
+				const children = Array.from(div.children);
+				const hasOnlyBlockElements = children.length > 0 && !children.some(child => {
+					const tag = child.tagName.toLowerCase();
+					return INLINE_ELEMENTS.has(tag);
+				});
+
+				if (hasOnlyBlockElements) {
+					const fragment = document.createDocumentFragment();
+					while (div.firstChild) {
+						fragment.appendChild(div.firstChild);
+					}
+					div.replaceWith(fragment);
+					processedCount++;
+					return true;
+				}
+			}
+
+			// Case 3: Wrapper div - merge up aggressively
+			if (isWrapperDiv(div)) {
+				// Special case: if div only contains block elements, merge them up
+				const children = Array.from(div.children);
+				const onlyBlockElements = !children.some(child => {
+					const tag = child.tagName.toLowerCase();
+					return INLINE_ELEMENTS.has(tag);
+				});
+				
+				if (onlyBlockElements) {
+					const fragment = document.createDocumentFragment();
+					while (div.firstChild) {
+						fragment.appendChild(div.firstChild);
+					}
+					div.replaceWith(fragment);
+					processedCount++;
+					return true;
+				}
+
+				// Otherwise handle as normal wrapper
+				const fragment = document.createDocumentFragment();
+				while (div.firstChild) {
+					fragment.appendChild(div.firstChild);
+				}
+				div.replaceWith(fragment);
+				processedCount++;
+				return true;
+			}
+
+			// Case 4: Div only contains text content - convert to paragraph
+			if (!div.children.length && div.textContent?.trim()) {
+				const p = document.createElement('p');
+				p.textContent = div.textContent;
+				div.replaceWith(p);
+				processedCount++;
+				return true;
+			}
+
+			// Case 5: Div has single child
+			if (div.children.length === 1) {
+				const child = div.firstElementChild!;
+				const childTag = child.tagName.toLowerCase();
+				
+				// Don't unwrap if child is inline or should be preserved
+				if (!INLINE_ELEMENTS.has(childTag) && !shouldPreserveElement(child)) {
+					div.replaceWith(child);
+					processedCount++;
+					return true;
+				}
+			}
+
+			// Case 6: Deeply nested div - merge up
+			let nestingDepth = 0;
+			let parent = div.parentElement;
+			while (parent) {
+				if (parent.tagName.toLowerCase() === 'div') {
+					nestingDepth++;
+				}
+				parent = parent.parentElement;
+			}
+
+			if (nestingDepth > 0) { // Changed from > 1 to > 0 to be more aggressive
+				const fragment = document.createDocumentFragment();
+				while (div.firstChild) {
+					fragment.appendChild(div.firstChild);
+				}
+				div.replaceWith(fragment);
+				processedCount++;
+				return true;
+			}
+
+			return false;
+		};
+
+		// First pass: Process top-level divs
+		const processTopLevelDivs = () => {
+			const topDivs = Array.from(element.children).filter(
+				el => el.tagName.toLowerCase() === 'div'
+			);
+			
+			let modified = false;
+			topDivs.forEach(div => {
+				if (processDiv(div)) {
+					modified = true;
+				}
+			});
+			return modified;
+		};
+
+		// Second pass: Process remaining divs from deepest to shallowest
+		const processRemainingDivs = () => {
+			const allDivs = Array.from(element.getElementsByTagName('div'))
+				.sort((a, b) => {
+					// Count nesting depth
+					const getDepth = (el: Element): number => {
+						let depth = 0;
+						let parent = el.parentElement;
+						while (parent) {
+							if (parent.tagName.toLowerCase() === 'div') depth++;
+							parent = parent.parentElement;
+						}
+						return depth;
+					};
+					return getDepth(b) - getDepth(a); // Process deepest first
+				});
+
+			let modified = false;
+			allDivs.forEach(div => {
+				if (processDiv(div)) {
+					modified = true;
+				}
+			});
+			return modified;
+		};
+
+		// Final cleanup pass - aggressively flatten remaining divs
+		const finalCleanup = () => {
+			const remainingDivs = Array.from(element.getElementsByTagName('div'));
+			let modified = false;
+			
+			remainingDivs.forEach(div => {
+				// Check if div only contains paragraphs
+				const children = Array.from(div.children);
+				const onlyParagraphs = children.every(child => child.tagName.toLowerCase() === 'p');
+				
+				if (onlyParagraphs || (!shouldPreserveElement(div) && isWrapperDiv(div))) {
+					const fragment = document.createDocumentFragment();
+					while (div.firstChild) {
+						fragment.appendChild(div.firstChild);
+					}
+					div.replaceWith(fragment);
+					processedCount++;
+					modified = true;
+				}
+			});
+			return modified;
+		};
+
+		// Execute all passes until no more changes
+		do {
+				keepProcessing = false;
+				if (processTopLevelDivs()) keepProcessing = true;
+				if (processRemainingDivs()) keepProcessing = true;
+				if (finalCleanup()) keepProcessing = true;
+			} while (keepProcessing);
+
+		const endTime = performance.now();
+		this._log('Flattened divs:', {
+			count: processedCount,
+			processingTime: `${(endTime - startTime).toFixed(2)}ms`
+		});
+	}
+
 	private cleanContent(element: Element, metadata: DefuddleMetadata) {
 		// Remove HTML comments
 		this.removeHtmlComments(element);
@@ -1449,15 +1729,30 @@ export class Defuddle {
 
 		// Convert embedded content to standard formats
 		this.standardizeElements(element);
-		
-		// Strip unwanted attributes
-		this.stripUnwantedAttributes(element);
 
-		// Remove empty elements
-		this.removeEmptyElements(element);
+		// Skip div flattening in debug mode
+		if (!this.debug) {
+			// First pass of div flattening
+			this.flattenDivs(element);
+			
+			// Strip unwanted attributes
+			this.stripUnwantedAttributes(element);
 
-		// Remove trailing headings
-		this.removeTrailingHeadings(element);
+			// Remove empty elements
+			this.removeEmptyElements(element);
+
+			// Remove trailing headings
+			this.removeTrailingHeadings(element);
+
+			// Final pass of div flattening after cleanup operations
+			this.flattenDivs(element);
+		} else {
+			// In debug mode, still do basic cleanup but preserve structure
+			this.stripUnwantedAttributes(element);
+			this.removeEmptyElements(element);
+			this.removeTrailingHeadings(element);
+			this._log('Debug mode: Skipping div flattening to preserve structure');
+		}
 	}
 
 	private removeTrailingHeadings(element: Element) {
@@ -1573,9 +1868,20 @@ export class Defuddle {
 			
 			attributes.forEach(attr => {
 				const attrName = attr.name.toLowerCase();
-				if (!ALLOWED_ATTRIBUTES.has(attrName) && !attrName.startsWith('data-')) {
-					el.removeAttribute(attr.name);
-					attributeCount++;
+				// In debug mode, allow debug attributes and data- attributes
+				if (this.debug) {
+					if (!ALLOWED_ATTRIBUTES.has(attrName) && 
+						!ALLOWED_ATTRIBUTES_DEBUG.has(attrName) && 
+						!attrName.startsWith('data-')) {
+						el.removeAttribute(attr.name);
+						attributeCount++;
+					}
+				} else {
+					// In normal mode, only allow standard attributes
+					if (!ALLOWED_ATTRIBUTES.has(attrName)) {
+						el.removeAttribute(attr.name);
+						attributeCount++;
+					}
 				}
 			});
 		};
@@ -1923,7 +2229,7 @@ export class Defuddle {
 		});
 
 		// Create the standardized footnote list
-		const newList = document.createElement('div');
+		const newList = document.createElement('footnotes');
 		newList.className = 'footnotes';
 		const orderedList = document.createElement('ol');
 
