@@ -1235,6 +1235,17 @@ export class Defuddle {
 						return false;
 					}));
 
+				// Special case: Check for divs that only contain spans with commas
+				if (el.tagName.toLowerCase() === 'div') {
+					const children = Array.from(el.children);
+					const hasOnlyCommaSpans = children.length > 0 && children.every(child => {
+						if (child.tagName.toLowerCase() !== 'span') return false;
+						const content = child.textContent?.trim() || '';
+						return content === ',' || content === '' || content === ' ';
+					});
+					if (hasOnlyCommaSpans) return true;
+				}
+
 				return hasOnlyWhitespace && !hasNbsp && hasNoChildren;
 			});
 

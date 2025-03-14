@@ -188,6 +188,7 @@ export const PARTIAL_SELECTORS = [
 	'article_subject',
 	'article-snippet',
 	'article-separator',
+    'articletags',
 	'article-tags',
 	'article_tags',
 	'article-title',
