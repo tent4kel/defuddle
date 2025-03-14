@@ -141,6 +141,8 @@ const EXACT_SELECTORS = [
 	'#sitesub',
 	
 	// other
+	'#NYT_ABOVE_MAIN_CONTENT_REGION',
+	'[data-testid="photoviewer-children-figure"] > span', // New York Times
 	'table.infobox',
 	'.pencraft:not(.pc-display-contents)', // Substack
 	'[data-optimizely="related-articles-section" i]' // The Economist
@@ -181,6 +183,7 @@ const PARTIAL_SELECTORS = [
 	'article--lede', // The Verge
 	'associated-people',
 //	'author', Gwern
+	'author-name',
 	'back-to-top',
 	'backlinks-section',
 	'banner',
