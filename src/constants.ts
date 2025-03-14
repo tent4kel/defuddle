@@ -196,6 +196,7 @@ export const PARTIAL_SELECTORS = [
 	'article-topics',
 	'article-type',
 	'article--lede', // The Verge
+    'articlewell',
 	'associated-people',
 //	'author', Gwern
     'author-box',
