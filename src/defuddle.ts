@@ -153,6 +153,7 @@ const EXACT_SELECTORS = [
 const PARTIAL_SELECTORS = [
 	'access-wall',
 	'activitypub',
+	'actioncall',
 	'appendix',
 	'avatar',
 	'advert',
@@ -214,6 +215,7 @@ const PARTIAL_SELECTORS = [
 	'content-card', // The Verge
 	'content-topics',
 	'contentpromo',
+	'context-widget', // Reuters
 	'core-collateral',
 	'_cta',
 	'-cta',
@@ -245,6 +247,7 @@ const PARTIAL_SELECTORS = [
 	'eyebrow',
 	'expand-reduce',
 	'externallinkembedwrapper', // The New Yorker
+	'extra-services',
 	'extra-title',
 	'facebook',
 	'favorite',
@@ -252,6 +255,7 @@ const PARTIAL_SELECTORS = [
 	'feed-links',
 	'field-site-sections',
 	'fixed',
+	'floating-vid',
 	'follow',
 	'footer',
 	'footnote-back',
@@ -275,6 +279,7 @@ const PARTIAL_SELECTORS = [
 	'jumplink',
 //	'keyword', // used in syntax highlighting
 	'kicker',
+	'labstab', // Arxiv
 	'-labels',
 	'language-name',
 	'latest-content',
@@ -366,6 +371,7 @@ const PARTIAL_SELECTORS = [
 	'print-header',
 	'profile',
 //	'promo',
+	'promo-box',
 	'pubdate',
 	'pub_date',
 	'pub-date',
