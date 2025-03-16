@@ -3,7 +3,6 @@
 export const ENTRY_POINT_ELEMENTS = [
 	'article',
 	'[role="article"]',
-	'[itemprop="articleBody"]',
 	'.post-content',
 	'.article-content',
 	'#article-content',
