@@ -59,7 +59,7 @@ export const EXACT_SELECTORS = [
 	'[role="banner" i]',
 	'.promo',
 	'.Promo',
-    '#barrier-page', // ft.com
+	'#barrier-page', // ft.com
 
 	// comments
 	'[id="comments" i]',
@@ -188,7 +188,7 @@ export const PARTIAL_SELECTORS = [
 	'article_subject',
 	'article-snippet',
 	'article-separator',
-    'articletags',
+	'articletags',
 	'article-tags',
 	'article_tags',
 	'article-title',
@@ -197,20 +197,20 @@ export const PARTIAL_SELECTORS = [
 	'article-topics',
 	'article-type',
 	'article--lede', // The Verge
-    'articlewell',
+	'articlewell',
 	'associated-people',
 //	'author', Gwern
-    'author-box',
+	'author-box',
 	'author-name',
-    'author-bio',
-    'author-mini-bio',
+	'author-bio',
+	'author-mini-bio',
 	'back-to-top',
 	'backlinks-section',
 	'banner',
 	'bio-block',
 	'blog-pager',
-    'bookmark-',
-    '-bookmark',
+	'bookmark-',
+	'-bookmark',
 	'bottom-of-article',
 	'brand-bar',
 	'breadcrumb',
@@ -225,7 +225,7 @@ export const PARTIAL_SELECTORS = [
 	'collections',
 	'comments',
 //	'-comment', Syntax highlighting
-    'commentbox',
+	'commentbox',
 	'comment-count',
 	'comment-content',
 	'comment-form',
@@ -441,7 +441,7 @@ export const PARTIAL_SELECTORS = [
 	'site-name',
 //	'skip-',
 //	'skip-link', TechCrunch
-    '_skip-link',
+	'_skip-link',
 	'social',
 	'speechify-ignore',
 	'sponsor',
@@ -478,7 +478,7 @@ export const PARTIAL_SELECTORS = [
 	'twitter',
 	'visually-hidden',
 	'welcomebox',
-    'widget-'
+	'widget-'
 ];
 
 // Selectors for footnotes and citations
