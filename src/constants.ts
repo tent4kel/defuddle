@@ -155,6 +155,7 @@ export const EXACT_SELECTORS = [
 	'#sitesub',
 	
 	// other
+	'#primaryaudio', // NPR
 	'#NYT_ABOVE_MAIN_CONTENT_REGION',
 	'[data-testid="photoviewer-children-figure"] > span', // New York Times
 	'table.infobox',
@@ -188,6 +189,8 @@ export const PARTIAL_SELECTORS = [
 	'article_subject',
 	'article-snippet',
 	'article-separator',
+	'article--share',
+	'article--topics',
 	'articletags',
 	'article-tags',
 	'article_tags',
@@ -199,7 +202,9 @@ export const PARTIAL_SELECTORS = [
 	'article--lede', // The Verge
 	'articlewell',
 	'associated-people',
+	'audio-card',
 //	'author', Gwern
+	'authored-by',
 	'author-box',
 	'author-name',
 	'author-bio',
@@ -219,6 +224,8 @@ export const PARTIAL_SELECTORS = [
 	'-btn',
 	'byline',
 	'captcha',
+	'card-text',
+	'card-media',
 	'cat_header',
 	'catlinks',
 	'chapter-list', // The Economist
@@ -295,6 +302,7 @@ export const PARTIAL_SELECTORS = [
 	'hero-list',
 	'hide-for-print',
 	'hide-print',
+	'hide-when-no-script',
 	'hidden-sidenote',
 	'interlude',
 	'interaction',
@@ -390,6 +398,7 @@ export const PARTIAL_SELECTORS = [
 //	'preview', used on Obsidian Publish
 	'prevnext',
 	'previousnext',
+	'press-inquiries',
 	'print-none',
 	'print-header',
 	'profile',
@@ -425,11 +434,13 @@ export const PARTIAL_SELECTORS = [
 //	'share',
 //	'-share', scitechdaily.com
 	'share-box',
+	'sharedaddy',
 	'share-icons',
 	'sharelinks',
 	'share-section',
 	'sidebartitle',
 	'sidebar_',
+	'sidebar-content',
 	'similar-',
 	'similar_',
 	'similars-',
@@ -442,6 +453,7 @@ export const PARTIAL_SELECTORS = [
 //	'skip-',
 //	'skip-link', TechCrunch
 	'_skip-link',
+	'slug-wrap',
 	'social',
 	'speechify-ignore',
 	'sponsor',
@@ -467,6 +479,7 @@ export const PARTIAL_SELECTORS = [
 	'tiptout',
 	'-tout-',
 	'-toc',
+	'toggle-caption',
 	'topic-list',
 	'toolbar',
 	'tooltip',
