@@ -477,8 +477,8 @@ export const PARTIAL_SELECTORS = [
 	'trust-badge',
 	'twitter',
 	'visually-hidden',
-	'welcomebox',
-	'widget-'
+	'welcomebox'
+//	'widget-'
 ];
 
 // Selectors for footnotes and citations
