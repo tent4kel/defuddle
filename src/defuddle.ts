@@ -40,7 +40,7 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 			// Function to get language from class
 			const getLanguageFromClass = (element: HTMLElement): string => {
 				// Check data-lang attribute first
-				const dataLang = element.getAttribute('data-lang');
+				const dataLang = element.getAttribute('data-lang') || element.getAttribute('data-language');
 				if (dataLang) {
 					return dataLang.toLowerCase();
 				}
@@ -120,16 +120,17 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 					if (element.tagName === 'BR') {
 						return '\n';
 					}
+
+					// Handle expressive-code line divs
+					if (element.classList.contains('ec-line')) {
+						const codeContent = element.querySelector('.code')?.textContent || '';
+						return codeContent + '\n';
+					}
 					
 					// Handle code elements and their children
 					element.childNodes.forEach(child => {
 						text += extractStructuredText(child);
 					});
-					
-					// Add newline after each code element
-					if (element.tagName === 'CODE') {
-						text += '\n';
-					}
 				}
 				return text;
 			};
@@ -143,7 +144,7 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 				.replace(/^\n+/, '')
 				// Remove any extra newlines at the end
 				.replace(/\n+$/, '')
-				// Replace multiple consecutive newlines with a single newline
+				// Preserve single newlines but collapse multiple newlines
 				.replace(/\n{3,}/g, '\n\n');
 
 			// Create new pre element
