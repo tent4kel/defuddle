@@ -97,7 +97,7 @@ Defuddle attempts to standardize HTML elements to provide a consistent input for
 
 ### Code blocks
 
-Code block are standardized to the following output. If present, line numbers and syntax highlighting are removed, but the language is retained and added as a data attribute and class.
+Code block are standardized. If present, line numbers and syntax highlighting are removed, but the language is retained and added as a data attribute and class.
 
 ```html
 <pre>
