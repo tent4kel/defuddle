@@ -336,7 +336,7 @@ export const PARTIAL_SELECTORS = [
 	'marketing',
 	'media-inquiry',
 	'menu-',
-	'meta-',
+//	'meta-', syntax highlighting
 	'metadata',
 	'might-like',
 	'more-about',
@@ -430,6 +430,8 @@ export const PARTIAL_SELECTORS = [
 	'reading_time',
 	'reading-time',
 	'reading-list',
+	'recent-',
+	'recent-articles',
 	'recentpost',
 	'recent_post',
 	'recent-post',
