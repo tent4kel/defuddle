@@ -489,7 +489,7 @@ export const PARTIAL_SELECTORS = [
 	'springercitation',
 //	'-stats',
 	'_stats',
-	'sticky',
+//	'sticky',
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
