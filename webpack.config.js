@@ -1,4 +1,5 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env, argv) => {
   const isDevelopment = argv.mode === 'development';
@@ -39,7 +40,16 @@ module.exports = (env, argv) => {
       // Ensure consistent output in both dev and prod
       moduleIds: 'deterministic',
       // Disable eval
-      minimize: !isDevelopment
+      minimize: !isDevelopment,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            output: {
+              ascii_only: true
+            }
+          }
+        })
+      ]
     }
   };
 }; 

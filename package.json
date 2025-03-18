@@ -42,6 +42,7 @@
 	"devDependencies": {
 		"@types/node": "^20.0.0",
 		"concurrently": "^8.2.2",
+		"terser-webpack-plugin": "^5.3.14",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
 		"undici-types": "^5.0.0",
