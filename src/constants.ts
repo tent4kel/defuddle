@@ -49,6 +49,8 @@ export const EXACT_SELECTORS = [
 	'noscript',
 	'script:not([type^="math/"])',
 	'style',
+	'meta',
+	'link',
 
 	// ads
 	'.ad:not([class*="gradient"])',
@@ -114,7 +116,6 @@ export const EXACT_SELECTORS = [
 	'form',
 	'input:not([type="checkbox"])',
 	'label',
-	'link',
 	'option',
 	'select',
 	'textarea',
@@ -173,7 +174,7 @@ export const PARTIAL_SELECTORS = [
 	'appendix',
 	'avatar',
 	'advert',
-	'-ad-',
+//	'-ad-', howtogeek.com
 	'_ad_',
 	'allterms',
 	'alert-box',
@@ -480,6 +481,7 @@ export const PARTIAL_SELECTORS = [
 	'tags__item',
 	'tag_list',
 	'taxonomy',
+	'table-content',
 	'table-of-contents',
 	'tabs-',
 //	'teaser', Nature
