@@ -727,7 +727,7 @@ export class Defuddle {
 		const partialRegex = new RegExp(combinedPattern, 'i');
 
 		// Create an efficient attribute selector for elements we care about
-		const attributeSelector = '[class],[id],[data-testid],[data-qa],[data-cy]';
+		const attributeSelector = '[class],[id],[data-testid],[data-test-id],[data-qa],[data-cy]';
 		const allElements = doc.querySelectorAll(attributeSelector);
 
 		// Process elements for partial matches
@@ -742,6 +742,7 @@ export class Defuddle {
 				el.className && typeof el.className === 'string' ? el.className : '',
 				el.id || '',
 				el.getAttribute('data-testid') || '',
+				el.getAttribute('data-test-id') || '',
 				el.getAttribute('data-qa') || '',
 				el.getAttribute('data-cy') || ''
 			].join(' ').toLowerCase();
