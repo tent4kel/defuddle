@@ -157,6 +157,7 @@ export const EXACT_SELECTORS = [
 	'#sitesub',
 	
 	// other
+	'.gutter',
 	'#primaryaudio', // NPR
 	'#NYT_ABOVE_MAIN_CONTENT_REGION',
 	'[data-testid="photoviewer-children-figure"] > span', // New York Times
@@ -181,6 +182,7 @@ export const PARTIAL_SELECTORS = [
 	'around-the-web',
 	'article-bottom-section',
 	'article-bottom',
+	'article-citation',
 	'article__copy',
 	'article_date',
 	'article-end ',
@@ -250,8 +252,10 @@ export const PARTIAL_SELECTORS = [
 	'content-card', // The Verge
 	'content-topics',
 	'contentpromo',
+	'context-bar',
 	'context-widget', // Reuters
 	'core-collateral',
+	'creative-commons_',
 	'_cta',
 	'-cta',
 	'cta-',
@@ -466,6 +470,7 @@ export const PARTIAL_SELECTORS = [
 	'site-name',
 //	'skip-',
 //	'skip-link', TechCrunch
+	'c-skip-link',
 	'_skip-link',
 	'slug-wrap',
 	'social',
@@ -504,6 +509,7 @@ export const PARTIAL_SELECTORS = [
 	'trust-feat',
 	'trust-badge',
 	'twitter',
+	'u-hide',
 	'visually-hidden',
 	'welcomebox'
 //	'widget-'
