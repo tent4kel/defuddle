@@ -100,6 +100,8 @@ export const EXACT_SELECTORS = [
 	'[href*="/tags/"]',
 	'[href*="/topics"]',
 	'[href*="author"]',
+	'[href="#top"]',
+	'[href="#Top"]',
 	'[href="#site-content"]',
 	'[src*="author"]',
 
@@ -191,6 +193,8 @@ export const PARTIAL_SELECTORS = [
 	'article__header',
 	'article__info',
 	'article-info',
+	'article-meta',
+	'article_meta',
 	'article__meta',
 	'article-subject',
 	'article_subject',
@@ -331,6 +335,7 @@ export const PARTIAL_SELECTORS = [
 	'links-title', // BBC
 	'listing-dynamic-terms', // Boston Review
 	'list-tags',
+	'listinks',
 	'loading',
 	'loa-info',
 	'logo_container',
@@ -417,6 +422,7 @@ export const PARTIAL_SELECTORS = [
 	'print-header',
 	'profile',
 //	'promo',
+	'promo_article',
 	'promo-box',
 	'pubdate',
 	'pub_date',
