@@ -127,7 +127,7 @@ Inline reference<sup id="fnref:1"><a href="#fn:1">1</a></sup>.
 
 ### Math
 
-Math elements (including MathJax and KaTeX) are converted to standard MathML:
+Math elements, including MathJax and KaTeX, are converted to standard MathML:
 
 ```html
 <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline" data-latex="a \neq 0">
