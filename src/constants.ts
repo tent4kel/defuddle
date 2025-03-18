@@ -178,6 +178,7 @@ export const PARTIAL_SELECTORS = [
 	'avatar',
 	'advert',
 //	'-ad-', howtogeek.com
+	'ad-placement',
 	'_ad_',
 	'allterms',
 	'alert-box',
@@ -318,6 +319,7 @@ export const PARTIAL_SELECTORS = [
 	'hide-print',
 	'hide-when-no-script',
 	'hidden-sidenote',
+	'hidden-accessibility',
 	'interlude',
 	'interaction',
 	'jumplink',
@@ -364,6 +366,7 @@ export const PARTIAL_SELECTORS = [
 	'navbar',
 //	'navigation',
 	'next-',
+	'newsgallery',
 	'news-story-title',
 //	'newsletter', used on Substack
 	'newsletter_',
@@ -476,6 +479,7 @@ export const PARTIAL_SELECTORS = [
 	'site-name',
 //	'skip-',
 //	'skip-link', TechCrunch
+	'skip-content',
 	'c-skip-link',
 	'_skip-link',
 	'slug-wrap',
