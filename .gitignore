@@ -2,3 +2,5 @@
 .cursorrules
 
 node_modules/
+
+dist/
