@@ -215,7 +215,7 @@ export const createCleanMathEl = (mathData: MathData | null, latex: string | nul
 	}
 	// If no MathML content but we have LaTeX, convert using Temml
 	else if (latex) {
-		try {			
+		try {
 			// Convert LaTeX to MathML using Temml
 			const mathml = temml.renderToString(latex, {
 				displayMode: isBlock,
