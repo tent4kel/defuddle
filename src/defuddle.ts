@@ -173,47 +173,51 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 		selector: 'h1, h2, h3, h4, h5, h6',
 		element: 'keep',
 		transform: (el: Element): Element => {
-			// If heading only contains a single anchor with internal link
-			if (el.children.length === 1 && 
-				el.firstElementChild?.tagName === 'A' &&
-				(el.firstElementChild.getAttribute('href')?.includes('#') || 
-				 el.firstElementChild.getAttribute('href')?.startsWith('#'))) {
-				
-				// Create new heading of same level
-				const newHeading = document.createElement(el.tagName);
-				
-				// Copy allowed attributes from original heading
-				Array.from(el.attributes).forEach(attr => {
-					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
-						newHeading.setAttribute(attr.name, attr.value);
-					}
-				});
-				
-				// Just use the text content
-				newHeading.textContent = el.textContent?.trim() || '';
-				
-				return newHeading;
-			}
+			// Create new heading of same level
+			const newHeading = document.createElement(el.tagName);
 			
-			// If heading contains navigation buttons or other utility elements
-			const buttons = el.querySelectorAll('button');
-			if (buttons.length > 0) {
-				const newHeading = document.createElement(el.tagName);
-				
-				// Copy allowed attributes
-				Array.from(el.attributes).forEach(attr => {
-					if (ALLOWED_ATTRIBUTES.has(attr.name)) {
-						newHeading.setAttribute(attr.name, attr.value);
-					}
-				});
-				
-				// Just use the text content
-				newHeading.textContent = el.textContent?.trim() || '';
-				
-				return newHeading;
-			}
+			// Copy allowed attributes from original heading
+			Array.from(el.attributes).forEach(attr => {
+				if (ALLOWED_ATTRIBUTES.has(attr.name)) {
+					newHeading.setAttribute(attr.name, attr.value);
+				}
+			});
+
+			// Clone the element so we can modify it without affecting the original
+			const clone = el.cloneNode(true) as Element;
+
+			// Remove navigation elements:
+			// 1. Anchors with internal links
+			// 2. Elements with 'anchor' class
+			// 3. Spans/divs containing only anchors
+			// 4. Buttons and other interactive elements
+			const toRemove = Array.from(clone.querySelectorAll('*')).filter(child => {
+				if (child instanceof HTMLAnchorElement) {
+					const href = child.getAttribute('href');
+					return href?.includes('#') || href?.startsWith('#');
+				}
+				if (child.classList.contains('anchor')) {
+					return true;
+				}
+				if (child instanceof HTMLButtonElement) {
+					return true;
+				}
+				if ((child instanceof HTMLSpanElement || child instanceof HTMLDivElement) && 
+					child.querySelector('a[href^="#"]')) {
+					return true;
+				}
+				return false;
+			});
+
+			toRemove.forEach(element => element.remove());
+
+			// Get the text content after removing navigation elements
+			const textContent = clone.textContent?.trim() || '';
+
+			// Set the clean text content
+			newHeading.textContent = textContent;
 			
-			return el;
+			return newHeading;
 		}
 	},
 	// Convert divs with paragraph role to actual paragraphs
@@ -1276,7 +1280,7 @@ export class Defuddle {
 		let removedCount = 0;
 		const startTime = performance.now();
 
-		// First pass: Remove empty text nodes
+		// First pass: remove empty text nodes
 		const removeEmptyTextNodes = (node: Node) => {
 			// Skip if inside pre or code
 			if (node instanceof Element) {
@@ -1319,7 +1323,7 @@ export class Defuddle {
 			}
 		};
 
-		// Second pass: Clean up empty elements and normalize spacing
+		// Second pass: clean up empty elements and normalize spacing
 		const cleanupEmptyElements = (node: Node) => {
 			if (!(node instanceof Element)) return;
 
