@@ -1135,6 +1135,14 @@ export class Defuddle {
 	}
 
 	private handleHeadings(element: Element, title: string) {
+		const normalizeText = (text: string): string => {
+			return text
+				.replace(/\u00A0/g, ' ') // Convert non-breaking spaces to regular spaces
+				.replace(/\s+/g, ' ') // Normalize all whitespace to single spaces
+				.trim()
+				.toLowerCase();
+		};
+
 		const h1s = element.getElementsByTagName('h1');
 
 		Array.from(h1s).forEach(h1 => {
@@ -1153,8 +1161,8 @@ export class Defuddle {
 		const h2s = element.getElementsByTagName('h2');
 		if (h2s.length > 0) {
 			const firstH2 = h2s[0];
-			const firstH2Text = firstH2.textContent?.trim().toLowerCase() || '';
-			const normalizedTitle = title.toLowerCase().trim();
+			const firstH2Text = normalizeText(firstH2.textContent || '');
+			const normalizedTitle = normalizeText(title);
 			if (normalizedTitle && normalizedTitle === firstH2Text) {
 				firstH2.remove();
 			}
