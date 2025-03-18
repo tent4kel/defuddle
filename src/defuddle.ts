@@ -116,15 +116,35 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 				
 				let text = '';
 				if (element instanceof HTMLElement) {
-					// Handle line breaks
+					// Handle explicit line breaks
 					if (element.tagName === 'BR') {
 						return '\n';
 					}
 
-					// Handle expressive-code line divs
-					if (element.classList.contains('ec-line')) {
-						const codeContent = element.querySelector('.code')?.textContent || '';
-						return codeContent + '\n';
+					// Handle common line-based code formats
+					// This covers various syntax highlighter implementations that use
+					// divs or spans to represent individual lines
+					if (element.matches('div[class*="line"], span[class*="line"], .ec-line, [data-line-number], [data-line]')) {
+						// Try to find the actual code content in common structures:
+						// 1. A dedicated code container
+						const codeContainer = element.querySelector('.code, .content, [class*="code-"], [class*="content-"]');
+						if (codeContainer) {
+							return (codeContainer.textContent || '') + '\n';
+						}
+						
+						// 2. Line number is in a separate element
+						const lineNumber = element.querySelector('.line-number, .gutter, [class*="line-number"], [class*="gutter"]');
+						if (lineNumber) {
+							// Get all text content except the line number
+							const withoutLineNum = Array.from(element.childNodes)
+								.filter(node => !lineNumber.contains(node))
+								.map(node => extractStructuredText(node))
+								.join('');
+							return withoutLineNum + '\n';
+						}
+						
+						// 3. Fallback to the entire line content
+						return element.textContent + '\n';
 					}
 					
 					// Handle code elements and their children
