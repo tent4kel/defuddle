@@ -91,7 +91,9 @@ Defuddle attempts to standardize HTML elements to provide a consistent input for
 
 ### Headings
 
-Anchor links in `<h1>` to `<h6>` elements are removed and become plain headings.
+- The first H1 or H2 heading is removed if it matches the title.
+- H1s are converted to H2s.
+- Anchor links in H1 to H6 elements are removed and become plain headings.
 
 ### Code blocks
 
@@ -121,6 +123,18 @@ Inline reference<sup id="fnref:1"><a href="#fn:1">1</a></sup>.
     </li>
     </ol>
 </div>
+```
+
+### Math
+
+Math elements (including MathJax and KaTeX) are converted to standard MathML:
+
+```html
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline" data-latex="a \neq 0">
+	<mi>a</mi>
+	<mo>≠</mo>
+	<mn>0</mn>
+</math>
 ```
 
 ## Development
