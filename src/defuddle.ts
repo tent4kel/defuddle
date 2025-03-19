@@ -1059,11 +1059,13 @@ export class Defuddle {
 	}
 
 	private cleanContent(element: Element, metadata: DefuddleMetadata) {
+		this.standardizeSpaces(element);
+
 		// Remove HTML comments
 		this.removeHtmlComments(element);
 		
 		// Handle H1 elements - remove first one and convert others to H2
-		this.handleHeadings(element, metadata.title);
+		this.standardizeHeadings(element, metadata.title);
 		
 		// Standardize footnotes and citations
 		this.standardizeFootnotes(element);
@@ -1100,6 +1102,46 @@ export class Defuddle {
 			this.removeTrailingHeadings(element);
 			this._log('Debug mode: Skipping div flattening to preserve structure');
 		}
+	}
+
+	private standardizeSpaces(element: Element) {
+		const processNode = (node: Node) => {
+			// Skip pre and code elements
+			if (node instanceof Element) {
+				const tag = node.tagName.toLowerCase();
+				if (tag === 'pre' || tag === 'code') {
+					return;
+				}
+			}
+
+			// Process text nodes
+			if (node.nodeType === Node.TEXT_NODE) {
+				const text = node.textContent || '';
+				// Replace &nbsp; with regular spaces, except when it's a single &nbsp; between words
+				const newText = text.replace(/\xA0+/g, (match) => {
+					// If it's a single &nbsp; between word characters, preserve it
+					if (match.length === 1) {
+						const prev = node.previousSibling?.textContent?.slice(-1);
+						const next = node.nextSibling?.textContent?.charAt(0);
+						if (prev?.match(/\w/) && next?.match(/\w/)) {
+							return '\xA0';
+						}
+					}
+					return ' '.repeat(match.length);
+				});
+				
+				if (newText !== text) {
+					node.textContent = newText;
+				}
+			}
+
+			// Process children recursively
+			if (node.hasChildNodes()) {
+				Array.from(node.childNodes).forEach(processNode);
+			}
+		};
+
+		processNode(element);
 	}
 
 	private removeTrailingHeadings(element: Element) {
@@ -1155,7 +1197,7 @@ export class Defuddle {
 		}
 	}
 
-	private handleHeadings(element: Element, title: string) {
+	private standardizeHeadings(element: Element, title: string) {
 		const normalizeText = (text: string): string => {
 			return text
 				.replace(/\u00A0/g, ' ') // Convert non-breaking spaces to regular spaces
