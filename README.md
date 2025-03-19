@@ -12,7 +12,7 @@ Defuddle aims to output clean and consistent HTML documents. It was written for 
 Defuddle can be used as a replacement for [Mozilla Readability](https://github.com/mozilla/readability) with a few differences:
 
 - More forgiving, removes fewer uncertain elements.
-- Provides a consistent output for footnotes, citations, code blocks.
+- Provides a consistent output for footnotes, math, code blocks, etc.
 - Uses a page's mobile styles to guess at unnecessary elements.
 - Extracts more metadata from the page, including schema.org data.
 
