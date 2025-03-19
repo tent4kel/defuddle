@@ -40,12 +40,12 @@ Defuddle comes in two bundles:
    ```js
    import { Defuddle } from 'defuddle';
    ```
-2. **Full bundle** (~434kB) includes advanced math conversion capabilities
+2. **Full bundle** (~432kB) includes advanced math conversion capabilities
    ```js
    import { Defuddle } from 'defuddle/full';
    ```
 
-The core bundle is recommended for most use cases. It still handles math content by preserving the original MathML or LaTeX, but doesn't include conversion between formats. The full bundle adds the ability to convert between MathML and LaTeX formats using `mathml-to-latex` and `temml` libraries.
+The core bundle is recommended for most use cases. It still handles math content, but doesn't include fallbacks for converting between MathML and LaTeX formats. The full bundle adds the ability to create reliable `<math>` elements using `mathml-to-latex` and `temml` libraries.
 
 ### Debug mode
 
