@@ -1392,27 +1392,30 @@ export class Defuddle {
 
 			// Ensure there's a space between inline elements if needed
 			if (!isBlockElement) {
-				const prevSibling = node.previousSibling;
-				const nextSibling = node.nextSibling;
+				const children = Array.from(node.childNodes);
+				for (let i = 0; i < children.length - 1; i++) {
+					const current = children[i];
+					const next = children[i + 1];
 
-				// Add space before if needed
-				if (prevSibling && prevSibling.nodeType === Node.TEXT_NODE) {
-					const text = prevSibling.textContent || '';
-					// Don't add space if next content starts with punctuation
-					const nextContent = node.textContent || '';
-					if (!text.endsWith(' ') && !text.endsWith('\n') && !text.endsWith('\xA0') && 
-						!nextContent.match(/^[,.!?:;]/)) {
-						prevSibling.textContent = text + ' ';
-					}
-				}
-
-				// Add space after if needed
-				if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
-					const text = nextSibling.textContent || '';
-					// Don't add space if text starts with punctuation
-					if (!text.startsWith(' ') && !text.startsWith('\n') && !text.startsWith('\xA0') && 
-						!text.match(/^[,.!?:;]/)) {
-						nextSibling.textContent = ' ' + text;
+					// Only add space between elements or between element and text
+					if (current instanceof Element || next instanceof Element) {
+						// Don't add space if next content starts with punctuation
+						const nextContent = next.textContent || '';
+						const currentContent = current.textContent || '';
+						
+						if (!nextContent.match(/^[,.!?:;]/) && 
+							!currentContent.match(/[,.!?:;]$/)) {
+							// Check if there's already a space
+							const hasSpace = (current.nodeType === Node.TEXT_NODE && 
+											(current.textContent || '').endsWith(' ')) ||
+											(next.nodeType === Node.TEXT_NODE && 
+											(next.textContent || '').startsWith(' '));
+							
+							if (!hasSpace) {
+								const space = document.createTextNode(' ');
+								node.insertBefore(space, next);
+							}
+						}
 					}
 				}
 			}
