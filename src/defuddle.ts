@@ -1319,8 +1319,11 @@ export class Defuddle {
 						attrValue.startsWith('fnref:') || // Footnote reference
 						attrValue.startsWith('fn:') // Footnote content
 					)) ||
-					// Preserve code block language classes
-					(attrName === 'class' && tag === 'code' && attrValue.startsWith('language-'))
+					// Preserve code block language classes and footnote backref class
+					(attrName === 'class' && (
+						(tag === 'code' && attrValue.startsWith('language-')) ||
+						attrValue === 'footnote-backref'
+					))
 				) {
 					return;
 				}
