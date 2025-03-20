@@ -208,11 +208,48 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 			// Clone the element so we can modify it without affecting the original
 			const clone = el.cloneNode(true) as Element;
 
-			// Remove navigation elements:
-			// 1. Anchors with internal links
-			// 2. Elements with 'anchor' class
-			// 3. Spans/divs containing only anchors
-			// 4. Buttons and other interactive elements
+			// First extract text from navigation elements before removing them
+			const navigationText = new Map<Element, string>();
+			
+			// Find all navigation elements and store their text content
+			Array.from(clone.querySelectorAll('*')).forEach(child => {
+				let shouldRemove = false;
+				
+				if (child instanceof HTMLAnchorElement) {
+					const href = child.getAttribute('href');
+					if (href?.includes('#') || href?.startsWith('#')) {
+						navigationText.set(child, child.textContent?.trim() || '');
+						shouldRemove = true;
+					}
+				}
+				if (child.classList.contains('anchor')) {
+					navigationText.set(child, child.textContent?.trim() || '');
+					shouldRemove = true;
+				}
+				if (child instanceof HTMLButtonElement) {
+					shouldRemove = true;
+				}
+				if ((child instanceof HTMLSpanElement || child instanceof HTMLDivElement) && 
+					child.querySelector('a[href^="#"]')) {
+					const anchor = child.querySelector('a[href^="#"]');
+					if (anchor) {
+						navigationText.set(child, anchor.textContent?.trim() || '');
+					}
+					shouldRemove = true;
+				}
+
+				if (shouldRemove) {
+					// If this element contains the only text content of its parent,
+					// store its text to be used for the parent
+					const parent = child.parentElement;
+					if (parent && parent !== clone && 
+						parent.textContent?.trim() === child.textContent?.trim()) {
+						navigationText.set(parent, child.textContent?.trim() || '');
+					}
+				}
+			});
+
+			// Remove navigation elements
 			const toRemove = Array.from(clone.querySelectorAll('*')).filter(child => {
 				if (child instanceof HTMLAnchorElement) {
 					const href = child.getAttribute('href');
@@ -234,7 +271,12 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 			toRemove.forEach(element => element.remove());
 
 			// Get the text content after removing navigation elements
-			const textContent = clone.textContent?.trim() || '';
+			let textContent = clone.textContent?.trim() || '';
+
+			// If we lost all text content but had navigation text, use that instead
+			if (!textContent && navigationText.size > 0) {
+				textContent = Array.from(navigationText.values())[0];
+			}
 
 			// Set the clean text content
 			newHeading.textContent = textContent;
@@ -532,7 +574,7 @@ export class Defuddle {
 
 			// Remove small images identified from original document
 			this.removeSmallImages(clone, smallImages);
-			
+
 			// Perform other destructive operations on the clone
 			this.removeHiddenElements(clone);
 			this.removeClutter(clone);
