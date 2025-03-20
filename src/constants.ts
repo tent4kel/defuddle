@@ -130,7 +130,7 @@ export const EXACT_SELECTORS = [
 
 	// iframes
 	'instaread-player',
-	'iframe:not([src*="youtube"]):not([src*="youtu.be"]):not([src*="vimeo"]):not([src*="twitter"]:not([src*="x.com"])',
+	'iframe:not([src*="youtube"]):not([src*="youtu.be"]):not([src*="vimeo"]):not([src*="twitter"]):not([src*="x.com"]):not([src*="datawrapper"])',
 
 	// logos
 	'[class="logo" i]',
@@ -172,8 +172,6 @@ export const EXACT_SELECTORS = [
 	'.pencraft:not(.pc-display-contents)', // Substack
 	'[data-optimizely="related-articles-section" i]' // The Economist
 ];
-
-
 
 // Attributes to test against for partial matches
 export const TEST_ATTRIBUTES = [
