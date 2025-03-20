@@ -506,6 +506,7 @@ export const PARTIAL_SELECTORS = [
 	'terminaltout',
 	'time-rubric',
 	'timestamp',
+	'time-to-read',
 	'tip_off',
 	'tiptout',
 	'-tout-',
