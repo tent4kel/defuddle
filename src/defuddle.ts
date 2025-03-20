@@ -1306,9 +1306,25 @@ export class Defuddle {
 			}
 
 			const attributes = Array.from(el.attributes);
+			const tag = el.tagName.toLowerCase();
 			
 			attributes.forEach(attr => {
 				const attrName = attr.name.toLowerCase();
+				const attrValue = attr.value;
+
+				// Special cases for preserving specific attributes
+				if (
+					// Preserve footnote IDs
+					(attrName === 'id' && (
+						attrValue.startsWith('fnref:') || // Footnote reference
+						attrValue.startsWith('fn:') // Footnote content
+					)) ||
+					// Preserve code block language classes
+					(attrName === 'class' && tag === 'code' && attrValue.startsWith('language-'))
+				) {
+					return;
+				}
+
 				// In debug mode, allow debug attributes and data- attributes
 				if (this.debug) {
 					if (!ALLOWED_ATTRIBUTES.has(attrName) && 
