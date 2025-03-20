@@ -130,7 +130,7 @@ export const EXACT_SELECTORS = [
 
 	// iframes
 	'instaread-player',
-	'iframe:not([src*="youtube"]):not([src*="youtu.be"]):not([src*="vimeo"]):not([src*="twitter"])',
+	'iframe:not([src*="youtube"]):not([src*="youtu.be"]):not([src*="vimeo"]):not([src*="twitter"]:not([src*="x.com"])',
 
 	// logos
 	'[class="logo" i]',
@@ -267,6 +267,7 @@ export const PARTIAL_SELECTORS = [
 	'comments',
 //	'-comment', Syntax highlighting
 	'commentbox',
+	'comment-button',
 	'comment-count',
 	'comment-content',
 	'comment-form',
@@ -353,6 +354,7 @@ export const PARTIAL_SELECTORS = [
 	'latest-content',
 	'-ledes-', // The Verge
 	'-license',
+	'like-button',
 	'link-box',
 	'links-grid', // BBC
 	'links-title', // BBC
@@ -441,6 +443,7 @@ export const PARTIAL_SELECTORS = [
 	'post-title',
 	'post_title',
 	'post__title',
+	'post-ufi-button',
 //	'preview', used on Obsidian Publish
 	'prevnext',
 	'previousnext',
