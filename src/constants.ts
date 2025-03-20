@@ -83,6 +83,7 @@ export const EXACT_SELECTORS = [
 	'.menu',
 	'#menu',
 	'#siteSub',
+	'.fixed',
 
 	// metadata
 	'.author',
@@ -172,7 +173,20 @@ export const EXACT_SELECTORS = [
 	'[data-optimizely="related-articles-section" i]' // The Economist
 ];
 
-// Removal patterns tested against attributes: class, id, data-testid, and data-qa
+
+
+// Attributes to test against for partial matches
+export const TEST_ATTRIBUTES = [
+	'class',
+	'id',
+	'data-test',
+	'data-testid',
+	'data-test-id',
+	'data-qa',
+	'data-cy'
+];
+
+// Removal patterns tested against attributes above
 // Case insensitive, partial matches allowed
 export const PARTIAL_SELECTORS = [
 	'access-wall',
@@ -188,8 +202,10 @@ export const PARTIAL_SELECTORS = [
 	'alert-box',
 	'around-the-web',
 	'aroundpages',
+	'article-author',
 	'article-bottom-section',
 	'article-bottom',
+	'article-category',
 	'article-citation',
 	'article__copy',
 	'article_date',
@@ -303,7 +319,6 @@ export const PARTIAL_SELECTORS = [
 	'feedback',
 	'feed-links',
 	'field-site-sections',
-	'fixed',
 	'floating-vid',
 	'follow',
 	'footer',
@@ -414,6 +429,7 @@ export const PARTIAL_SELECTORS = [
 	'postsnippet',
 	'post_snippet',
 	'post-snippet',
+	'post-subject',
 	'posttax',
 	'post-tax',
 	'post_tax',
@@ -431,6 +447,8 @@ export const PARTIAL_SELECTORS = [
 	'press-inquiries',
 	'print-none',
 	'print-header',
+	'privacy-notice',
+	'privacy-settings',
 	'profile',
 //	'promo',
 	'promo_article',
@@ -481,6 +499,7 @@ export const PARTIAL_SELECTORS = [
 	'sidebar-author',
 	'sidebar-item',
 	'side-box',
+	'side-logo',
 	'site-index',
 	'site-header',
 	'site-logo',

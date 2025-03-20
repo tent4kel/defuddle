@@ -14,7 +14,8 @@ import {
 	FOOTNOTE_LIST_SELECTORS,
 	FOOTNOTE_INLINE_REFERENCES,
 	ENTRY_POINT_ELEMENTS,
-	ALLOWED_EMPTY_ELEMENTS
+	ALLOWED_EMPTY_ELEMENTS,
+	TEST_ATTRIBUTES
 } from './constants';
 import { mathStandardizationRules } from './math';
 
@@ -752,7 +753,7 @@ export class Defuddle {
 		const partialRegex = new RegExp(combinedPattern, 'i');
 
 		// Create an efficient attribute selector for elements we care about
-		const attributeSelector = '[class],[id],[data-testid],[data-test-id],[data-qa],[data-cy]';
+		const attributeSelector = TEST_ATTRIBUTES.map(attr => `[${attr}]`).join(',');
 		const allElements = doc.querySelectorAll(attributeSelector);
 
 		// Process elements for partial matches
@@ -763,14 +764,15 @@ export class Defuddle {
 			}
 
 			// Get all relevant attributes and combine into a single string
-			const attrs = [
-				el.className && typeof el.className === 'string' ? el.className : '',
-				el.id || '',
-				el.getAttribute('data-testid') || '',
-				el.getAttribute('data-test-id') || '',
-				el.getAttribute('data-qa') || '',
-				el.getAttribute('data-cy') || ''
-			].join(' ').toLowerCase();
+			const attrs = TEST_ATTRIBUTES.map(attr => {
+				if (attr === 'class') {
+					return el.className && typeof el.className === 'string' ? el.className : '';
+				}
+				if (attr === 'id') {
+					return el.id || '';
+				}
+				return el.getAttribute(attr) || '';
+			}).join(' ').toLowerCase();
 
 			// Skip if no attributes to check
 			if (!attrs.trim()) {
