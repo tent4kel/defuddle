@@ -395,7 +395,7 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 	},
 	// Code blocks with syntax highlighting
 	{
-		selector: '.wp-block-syntaxhighlighter-code, .syntaxhighlighter, .highlight, .highlight-source, .wp-block-code, pre[class*="language-"], pre[class*="brush:"]',
+		selector: 'div[class*="prismjs"], .wp-block-syntaxhighlighter-code, .syntaxhighlighter, .highlight, .highlight-source, .wp-block-code, pre[class*="language-"], pre[class*="brush:"]',
 		element: 'pre',
 		transform: (el: Element): Element => {
 			if (!(el instanceof HTMLElement)) return el;
