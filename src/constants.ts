@@ -68,7 +68,7 @@ export const EXACT_SELECTORS = [
 
 	// header, nav
 	'header',
-//	'.header',
+	'.header:not(.banner)',
 	'#header',
 	'nav',
 	'.navigation',
