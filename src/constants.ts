@@ -258,6 +258,7 @@ export const PARTIAL_SELECTORS = [
 	'captcha',
 	'card-text',
 	'card-media',
+	'card-post',
 	'cat_header',
 	'catlinks',
 	'chapter-list', // The Economist
@@ -332,6 +333,7 @@ export const PARTIAL_SELECTORS = [
 	'google',
 	'goog-',
 	'graph-view',
+	'hamburger',
 	'header-logo',
 	'header-pattern', // The Verge
 	'hero-list',

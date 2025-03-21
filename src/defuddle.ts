@@ -860,8 +860,8 @@ export class Defuddle {
 			}
 			
 			// Check for semantic classes
-			const className = el.className.toLowerCase();
-			if (className.match(/(?:article|main|content|footnote|reference|bibliography)/)) {
+			const className = el.className;
+			if (typeof className === 'string' && className.toLowerCase().match(/(?:article|main|content|footnote|reference|bibliography)/)) {
 				return true;
 			}
 
@@ -871,7 +871,7 @@ export class Defuddle {
 				const hasPreservedElements = children.some(child => 
 					PRESERVE_ELEMENTS.has(child.tagName.toLowerCase()) ||
 					child.getAttribute('role') === 'article' ||
-					child.className.toLowerCase().includes('article')
+					(typeof child.className === 'string' && child.className.toLowerCase().includes('article'))
 				);
 				if (hasPreservedElements) return true;
 			}
