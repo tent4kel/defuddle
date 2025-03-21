@@ -1317,7 +1317,8 @@ export class Defuddle {
 					// Preserve footnote IDs
 					(attrName === 'id' && (
 						attrValue.startsWith('fnref:') || // Footnote reference
-						attrValue.startsWith('fn:') // Footnote content
+						attrValue.startsWith('fn:') || // Footnote content
+						attrValue === 'footnotes' // Footnotes container
 					)) ||
 					// Preserve code block language classes and footnote backref class
 					(attrName === 'class' && (
@@ -1827,8 +1828,8 @@ export class Defuddle {
 		});
 
 		// Create the standardized footnote list
-		const newList = document.createElement('footnotes');
-		newList.className = 'footnotes';
+		const newList = document.createElement('div');
+		newList.id = 'footnotes';
 		const orderedList = document.createElement('ol');
 
 		// Create footnote items in order

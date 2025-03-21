@@ -129,7 +129,7 @@ Inline references and footnotes are converted to a standard format:
 ```html
 Inline reference<sup id="fnref:1"><a href="#fn:1">1</a></sup>.
 
-<div class="footnotes">
+<div id="footnotes">
   <ol>
     <li class="footnote" id="fn:1">
       <p>
