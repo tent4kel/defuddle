@@ -260,6 +260,7 @@ export const PARTIAL_SELECTORS = [
 	'card-text',
 	'card-media',
 	'card-post',
+	'carousel',
 	'cat_header',
 	'catlinks',
 	'chapter-list', // The Economist
@@ -343,6 +344,7 @@ export const PARTIAL_SELECTORS = [
 	'hide-when-no-script',
 	'hidden-sidenote',
 	'hidden-accessibility',
+	'instacartIntegration',
 	'interlude',
 	'interaction',
 	'jumplink',
@@ -400,6 +402,7 @@ export const PARTIAL_SELECTORS = [
 	'newsletterwidget',
 	'newsletterwrapper',
 	'not-found',
+	'notessection',
 	'nomobile',
 	'noprint',
 	'originally-published', // Mercury News
@@ -465,6 +468,7 @@ export const PARTIAL_SELECTORS = [
 	'qr-code',
 	'qr_code',
 	'_rail',
+	'ratingssection',
 	'readmore',
 	'read-next',
 	'read_next',
