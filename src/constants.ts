@@ -114,6 +114,7 @@ export const EXACT_SELECTORS = [
 	'footer',
 
 	// inputs, forms, elements
+	'.aside',
 	'aside',
 	'button',
 		// '[role="button"]', Medium images
@@ -321,6 +322,7 @@ export const PARTIAL_SELECTORS = [
 	'feedback',
 	'feed-links',
 	'field-site-sections',
+	'fixheader',
 	'floating-vid',
 	'follow',
 	'footer',
@@ -344,6 +346,7 @@ export const PARTIAL_SELECTORS = [
 	'hide-when-no-script',
 	'hidden-sidenote',
 	'hidden-accessibility',
+	'infoline',
 	'instacartIntegration',
 	'interlude',
 	'interaction',
@@ -467,6 +470,7 @@ export const PARTIAL_SELECTORS = [
 	'publicationName', // Medium
 	'qr-code',
 	'qr_code',
+	'quick_up',
 	'_rail',
 	'ratingssection',
 	'readmore',
@@ -528,6 +532,7 @@ export const PARTIAL_SELECTORS = [
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
+	'submenu',
 	'subscribe',
 	'_tags',
 	'tags__item',
@@ -556,6 +561,7 @@ export const PARTIAL_SELECTORS = [
 	'trust-badge',
 	'twitter',
 	'u-hide',
+	'viewbottom',
 	'visually-hidden',
 	'welcomebox'
 //	'widget-'
