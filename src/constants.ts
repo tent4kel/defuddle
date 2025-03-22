@@ -251,6 +251,7 @@ export const PARTIAL_SELECTORS = [
 	'bookmark-',
 	'-bookmark',
 	'bottom-of-article',
+	'bottom-wrapper',
 	'brand-bar',
 	'breadcrumb',
 	'button-wrapper',
