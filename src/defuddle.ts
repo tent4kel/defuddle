@@ -781,6 +781,9 @@ export class Defuddle {
 			// Final pass of div flattening after cleanup operations
 			this.flattenDivs(element);
 
+			// Standardize consecutive br elements
+			this.stripExtraBrElements(element);
+
 			// Clean up empty lines
 			this.removeEmptyLines(element);
 		} else {
@@ -788,6 +791,7 @@ export class Defuddle {
 			this.stripUnwantedAttributes(element);
 			this.removeEmptyElements(element);
 			this.removeTrailingHeadings(element);
+			this.stripExtraBrElements(element);
 			this._log('Debug mode: Skipping div flattening to preserve structure');
 		}
 	}
@@ -1052,6 +1056,76 @@ export class Defuddle {
 		this._log('Removed empty elements:', {
 			count: removedCount,
 			iterations
+		});
+	}
+
+	private stripExtraBrElements(element: Element) {
+		let processedCount = 0;
+		const startTime = performance.now();
+
+		// Use TreeWalker to find text nodes and br elements
+		const treeWalker = document.createTreeWalker(
+			element,
+			NodeFilter.SHOW_ELEMENT,
+			{
+				acceptNode: (node: Element) => {
+					return node.tagName.toLowerCase() === 'br' ? 
+						NodeFilter.FILTER_ACCEPT : 
+						NodeFilter.FILTER_SKIP;
+				}
+			}
+		);
+
+		// Keep track of consecutive br elements
+		let consecutiveBrs: Element[] = [];
+		let currentNode: Element | null;
+
+		// Helper to process collected br elements
+		const processBrs = () => {
+			if (consecutiveBrs.length > 2) {
+				// Keep only two br elements
+				for (let i = 2; i < consecutiveBrs.length; i++) {
+					consecutiveBrs[i].remove();
+					processedCount++;
+				}
+			}
+			consecutiveBrs = [];
+		};
+
+		// Find all br elements
+		while (currentNode = treeWalker.nextNode() as Element) {
+			// Check if this br is consecutive with previous ones
+			let isConsecutive = false;
+			if (consecutiveBrs.length > 0) {
+				const lastBr = consecutiveBrs[consecutiveBrs.length - 1];
+				let node: Node | null = currentNode.previousSibling;
+				
+				// Skip whitespace text nodes
+				while (node && node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+					node = node.previousSibling;
+				}
+				
+				if (node === lastBr) {
+					isConsecutive = true;
+				}
+			}
+
+			if (isConsecutive) {
+				consecutiveBrs.push(currentNode);
+			} else {
+				// Process any previously collected brs before starting new group
+				processBrs();
+				consecutiveBrs = [currentNode];
+			}
+		}
+
+		// Process any remaining br elements
+		processBrs();
+
+		const endTime = performance.now();
+		this._log('Standardized br elements:', {
+			removed: processedCount,
+			processingTime: `${(endTime - startTime).toFixed(2)}ms`
 		});
 	}
 
