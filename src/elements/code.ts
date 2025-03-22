@@ -1,6 +1,125 @@
-import { SUPPORTED_LANGUAGES, ALLOWED_ATTRIBUTES } from '../constants';
+import { ALLOWED_ATTRIBUTES } from '../constants';
 
-// Converts code blocks with different syntax highlighters and line numbers
+// Language patterns
+const HIGHLIGHTER_PATTERNS = [
+	/^language-(\w+)$/,          // language-javascript
+	/^lang-(\w+)$/,              // lang-javascript
+	/^(\w+)-code$/,              // javascript-code
+	/^code-(\w+)$/,              // code-javascript
+	/^syntax-(\w+)$/,            // syntax-javascript
+	/^code-snippet__(\w+)$/,     // code-snippet__javascript
+	/^highlight-(\w+)$/,         // highlight-javascript
+	/^(\w+)-snippet$/,           // javascript-snippet
+
+	// fallback
+	/(?:^|\s)(?:language|lang|brush|syntax)-(\w+)(?:\s|$)/i
+];
+
+// Languages to detect in code blocks
+const CODE_LANGUAGES = new Set([
+	'abap',
+	'actionscript',
+	'ada',
+	'adoc',
+	'agda',
+	'antlr4',
+	'applescript',
+	'arduino',
+	'armasm',
+	'asciidoc',
+	'aspnet',
+	'atom',
+	'bash',
+	'batch',
+	'c',
+	'clojure',
+	'cmake',
+	'cobol',
+	'coffeescript',
+	'cpp', 'c++',
+	'crystal',
+	'csharp', 'cs',
+	'dart',
+	'django',
+	'dockerfile',
+	'dotnet',
+	'elixir',
+	'elm',
+	'erlang',
+	'fortran',
+	'fsharp',
+	'gdscript',
+	'gitignore',
+	'glsl',
+	'golang',
+	'gradle',
+	'graphql',
+	'groovy',
+	'haskell', 'hs',
+	'haxe',
+	'hlsl',
+	'html',
+	'idris',
+	'java',
+	'javascript', 'js', 'jsx',
+	'jsdoc',
+	'json', 'jsonp',
+	'julia',
+	'kotlin',
+	'latex',
+	'lisp', 'elisp',
+	'livescript',
+	'lua',
+	'makefile',
+	'markdown', 'md',
+	'markup',
+	'masm',
+	'mathml',
+	'matlab',
+	'mongodb',
+	'mysql',
+	'nasm',
+	'nginx',
+	'nim',
+	'nix',
+	'objc',
+	'ocaml',
+	'pascal',
+	'perl',
+	'php',
+	'postgresql',
+	'powershell',
+	'prolog',
+	'puppet',
+	'python',
+	'regex',
+	'rss',
+	'ruby', 'rb',
+	'rust',
+	'scala',
+	'scheme',
+	'shell', 'sh',
+	'solidity',
+	'sparql',
+	'sql',
+	'ssml',
+	'svg',
+	'swift',
+	'tcl',
+	'terraform',
+	'tex',
+	'toml',
+	'typescript', 'ts', 'tsx',
+	'unrealscript',
+	'verilog',
+	'vhdl',
+	'webassembly', 'wasm',
+	'xml',
+	'yaml', 'yml',
+	'zig'
+]);
+
+// Convert code blocks with different syntax highlighters and line numbers
 // to a standard <pre> and <code> element with a language attribute
 export const codeBlockRules = [
 	{
@@ -27,43 +146,30 @@ export const codeBlockRules = [
 					return dataLang.toLowerCase();
 				}
 
-				// Language patterns
-				const languagePatterns = [
-					/^language-(\w+)$/,          // language-javascript
-					/^lang-(\w+)$/,              // lang-javascript
-					/^(\w+)-code$/,              // javascript-code
-					/^code-(\w+)$/,              // code-javascript
-					/^syntax-(\w+)$/,            // syntax-javascript
-					/^code-snippet__(\w+)$/,     // code-snippet__javascript
-					/^highlight-(\w+)$/,         // highlight-javascript
-					/^(\w+)-snippet$/,           // javascript-snippet
-					/(?:^|\s)(?:language|lang|brush|syntax)-(\w+)(?:\s|$)/i  // Additional syntax highlighter patterns
-				];
-
 				// Check class names for patterns and supported languages
 				const classNames = Array.from(element.classList);
 				
-				// First check for syntax highlighter specific format
+				// Check for syntax highlighter specific format
 				if (element.classList.contains('syntaxhighlighter')) {
 					const langClass = classNames.find(c => !['syntaxhighlighter', 'nogutter'].includes(c));
-					if (langClass && SUPPORTED_LANGUAGES.has(langClass.toLowerCase())) {
+					if (langClass && CODE_LANGUAGES.has(langClass.toLowerCase())) {
 						return langClass.toLowerCase();
 					}
 				}
 
-				// Then check patterns
+				// Check patterns
 				for (const className of classNames) {
-					for (const pattern of languagePatterns) {
+					for (const pattern of HIGHLIGHTER_PATTERNS) {
 						const match = className.toLowerCase().match(pattern);
-						if (match && match[1] && SUPPORTED_LANGUAGES.has(match[1].toLowerCase())) {
+						if (match && match[1] && CODE_LANGUAGES.has(match[1].toLowerCase())) {
 							return match[1].toLowerCase();
 						}
 					}
 				}
 
-				// Finally check for bare language names
+				// If all else fails, check for bare language names
 				for (const className of classNames) {
-					if (SUPPORTED_LANGUAGES.has(className.toLowerCase())) {
+					if (CODE_LANGUAGES.has(className.toLowerCase())) {
 						return className.toLowerCase();
 					}
 				}
@@ -190,13 +296,6 @@ export const codeBlockRules = [
 
 			// Create new pre element
 			const newPre = document.createElement('pre');
-			
-			// Copy allowed attributes
-			Array.from(el.attributes).forEach(attr => {
-				if (ALLOWED_ATTRIBUTES.has(attr.name)) {
-					newPre.setAttribute(attr.name, attr.value);
-				}
-			});
 
 			// Create code element
 			const code = document.createElement('code');
