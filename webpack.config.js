@@ -62,7 +62,7 @@ module.exports = (env, argv) => {
       ...commonConfig.resolve,
       alias: {
         // Alias the math module to use core version
-        './math': path.resolve(__dirname, 'src/math.core.ts')
+        './math': path.resolve(__dirname, 'src/elements/math.core.ts')
       }
     }
   };
@@ -85,7 +85,7 @@ module.exports = (env, argv) => {
       ...commonConfig.resolve,
       alias: {
         // Alias the math module to use full version
-        './math': path.resolve(__dirname, 'src/math.full.ts')
+        './math': path.resolve(__dirname, 'src/elements/math.full.ts')
       }
     }
   };

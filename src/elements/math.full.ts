@@ -68,8 +68,7 @@ export const createCleanMathEl = (mathData: MathData | null, latex: string | nul
 	return cleanMathEl;
 };
 
-// Find math elements
-export const mathStandardizationRules = [
+export const mathRules = [
 	{
 		selector: mathSelectors,
 		element: 'math',
