@@ -244,6 +244,7 @@ export const PARTIAL_SELECTORS = [
 	'author-publish-info',
 	'authored-by',
 	'back-to-top',
+	'backlink_container',
 	'backlinks-section',
 //	'banner',
 	'bio-block',
@@ -262,7 +263,7 @@ export const PARTIAL_SELECTORS = [
 	'card-text',
 	'card-media',
 	'card-post',
-	'carousel',
+//	'carousel',
 	'cat_header',
 	'catlinks',
 	'chapter-list', // The Economist
@@ -409,6 +410,7 @@ export const PARTIAL_SELECTORS = [
 	'notessection',
 	'nomobile',
 	'noprint',
+	'open-slideshow',
 	'originally-published', // Mercury News
 	'outline-view',
 	'overlay',
