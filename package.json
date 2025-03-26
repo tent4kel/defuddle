@@ -31,7 +31,8 @@
 		"prepublishOnly": "npm run build",
 		"dev:types": "tsc --project tsconfig.declarations.json --watch",
 		"dev:js": "webpack --watch --mode development",
-		"dev": "npm run clean && npm run build:types && concurrently \"npm run dev:types\" \"npm run dev:js\""
+		"dev": "npm run clean && npm run build:types && concurrently \"npm run dev:types\" \"npm run dev:js\"",
+		"playground": "node playground/server.js"
 	},
 	"keywords": [
 		"readability",

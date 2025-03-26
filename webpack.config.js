@@ -54,7 +54,8 @@ module.exports = (env, argv) => {
       filename: 'index.js',
       library: {
         name: 'Defuddle',
-        type: 'umd'
+        type: 'umd',
+        export: 'Defuddle'
       },
       globalObject: 'typeof self !== "undefined" ? self : this'
     },
@@ -77,7 +78,8 @@ module.exports = (env, argv) => {
       filename: 'index.full.js',
       library: {
         name: 'Defuddle',
-        type: 'umd'
+        type: 'umd',
+        export: 'Defuddle'
       },
       globalObject: 'typeof self !== "undefined" ? self : this'
     },
