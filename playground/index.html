@@ -297,29 +297,35 @@
 				const defuddle = new Defuddle(doc);
 				const result = defuddle.parse();
 				
+				// Log the full result for debugging
+				console.log('Defuddle Result:', result);
+				
 				// Display content
 				output.innerHTML = result.content;
 				
-				// Display metadata
-				metadataOutput.textContent = JSON.stringify(result.metadata, null, 2);
+				// Display metadata - show all fields except content
+				const { content, ...metadata } = result;
+				metadataOutput.textContent = JSON.stringify(metadata, null, 2);
 				
-				// Display debug info
+				// Display debug info with actual properties
 				debugOutput.textContent = JSON.stringify({
-					title: result.title,
-					textContent: result.textContent,
-					length: result.textContent.length,
-					excerpt: result.excerpt,
-					byline: result.byline,
-					siteName: result.siteName,
-					publishedTime: result.publishedTime,
-					modifiedTime: result.modifiedTime,
-					authors: result.authors,
-					language: result.language,
-					direction: result.direction
+					title: result.title || null,
+					description: result.description || null,
+					domain: result.domain || null,
+					favicon: result.favicon || null,
+					image: result.image || null,
+					parseTime: result.parseTime || null,
+					published: result.published || null,
+					schemaOrgData: result.schemaOrgData || null,
+					site: result.site || null,
+					wordCount: result.wordCount || null,
+					content: result.content ? 'Content present' : 'No content'
 				}, null, 2);
 				
 				hideError();
 			} catch (error) {
+				console.error('Defuddle Error:', error);
+				console.error('Error Stack:', error.stack);
 				showError(error.message);
 			}
 		});
