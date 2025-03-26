@@ -171,7 +171,6 @@
 			<div class="input-section">
 				<h2>Input HTML</h2>
 				<div class="controls">
-					<button id="loadSample" class="btn">Load sample</button>
 					<button id="clearInput" class="btn">Clear</button>
 				</div>
 				<textarea id="input" placeholder="Paste your HTML here..."></textarea>
@@ -205,67 +204,13 @@
 		<div class="error-container" id="errorContainer"></div>
 	</div>
 
-	<script src="../dist/index.js"></script>
+	<script src="https://unpkg.com/defuddle@latest/dist/index.js"></script>
 	<script>
-		// Sample HTML content for testing
-		const sampleHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Sample Article</title>
-</head>
-<body>
-	<header>
-		<nav>
-			<a href="#">Home</a>
-			<a href="#">About</a>
-		</nav>
-	</header>
-	
-	<main>
-		<article>
-			<h1>Main Article Title</h1>
-			<div class="author">By John Doe</div>
-			<div class="date">March 26, 2024</div>
-			
-			<p>This is the first paragraph of the article. It contains the main content that we want to extract.</p>
-			
-			<div class="advertisement">
-				<p>Sponsored Content</p>
-			</div>
-			
-			<p>This is another paragraph with more content. We want to keep this part as it's part of the main article.</p>
-			
-			<div class="social-share">
-				<button>Share on Twitter</button>
-				<button>Share on Facebook</button>
-			</div>
-			
-			<p>More article content here. This should be preserved as it's part of the main content.</p>
-			
-			<div class="related-articles">
-				<h3>Related Articles</h3>
-				<ul>
-					<li>Article 1</li>
-					<li>Article 2</li>
-				</ul>
-			</div>
-		</article>
-	</main>
-	
-	<footer>
-		<p>© 2024 Sample Website</p>
-	</footer>
-</body>
-</html>
-`;
-
 		// DOM Elements
 		const input = document.getElementById('input');
 		const output = document.getElementById('output');
 		const metadataOutput = document.getElementById('metadataOutput');
 		const debugOutput = document.getElementById('debugOutput');
-		const loadSampleBtn = document.getElementById('loadSample');
 		const clearInputBtn = document.getElementById('clearInput');
 		const parseBtn = document.getElementById('parse');
 		const clearOutputBtn = document.getElementById('clearOutput');
@@ -274,10 +219,6 @@
 		const tabContents = document.querySelectorAll('.tab-content');
 
 		// Event Listeners
-		loadSampleBtn.addEventListener('click', () => {
-			input.value = sampleHTML;
-		});
-
 		clearInputBtn.addEventListener('click', () => {
 			input.value = '';
 		});
