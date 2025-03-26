@@ -27,7 +27,7 @@ npm install defuddle
 ## Usage
 
 ```typescript
-import { Defuddle } from 'defuddle';
+import Defuddle from 'defuddle';
 
 const article = new Defuddle(document).parse();
 
@@ -42,11 +42,11 @@ Defuddle comes in two bundles:
 
 **Core bundle** (~50kB), no dependencies
 ```js
-import { Defuddle } from 'defuddle';
+import Defuddle from 'defuddle';
 ```
 **Full bundle** (~432kB), includes advanced math conversion capabilities
 ```js
-import { Defuddle } from 'defuddle/full';
+import Defuddle from 'defuddle/full';
 ```
 
 The core bundle is recommended for most use cases. It still handles math content, but doesn't include fallbacks for converting between MathML and LaTeX formats. The full bundle adds the ability to create reliable `<math>` elements using `mathml-to-latex` and `temml` libraries.
@@ -69,7 +69,7 @@ const article = new Defuddle(document, { debug: true }).parse();
 When using Defuddle in a Node.js environment, you can use JSDOM to create a DOM document:
 
 ```typescript
-import { Defuddle } from 'defuddle';
+import Defuddle from 'defuddle';
 import { JSDOM } from 'jsdom';
 
 const html = '...'; // Your HTML string

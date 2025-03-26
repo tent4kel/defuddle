@@ -55,7 +55,7 @@ module.exports = (env, argv) => {
       library: {
         name: 'Defuddle',
         type: 'umd',
-        export: 'Defuddle'
+        export: 'default'
       },
       globalObject: 'typeof self !== "undefined" ? self : this'
     },
@@ -79,7 +79,7 @@ module.exports = (env, argv) => {
       library: {
         name: 'Defuddle',
         type: 'umd',
-        export: 'Defuddle'
+        export: 'default'
       },
       globalObject: 'typeof self !== "undefined" ? self : this'
     },
