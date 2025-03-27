@@ -133,7 +133,8 @@ export const codeBlockRules = [
 			'.highlight',
 			'.highlight-source',
 			'.wp-block-syntaxhighlighter-code',
-			'.wp-block-code'
+			'.wp-block-code',
+			'div[class*="language-"]'
 		].join(', '),
 		element: 'pre',
 		transform: (el: Element): Element => {

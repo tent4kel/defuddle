@@ -34,9 +34,9 @@ export const INLINE_ELEMENTS = new Set([
 // Hidden elements that should be removed
 export const HIDDEN_ELEMENT_SELECTORS = [
 	'[hidden]',
-//	'[aria-hidden="true"]', needed for math formulas
-//	'[style*="display: none"]', needed for for math formulas
-//	'[style*="display:none"]',
+ 	'[aria-hidden="true"]:not([class*="math"])',
+	'[style*="display: none"]:not([class*="math"])',
+	'[style*="display:none"]:not([class*="math"])',
 	'[style*="visibility: hidden"]',
 	'[style*="visibility:hidden"]',
 	'.hidden',
@@ -256,6 +256,7 @@ export const PARTIAL_SELECTORS = [
 	'brand-bar',
 	'breadcrumb',
 	'button-wrapper',
+	'buttons-container',
 	'btn-',
 	'-btn',
 	'byline',
@@ -555,7 +556,7 @@ export const PARTIAL_SELECTORS = [
 	'-toc',
 	'toggle-caption',
 	'topic-list',
-	'toolbar',
+//	'toolbar', prism.js
 	'tooltip',
 	'top-wrapper',
 	'tree-item',
