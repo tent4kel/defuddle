@@ -460,6 +460,8 @@ export const PARTIAL_SELECTORS = [
 	'post-ufi-button',
 //	'preview', used on Obsidian Publish
 	'prevnext',
+	'prev_next',
+	'prev-next',
 	'previousnext',
 	'press-inquiries',
 	'print-none',
