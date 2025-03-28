@@ -248,9 +248,11 @@ export const PARTIAL_SELECTORS = [
 	'backlinks-section',
 //	'banner',
 	'bio-block',
+	'biobox',
 	'blog-pager',
 	'bookmark-',
 	'-bookmark',
+	'bottominfo',
 	'bottom-of-article',
 	'bottom-wrapper',
 	'brand-bar',
@@ -273,8 +275,9 @@ export const PARTIAL_SELECTORS = [
 //	'-comment', Syntax highlighting
 	'commentbox',
 	'comment-button',
-	'comment-count',
+	'commentcomp',
 	'comment-content',
+	'comment-count',
 	'comment-form',
 	'comment-number',
 	'comment-respond',
@@ -536,6 +539,7 @@ export const PARTIAL_SELECTORS = [
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
+	'subhead',
 	'submenu',
 	'subscribe',
 	'_tags',
