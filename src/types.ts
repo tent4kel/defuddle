@@ -1,4 +1,3 @@
-// Define the DefuddleMetadata interface
 export interface DefuddleMetadata {
 	title: string;
 	description: string;
@@ -13,13 +12,26 @@ export interface DefuddleMetadata {
 	wordCount: number;
 }
 
-// Define the DefuddleResponse interface
 export interface DefuddleResponse extends DefuddleMetadata {
 	content: string;
+	extractorType?: string;
 }
 
-// Define the DefuddleOptions interface
 export interface DefuddleOptions {
 	debug?: boolean;
 	keepClasses?: boolean;
+	url?: string;
+}
+
+export interface ExtractorVariables {
+	[key: string]: string;
+}
+
+export interface ExtractedContent {
+	title?: string;
+	author?: string;
+	published?: string;
+	content?: string;
+	contentHtml?: string;
+	variables?: ExtractorVariables;
 } 
