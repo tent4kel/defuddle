@@ -324,6 +324,7 @@ export const PARTIAL_SELECTORS = [
 	'extra-services',
 	'extra-title',
 	'facebook',
+	'fancy-box',
 	'favorite',
 	'feedback',
 	'feed-links',
