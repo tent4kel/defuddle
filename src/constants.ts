@@ -105,6 +105,7 @@ export const EXACT_SELECTORS = [
 	'[href*="/tags/"]',
 	'[href*="/topics"]',
 	'[href*="author"]',
+	'[href*="#toc"]',
 	'[href="#top"]',
 	'[href="#Top"]',
 	'[href="#site-content"]',
