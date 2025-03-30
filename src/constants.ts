@@ -109,6 +109,7 @@ export const EXACT_SELECTORS = [
 	'[href="#top"]',
 	'[href="#Top"]',
 	'[href="#site-content"]',
+	'[href*="#main-content"]',
 	'[src*="author"]',
 
 	// footer
@@ -505,6 +506,7 @@ export const PARTIAL_SELECTORS = [
 	'relevant',
 	'reversefootnote',
 	'screen-reader-text',
+	'section-nav',
 //	'share',
 //	'-share', scitechdaily.com
 	'share-box',
