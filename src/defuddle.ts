@@ -1886,6 +1886,22 @@ export class Defuddle {
 	}
 
 	private findTableBasedContent(doc: Document): Element | null {
+		// First check if this looks like an old-style table-based layout
+		const tables = Array.from(doc.getElementsByTagName('table'));
+		const hasTableLayout = tables.some(table => {
+			const width = parseInt(table.getAttribute('width') || '0');
+			const style = window.getComputedStyle(table);
+			return width > 400 || 
+				(style.width.includes('px') && parseInt(style.width) > 400) ||
+				table.getAttribute('align') === 'center' ||
+				table.className.toLowerCase().includes('content') ||
+				table.className.toLowerCase().includes('article');
+		});
+
+		if (!hasTableLayout) {
+			return null; // Don't try table-based extraction for modern layouts
+		}
+
 		const cells = Array.from(doc.getElementsByTagName('td'));
 		return ContentScorer.findBestElement(cells);
 	}

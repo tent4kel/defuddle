@@ -63,9 +63,25 @@ export class ContentScorer {
 			// Table cells get a bonus for being in the main content area
 			const parentTable = element.closest('table');
 			if (parentTable) {
+				// Only favor cells in tables that look like old-style content layouts
 				const tableWidth = parseInt(parentTable.getAttribute('width') || '0');
-				if (tableWidth > 400) { // Common width for main content tables
-					score += 10;
+				const tableStyle = window.getComputedStyle(parentTable);
+				const isTableLayout = 
+					tableWidth > 400 || // Common width for main content tables
+					tableStyle.width.includes('px') && parseInt(tableStyle.width) > 400 ||
+					parentTable.getAttribute('align') === 'center' ||
+					parentTable.className.toLowerCase().includes('content') ||
+					parentTable.className.toLowerCase().includes('article');
+
+				if (isTableLayout) {
+					// Additional checks to ensure this is likely the main content cell
+					const allCells = Array.from(parentTable.getElementsByTagName('td'));
+					const cellIndex = allCells.indexOf(element);
+					const isCenterCell = cellIndex > 0 && cellIndex < allCells.length - 1;
+					
+					if (isCenterCell) {
+						score += 10;
+					}
 				}
 			}
 		}
