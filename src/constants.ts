@@ -6,6 +6,7 @@ export const ENTRY_POINT_ELEMENTS = [
 	'.post-content',
 	'.article-content',
 	'#article-content',
+	'.entry-content',
 	'.content-article',
 	'main',
 	'[role="main"]',
@@ -190,6 +191,7 @@ export const TEST_ATTRIBUTES = [
 // Removal patterns tested against attributes above
 // Case insensitive, partial matches allowed
 export const PARTIAL_SELECTORS = [
+	'a-statement',
 	'access-wall',
 	'activitypub',
 	'actioncall',
@@ -345,7 +347,7 @@ export const PARTIAL_SELECTORS = [
 	'fullbleedheader',
 	'gist-meta',
 //	'global',
-	'google',
+//	'google',
 	'goog-',
 	'graph-view',
 	'hamburger',
@@ -531,6 +533,7 @@ export const PARTIAL_SELECTORS = [
 	'site-header',
 	'site-logo',
 	'site-name',
+	'site-wordpress',
 //	'skip-',
 //	'skip-link', TechCrunch
 	'skip-content',
