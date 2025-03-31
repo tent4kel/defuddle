@@ -111,7 +111,7 @@ export const EXACT_SELECTORS = [
 	'[href="#Top"]',
 	'[href="#site-content"]',
 	'[href="#main-content"]',
-	'[href="#main"]',
+	'[href^="#main"]',
 	'[src*="author"]',
 
 	// footer
@@ -358,6 +358,7 @@ export const PARTIAL_SELECTORS = [
 	'hide-for-print',
 	'hide-print',
 	'hide-when-no-script',
+	'hidden-print',
 	'hidden-sidenote',
 	'hidden-accessibility',
 	'infoline',
@@ -557,7 +558,7 @@ export const PARTIAL_SELECTORS = [
 	'subject-label',
 	'subhead',
 	'submenu',
-	'subscribe',
+//	'subscribe',
 	'_tags',
 	'tags__item',
 	'tag_list',
