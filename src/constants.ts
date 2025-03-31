@@ -236,7 +236,7 @@ export const PARTIAL_SELECTORS = [
 	'article_title',
 	'articletopics',
 	'article-topics',
-	'article-type',
+//	'article-type',
 	'article--lede', // The Verge
 	'articlewell',
 	'associated-people',
