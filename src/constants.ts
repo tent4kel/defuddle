@@ -6,8 +6,10 @@ export const ENTRY_POINT_ELEMENTS = [
 	'.post-content',
 	'.article-content',
 	'#article-content',
+	'.article_post',
 	'.entry-content',
 	'.content-article',
+	'.markdown-body',
 	'main',
 	'[role="main"]',
 	'body' // ensures there is always a match
@@ -196,6 +198,7 @@ export const PARTIAL_SELECTORS = [
 	'access-wall',
 	'activitypub',
 	'actioncall',
+	'after_main_article',
 	'appendix',
 	'avatar',
 	'advert',
@@ -251,6 +254,7 @@ export const PARTIAL_SELECTORS = [
 	'author-name',
 	'author-publish-info',
 	'authored-by',
+
 	'back-to-top',
 	'backlink_container',
 	'backlinks-section',
@@ -270,6 +274,7 @@ export const PARTIAL_SELECTORS = [
 	'btn-',
 	'-btn',
 	'byline',
+
 	'captcha',
 	'card-text',
 	'card-media',
@@ -305,6 +310,7 @@ export const PARTIAL_SELECTORS = [
 	'cta_',
 	'current-issue', // The Nation
 	'custom-list-number',
+
 	'dateline',
 	'dateheader',
 	'date-header',
@@ -318,6 +324,7 @@ export const PARTIAL_SELECTORS = [
 	'donate',
 	'donation',
 	'dropdown', // Ars Technica
+
 	'eletters',
 	'emailsignup',
 	'engagement-widget',
@@ -332,6 +339,7 @@ export const PARTIAL_SELECTORS = [
 	'externallinkembedwrapper', // The New Yorker
 	'extra-services',
 	'extra-title',
+	
 	'facebook',
 	'fancy-box',
 	'favorite',
@@ -340,7 +348,7 @@ export const PARTIAL_SELECTORS = [
 	'field-site-sections',
 	'fixheader',
 	'floating-vid',
-	'follow',
+//	'follow',
 	'footer',
 	'footnote-back',
 	'footnoteback',
@@ -348,14 +356,20 @@ export const PARTIAL_SELECTORS = [
 	'frontmatter',
 	'further-reading',
 	'fullbleedheader',
+	
+	'gated-',
+	'gh-feed',
 	'gist-meta',
 //	'global',
 //	'google',
 	'goog-',
 	'graph-view',
+
 	'hamburger',
+	'header_logo',
 	'header-logo',
 	'header-pattern', // The Verge
+	'headlines',
 	'hero-list',
 	'hide-for-print',
 	'hide-print',
@@ -363,6 +377,7 @@ export const PARTIAL_SELECTORS = [
 	'hidden-print',
 	'hidden-sidenote',
 	'hidden-accessibility',
+
 	'infoline',
 	'instacartIntegration',
 	'interlude',
@@ -370,14 +385,21 @@ export const PARTIAL_SELECTORS = [
 	'itemendrow',
 	'jumplink',
 	'jump-to-',
+
+	'keepreading',
+	'keep-reading',
+	'keep_reading',
 //	'keyword', // used in syntax highlighting
+	'keyword_wrap',
 	'kicker',
+
 	'labstab', // Arxiv
 	'-labels',
 	'language-name',
 	'latest-content',
 	'-ledes-', // The Verge
 	'-license',
+	'lightbox-popup',
 	'like-button',
 	'link-box',
 	'links-grid', // BBC
@@ -391,12 +413,16 @@ export const PARTIAL_SELECTORS = [
 	'ltx_role_refnum', // Arxiv
 	'ltx_tag_bibitem',
 	'ltx_error',
+
+	'masthead',
 	'marketing',
 	'media-inquiry',
+	'-menu',
 	'menu-',
 //	'meta-', syntax highlighting
 	'metadata',
 	'might-like',
+	'minibio',
 	'more-about',
 	'_modal',
 	'-modal',
@@ -409,6 +435,7 @@ export const PARTIAL_SELECTORS = [
 	'mw-cite-backlink',
 	'mw-indicators',
 	'mw-jump-link',
+
 	'nav-',
 	'nav_',
 	'navbar',
@@ -427,16 +454,19 @@ export const PARTIAL_SELECTORS = [
 	'notessection',
 	'nomobile',
 	'noprint',
+
 	'open-slideshow',
 	'originally-published', // Mercury News
 	'outline-view',
 	'overlay',
+
 	'page-title',
 	'paywall_message',
 	'-partners',
 	'plea',
 	'popular',
 //	'popup', Gwern
+	'popup_links',
 	'pop-up',
 	'popover',
 	'post-author',
@@ -492,11 +522,14 @@ export const PARTIAL_SELECTORS = [
 	'pub-date',
 	'publication-date',
 	'publicationName', // Medium
+
 	'qr-code',
 	'qr_code',
 	'quick_up',
+
 	'_rail',
 	'ratingssection',
+	'read_also',
 	'readmore',
 	'read-next',
 	'read_next',
@@ -517,6 +550,7 @@ export const PARTIAL_SELECTORS = [
 	'related',
 	'relevant',
 	'reversefootnote',
+
 	'screen-reader-text',
 	'section-nav',
 //	'share',
@@ -525,6 +559,7 @@ export const PARTIAL_SELECTORS = [
 	'sharedaddy',
 	'share-icons',
 	'sharelinks',
+	'share-print',
 	'share-section',
 	'sidebartitle',
 	'sidebar_',
@@ -562,6 +597,7 @@ export const PARTIAL_SELECTORS = [
 	'subhead',
 	'submenu',
 //	'subscribe',
+
 	'_tags',
 	'tags__item',
 	'tag_list',
@@ -581,6 +617,7 @@ export const PARTIAL_SELECTORS = [
 	'toggle-caption',
 //	'toolbar', prism.js
 	'tooltip',
+	'topbar',
 	'topic-list',
 //	'top-section',
 	'top-wrapper',
@@ -589,6 +626,7 @@ export const PARTIAL_SELECTORS = [
 	'trust-feat',
 	'trust-badge',
 	'twitter',
+
 	'u-hide',
 	'viewbottom',
 	'visually-hidden',
