@@ -399,6 +399,7 @@ export const PARTIAL_SELECTORS = [
 	'more-',
 	'morenews',
 	'morestories',
+	'most-read',
 	'move-helper',
 	'mw-editsection',
 	'mw-cite-backlink',
