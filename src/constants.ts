@@ -110,7 +110,8 @@ export const EXACT_SELECTORS = [
 	'[href="#top"]',
 	'[href="#Top"]',
 	'[href="#site-content"]',
-	'[href*="#main-content"]',
+	'[href="#main-content"]',
+	'[href="#main"]',
 	'[src*="author"]',
 
 	// footer
@@ -539,6 +540,7 @@ export const PARTIAL_SELECTORS = [
 	'skip-content',
 	'c-skip-link',
 	'_skip-link',
+	'-slider',
 	'slug-wrap',
 	'social',
 	'speechify-ignore',
