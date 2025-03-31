@@ -197,6 +197,8 @@ export const PARTIAL_SELECTORS = [
 	'avatar',
 	'advert',
 //	'-ad-', howtogeek.com
+	'adlayout',
+	'ad-tldr',
 	'ad-placement',
 	'_ad_',
 	'allterms',
