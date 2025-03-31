@@ -219,6 +219,7 @@ export const PARTIAL_SELECTORS = [
 	'article_header',
 	'article-header',
 	'article__header',
+	'article__hero',
 	'article__info',
 	'article-info',
 	'article-meta',
@@ -315,6 +316,7 @@ export const PARTIAL_SELECTORS = [
 	'discuss_',
 	'disqus',
 	'donate',
+	'donation',
 	'dropdown', // Ars Technica
 	'eletters',
 	'emailsignup',
@@ -365,6 +367,7 @@ export const PARTIAL_SELECTORS = [
 	'instacartIntegration',
 	'interlude',
 	'interaction',
+	'itemendrow',
 	'jumplink',
 	'jump-to-',
 //	'keyword', // used in syntax highlighting
