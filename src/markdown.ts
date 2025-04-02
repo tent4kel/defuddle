@@ -1,4 +1,5 @@
 import TurndownService from 'turndown';
+import { NODE_TYPE } from './constants';
 
 // Define a type that works for both JSDOM and browser environments
 type GenericElement = {
@@ -26,12 +27,6 @@ type GenericElement = {
 	tagName?: string;
 	nodeType: number;
 	closest?: (selector: string) => Element | null;
-};
-
-// Define node type constants that work in both browser and Node.js
-const NODE_TYPE = {
-	ELEMENT_NODE: 1,
-	TEXT_NODE: 3
 };
 
 // Helper functions for type assertions
