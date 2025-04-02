@@ -28,7 +28,7 @@ import { ContentScorer, ContentScore } from './scoring';
 interface StandardizationRule {
 	selector: string;
 	element: string;
-	transform?: (el: Element) => Element;
+	transform?: (el: Element, doc: Document) => Element;
 }
 
 const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
@@ -40,8 +40,8 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 	{ 
 		selector: 'div[data-testid^="paragraph"], div[role="paragraph"]', 
 		element: 'p',
-		transform: (el: Element): Element => {
-			const p = document.createElement('p');
+		transform: (el: Element, doc: Document): Element => {
+			const p = doc.createElement('p');
 			
 			// Copy innerHTML
 			p.innerHTML = el.innerHTML;
@@ -61,26 +61,26 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 		selector: 'div[role="list"]', 
 		element: 'ul',
 		// Custom handler for list type detection and transformation
-		transform: (el: Element): Element => {
+		transform: (el: Element, doc: Document): Element => {
 			// First determine if this is an ordered list
 			const firstItem = el.querySelector('div[role="listitem"] .label');
 			const label = firstItem?.textContent?.trim() || '';
 			const isOrdered = label.match(/^\d+\)/);
 			
 			// Create the appropriate list type
-			const list = document.createElement(isOrdered ? 'ol' : 'ul');
+			const list = doc.createElement(isOrdered ? 'ol' : 'ul');
 			
 			// Process each list item
 			const items = el.querySelectorAll('div[role="listitem"]');
 			items.forEach(item => {
-				const li = document.createElement('li');
+				const li = doc.createElement('li');
 				const content = item.querySelector('.content');
 				
 				if (content) {
 					// Convert any paragraph divs inside content
 					const paragraphDivs = content.querySelectorAll('div[role="paragraph"]');
 					paragraphDivs.forEach(div => {
-						const p = document.createElement('p');
+						const p = doc.createElement('p');
 						p.innerHTML = div.innerHTML;
 						div.replaceWith(p);
 					});
@@ -92,19 +92,19 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 						const nestedLabel = firstNestedItem?.textContent?.trim() || '';
 						const isNestedOrdered = nestedLabel.match(/^\d+\)/);
 						
-						const newNestedList = document.createElement(isNestedOrdered ? 'ol' : 'ul');
+						const newNestedList = doc.createElement(isNestedOrdered ? 'ol' : 'ul');
 						
 						// Process nested items
 						const nestedItems = nestedList.querySelectorAll('div[role="listitem"]');
 						nestedItems.forEach(nestedItem => {
-							const nestedLi = document.createElement('li');
+							const nestedLi = doc.createElement('li');
 							const nestedContent = nestedItem.querySelector('.content');
 							
 							if (nestedContent) {
 								// Convert paragraph divs in nested items
 								const nestedParagraphs = nestedContent.querySelectorAll('div[role="paragraph"]');
 								nestedParagraphs.forEach(div => {
-									const p = document.createElement('p');
+									const p = doc.createElement('p');
 									p.innerHTML = div.innerHTML;
 									div.replaceWith(p);
 								});
@@ -130,14 +130,14 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 		selector: 'div[role="listitem"]', 
 		element: 'li',
 		// Custom handler for list item content
-		transform: (el: Element): Element => {
+		transform: (el: Element, doc: Document): Element => {
 			const content = el.querySelector('.content');
 			if (!content) return el;
 			
 			// Convert any paragraph divs inside content
 			const paragraphDivs = content.querySelectorAll('div[role="paragraph"]');
 			paragraphDivs.forEach(div => {
-				const p = document.createElement('p');
+				const p = doc.createElement('p');
 				p.innerHTML = div.innerHTML;
 				div.replaceWith(p);
 			});
@@ -163,7 +163,7 @@ interface StyleChange {
 }
 
 export class Defuddle {
-	private doc: Document;
+	private readonly doc: Document;
 	private options: DefuddleOptions;
 	private debug: boolean;
 
@@ -985,7 +985,7 @@ export class Defuddle {
 		const h1s = element.getElementsByTagName('h1');
 
 		Array.from(h1s).forEach(h1 => {
-			const h2 = document.createElement('h2');
+			const h2 = this.doc.createElement('h2');
 			h2.innerHTML = h1.innerHTML;
 			// Copy allowed attributes
 			Array.from(h1.attributes).forEach(attr => {
@@ -1676,7 +1676,7 @@ export class Defuddle {
 		this._log('Processed lazy images:', processedCount);
 	}
 
-	private standardizeElements(element: Element) {
+	private standardizeElements(element: Element): void {
 		let processedCount = 0;
 
 		// Convert elements based on standardization rules
@@ -1685,7 +1685,7 @@ export class Defuddle {
 			elements.forEach(el => {
 				if (rule.transform) {
 					// If there's a transform function, use it to create the new element
-					const transformed = rule.transform(el);
+					const transformed = rule.transform(el, this.doc);
 					el.replaceWith(transformed);
 					processedCount++;
 				}
@@ -1698,7 +1698,7 @@ export class Defuddle {
 			const videoId = el.getAttribute('videoid');
 			if (!videoId) return;
 
-			const iframe = document.createElement('iframe');
+			const iframe = this.doc.createElement('iframe');
 			iframe.width = '560';
 			iframe.height = '315';
 			iframe.src = `https://www.youtube.com/embed/${videoId}`;
