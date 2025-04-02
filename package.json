@@ -1,6 +1,6 @@
 {
 	"name": "defuddle",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"description": "Extract article content and metadata from web pages.",
 	"main": "dist/index.js",
 	"module": "dist/index.js",
@@ -38,7 +38,7 @@
 		"dev:types": "tsc --project tsconfig.declarations.json --watch",
 		"dev:js": "webpack --watch --mode development",
 		"dev:node": "tsc --project tsconfig.node.json --watch",
-		"dev": "npm run clean && npm run build:types && concurrently \"npm run dev:types\" \"npm run dev:js\" \"npm run dev:node\"",
+		"dev": "npm run clean && npm run build:types && concurrently \"npm run dev:types\" \"npm run dev:node\" \"npm run dev:js\"",
 		"playground": "node playground/server.js"
 	},
 	"keywords": [
