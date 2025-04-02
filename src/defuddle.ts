@@ -270,7 +270,7 @@ export class Defuddle {
 
 	private countWords(content: string): number {
 		// Create a temporary div to parse HTML content
-		const tempDiv = document.createElement('div');
+		const tempDiv = this.doc.createElement('div');
 		tempDiv.innerHTML = content;
 
 		// Get text content, removing extra whitespace
@@ -303,17 +303,22 @@ export class Defuddle {
 					sheet.cssRules;
 					return true;
 				} catch (e) {
-					// Expected error for cross-origin stylesheets
+					// Expected error for cross-origin stylesheets or Node.js environment
 					if (e instanceof DOMException && e.name === 'SecurityError') {
 						return false;
 					}
-					throw e;
+					return false;
 				}
 			});
 			
 			// Process all sheets in a single pass
 			const mediaRules = sheets.flatMap(sheet => {
 				try {
+					// Check if we're in a browser environment where CSSMediaRule is available
+					if (typeof CSSMediaRule === 'undefined') {
+						return [];
+					}
+
 					return Array.from(sheet.cssRules)
 						.filter((rule): rule is CSSMediaRule => 
 							rule instanceof CSSMediaRule &&
@@ -379,6 +384,31 @@ export class Defuddle {
 
 	}
 
+	private getWindow(doc: Document): Window | null {
+		// First try defaultView
+		if (doc.defaultView) {
+			return doc.defaultView;
+		}
+		
+		// Then try ownerWindow
+		if ((doc as any).ownerWindow) {
+			return (doc as any).ownerWindow;
+		}
+		
+		// Finally try to get window from document
+		if ((doc as any).window) {
+			return (doc as any).window;
+		}
+		
+		return null;
+	}
+
+	private getComputedStyle(element: Element): CSSStyleDeclaration | null {
+		const win = this.getWindow(element.ownerDocument);
+		if (!win) return null;
+		return win.getComputedStyle(element);
+	}
+
 	private removeHiddenElements(doc: Document) {
 		let count = 0;
 		const elementsToRemove = new Set<Element>();
@@ -388,39 +418,30 @@ export class Defuddle {
 		hiddenElements.forEach(el => elementsToRemove.add(el));
 		count += hiddenElements.length;
 
-		// Second pass: Use TreeWalker for efficient traversal
-		const treeWalker = doc.createTreeWalker(
-			doc.body,
-			NodeFilter.SHOW_ELEMENT,
-			{
-				acceptNode: (node: Element) => {
-					// Skip elements already marked for removal
-					if (elementsToRemove.has(node)) {
-						return NodeFilter.FILTER_REJECT;
-					}
-					return NodeFilter.FILTER_ACCEPT;
-				}
-			}
-		);
-
-		// Batch style computations
-		const elements: Element[] = [];
-		let currentNode: Element | null;
-		while (currentNode = treeWalker.nextNode() as Element) {
-			elements.push(currentNode);
-		}
+		// Second pass: Get all elements and check their styles
+		const allElements = Array.from(doc.getElementsByTagName('*'));
 
 		// Process styles in batches to minimize layout thrashing
 		const BATCH_SIZE = 100;
-		for (let i = 0; i < elements.length; i += BATCH_SIZE) {
-			const batch = elements.slice(i, i + BATCH_SIZE);
+		for (let i = 0; i < allElements.length; i += BATCH_SIZE) {
+			const batch = allElements.slice(i, i + BATCH_SIZE);
 			
 			// Read phase - gather all computedStyles
 			const styles = batch.map(element => {
 				try {
 					return element.ownerDocument.defaultView?.getComputedStyle(element);
 				} catch (e) {
-					return null;
+					// If we can't get computed style, check inline styles
+					const style = element.getAttribute('style');
+					if (!style) return null;
+					
+					// Create a temporary style element to parse inline styles
+					const tempStyle = doc.createElement('style');
+					tempStyle.textContent = `* { ${style} }`;
+					doc.head.appendChild(tempStyle);
+					const computedStyle = element.ownerDocument.defaultView?.getComputedStyle(element);
+					doc.head.removeChild(tempStyle);
+					return computedStyle;
 				}
 			});
 			
@@ -576,7 +597,7 @@ export class Defuddle {
 
 			// Check if it has excessive whitespace or empty text nodes
 			const textNodes = Array.from(div.childNodes).filter(node => 
-				node.nodeType === Node.TEXT_NODE && node.textContent?.trim()
+				node.nodeType === 3 && node.textContent?.trim() // 3 is TEXT_NODE
 			);
 			if (textNodes.length === 0) return true;
 
@@ -827,15 +848,15 @@ export class Defuddle {
 	private standardizeSpaces(element: Element) {
 		const processNode = (node: Node) => {
 			// Skip pre and code elements
-			if (node instanceof Element) {
-				const tag = node.tagName.toLowerCase();
+			if (node.nodeType === 1) { // ELEMENT_NODE
+				const tag = (node as Element).tagName.toLowerCase();
 				if (tag === 'pre' || tag === 'code') {
 					return;
 				}
 			}
 
 			// Process text nodes
-			if (node.nodeType === Node.TEXT_NODE) {
+			if (node.nodeType === 3) { // TEXT_NODE
 				const text = node.textContent || '';
 				// Replace &nbsp; with regular spaces, except when it's a single &nbsp; between words
 				const newText = text.replace(/\xA0+/g, (match) => {
@@ -874,9 +895,9 @@ export class Defuddle {
 
 			// First check direct siblings
 			while (sibling) {
-				if (sibling.nodeType === Node.TEXT_NODE) {
+				if (sibling.nodeType === 3) { // TEXT_NODE
 					nextContent += sibling.textContent || '';
-				} else if (sibling.nodeType === Node.ELEMENT_NODE) {
+				} else if (sibling.nodeType === 1) { // ELEMENT_NODE
 					// If we find an element sibling, check its content
 					nextContent += (sibling as Element).textContent || '';
 				}
@@ -953,23 +974,23 @@ export class Defuddle {
 	}
 
 	private removeHtmlComments(element: Element) {
-		const comments: Comment[] = [];
-		const walker = document.createTreeWalker(
-			element,
-			NodeFilter.SHOW_COMMENT,
-			null
-		);
+		let removedCount = 0;
 
-		let node;
-		while (node = walker.nextNode()) {
-			comments.push(node as Comment);
-		}
-
-		comments.forEach(comment => {
-			comment.remove();
+		// Get all elements and check their child nodes
+		const allElements = Array.from(element.getElementsByTagName('*'));
+		
+		// Process each element's child nodes
+		allElements.forEach(el => {
+			const childNodes = Array.from(el.childNodes);
+			childNodes.forEach(node => {
+				if (node.nodeType === 8) { // 8 is the node type for comments
+					node.remove();
+					removedCount++;
+				}
+			});
 		});
 
-		this._log('Removed HTML comments:', comments.length);
+		this._log('Removed HTML comments:', removedCount);
 	}
 
 	private stripUnwantedAttributes(element: Element) {
@@ -977,7 +998,7 @@ export class Defuddle {
 
 		const processElement = (el: Element) => {
 			// Skip SVG elements - preserve all their attributes
-			if (el instanceof SVGElement) {
+			if (el.tagName.toLowerCase() === 'svg' || el.namespaceURI === 'http://www.w3.org/2000/svg') {
 				return;
 			}
 
@@ -1051,7 +1072,7 @@ export class Defuddle {
 				// Check if element has no meaningful children
 				const hasNoChildren = !el.hasChildNodes() || 
 					(Array.from(el.childNodes).every(node => {
-						if (node.nodeType === Node.TEXT_NODE) {
+						if (node.nodeType === 3) { // TEXT_NODE
 							const nodeText = node.textContent || '';
 							return nodeText.trim().length === 0 && !nodeText.includes('\u00A0');
 						}
@@ -1081,32 +1102,18 @@ export class Defuddle {
 			}
 		}
 
-		this._log('Removed empty elements:', {
-			count: removedCount,
-			iterations
-		});
+		this._log('Removed empty elements:', removedCount, 'iterations:', iterations);
 	}
 
 	private stripExtraBrElements(element: Element) {
 		let processedCount = 0;
 		const startTime = Date.now();
 
-		// Use TreeWalker to find text nodes and br elements
-		const treeWalker = this.doc.createTreeWalker(
-			element,
-			NodeFilter.SHOW_ELEMENT,
-			{
-				acceptNode: (node: Element) => {
-					return node.tagName.toLowerCase() === 'br' ? 
-						NodeFilter.FILTER_ACCEPT : 
-						NodeFilter.FILTER_SKIP;
-				}
-			}
-		);
+		// Get all br elements directly
+		const brElements = Array.from(element.getElementsByTagName('br'));
 
 		// Keep track of consecutive br elements
 		let consecutiveBrs: Element[] = [];
-		let currentNode: Element | null;
 
 		// Helper to process collected br elements
 		const processBrs = () => {
@@ -1120,8 +1127,8 @@ export class Defuddle {
 			consecutiveBrs = [];
 		};
 
-		// Find all br elements
-		while (currentNode = treeWalker.nextNode() as Element) {
+		// Process all br elements
+		brElements.forEach(currentNode => {
 			// Check if this br is consecutive with previous ones
 			let isConsecutive = false;
 			if (consecutiveBrs.length > 0) {
@@ -1129,7 +1136,7 @@ export class Defuddle {
 				let node: Node | null = currentNode.previousSibling;
 				
 				// Skip whitespace text nodes
-				while (node && node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+				while (node && node.nodeType === 3 && !node.textContent?.trim()) {
 					node = node.previousSibling;
 				}
 				
@@ -1145,7 +1152,7 @@ export class Defuddle {
 				processBrs();
 				consecutiveBrs = [currentNode];
 			}
-		}
+		});
 
 		// Process any remaining br elements
 		processBrs();
@@ -1221,7 +1228,7 @@ export class Defuddle {
 			node.normalize(); // Combine adjacent text nodes
 
 			// Special handling for block elements
-			const isBlockElement = getComputedStyle(node).display === 'block';
+			const isBlockElement = this.getComputedStyle(node)?.display === 'block';
 			
 			// Only remove empty text nodes at the start and end if they contain just newlines/tabs
 			// For block elements, also remove spaces
@@ -1289,13 +1296,14 @@ export class Defuddle {
 		content: string | Element,
 		refs: string[]
 	): HTMLLIElement {
-		const newItem = document.createElement('li');
+		const doc = content instanceof Element ? content.ownerDocument : this.doc;
+		const newItem = doc.createElement('li');
 		newItem.className = 'footnote';
 		newItem.id = `fn:${footnoteNumber}`;
 
 		// Handle content
 		if (typeof content === 'string') {
-			const paragraph = document.createElement('p');
+			const paragraph = doc.createElement('p');
 			paragraph.innerHTML = content;
 			newItem.appendChild(paragraph);
 		} else {
@@ -1303,13 +1311,13 @@ export class Defuddle {
 			const paragraphs = Array.from(content.querySelectorAll('p'));
 			if (paragraphs.length === 0) {
 				// If no paragraphs, wrap content in a paragraph
-				const paragraph = document.createElement('p');
+				const paragraph = doc.createElement('p');
 				paragraph.innerHTML = content.innerHTML;
 				newItem.appendChild(paragraph);
 			} else {
 				// Copy existing paragraphs
 				paragraphs.forEach(p => {
-					const newP = document.createElement('p');
+					const newP = doc.createElement('p');
 					newP.innerHTML = p.innerHTML;
 					newItem.appendChild(newP);
 				});
@@ -1319,7 +1327,7 @@ export class Defuddle {
 		// Add backlink(s) to the last paragraph
 		const lastParagraph = newItem.querySelector('p:last-of-type') || newItem;
 		refs.forEach((refId, index) => {
-			const backlink = document.createElement('a');
+			const backlink = doc.createElement('a');
 			backlink.href = `#${refId}`;
 			backlink.title = 'return to article';
 			backlink.className = 'footnote-backref';
@@ -1427,9 +1435,9 @@ export class Defuddle {
 	// Every footnote reference should be a sup element with an anchor inside
 	// e.g. <sup id="fnref:1"><a href="#fn:1">1</a></sup>
 	private createFootnoteReference(footnoteNumber: string, refId: string): HTMLElement {
-		const sup = document.createElement('sup');
+		const sup = this.doc.createElement('sup');
 		sup.id = refId;
-		const link = document.createElement('a');
+		const link = this.doc.createElement('a');
 		link.href = `#fn:${footnoteNumber}`;
 		link.textContent = footnoteNumber;
 		sup.appendChild(link);
@@ -1556,13 +1564,13 @@ export class Defuddle {
 		supGroups.forEach((references, container) => {
 			if (references.length > 0) {
 				// Create a document fragment to hold all the references
-				const fragment = document.createDocumentFragment();
+				const fragment = this.doc.createDocumentFragment();
 				
 				// Add each reference as its own sup element
 				references.forEach((ref, index) => {
 					const link = ref.querySelector('a');
 					if (link) {
-						const sup = document.createElement('sup');
+						const sup = this.doc.createElement('sup');
 						sup.id = ref.id;
 						sup.appendChild(link.cloneNode(true));
 						fragment.appendChild(sup);
@@ -1574,9 +1582,9 @@ export class Defuddle {
 		});
 
 		// Create the standardized footnote list
-		const newList = document.createElement('div');
+		const newList = this.doc.createElement('div');
 		newList.id = 'footnotes';
-		const orderedList = document.createElement('ol');
+		const orderedList = this.doc.createElement('ol');
 
 		// Create footnote items in order
 		Object.entries(footnotes).forEach(([number, data]) => {
@@ -1604,19 +1612,22 @@ export class Defuddle {
 		const lazyImages = element.querySelectorAll('img[data-src], img[data-srcset]');
 
 		lazyImages.forEach(img => {
-			if (!(img instanceof HTMLImageElement)) return;
+			// Check if element is an image by checking tag name and required properties
+			if (img.tagName.toLowerCase() !== 'img' || !('src' in img) || !('srcset' in img)) {
+				return;
+			}
 
 			// Handle data-src
 			const dataSrc = img.getAttribute('data-src');
-			if (dataSrc && !img.src) {
-				img.src = dataSrc;
+			if (dataSrc && !img.getAttribute('src')) {
+				img.setAttribute('src', dataSrc);
 				processedCount++;
 			}
 
 			// Handle data-srcset
 			const dataSrcset = img.getAttribute('data-srcset');
-			if (dataSrcset && !img.srcset) {
-				img.srcset = dataSrcset;
+			if (dataSrcset && !img.getAttribute('srcset')) {
+				img.setAttribute('srcset', dataSrcset);
 				processedCount++;
 			}
 
@@ -1683,7 +1694,7 @@ export class Defuddle {
 		].filter(element => {
 			// Skip lazy-loaded images that haven't been processed yet
 			// and math images which may be small
-			if (element instanceof HTMLImageElement) {
+			if (element.tagName.toLowerCase() === 'img') {
 				const ignoredImage = element.classList.contains('lazy') || 
 					element.classList.contains('lazyload') ||
 					element.classList.contains('latex') ||
@@ -1704,8 +1715,10 @@ export class Defuddle {
 		const measurements = elements.map(element => ({
 			element,
 			// Static attributes (no reflow)
-			naturalWidth: element instanceof HTMLImageElement ? element.naturalWidth : 0,
-			naturalHeight: element instanceof HTMLImageElement ? element.naturalHeight : 0,
+			naturalWidth: element.tagName.toLowerCase() === 'img' ? 
+				parseInt(element.getAttribute('width') || '0') || 0 : 0,
+			naturalHeight: element.tagName.toLowerCase() === 'img' ? 
+				parseInt(element.getAttribute('height') || '0') || 0 : 0,
 			attrWidth: parseInt(element.getAttribute('width') || '0'),
 			attrHeight: parseInt(element.getAttribute('height') || '0')
 		}));
@@ -1816,13 +1829,13 @@ export class Defuddle {
 
 	private getElementIdentifier(element: Element): string | null {
 		// Try to create a unique identifier using various attributes
-		if (element instanceof HTMLImageElement) {
+		if (element.tagName.toLowerCase() === 'img') {
 			// For lazy-loaded images, use data-src as identifier if available
 			const dataSrc = element.getAttribute('data-src');
 			if (dataSrc) return `src:${dataSrc}`;
 			
-			const src = element.src || '';
-			const srcset = element.srcset || '';
+			const src = element.getAttribute('src') || '';
+			const srcset = element.getAttribute('srcset') || '';
 			const dataSrcset = element.getAttribute('data-srcset');
 			
 			if (src) return `src:${src}`;
@@ -1832,7 +1845,7 @@ export class Defuddle {
 
 		const id = element.id || '';
 		const className = element.className || '';
-		const viewBox = element instanceof SVGElement ? element.getAttribute('viewBox') || '' : '';
+		const viewBox = element.tagName.toLowerCase() === 'svg' ? element.getAttribute('viewBox') || '' : '';
 		
 		if (id) return `id:${id}`;
 		if (viewBox) return `viewBox:${viewBox}`;
@@ -1890,9 +1903,9 @@ export class Defuddle {
 		const tables = Array.from(doc.getElementsByTagName('table'));
 		const hasTableLayout = tables.some(table => {
 			const width = parseInt(table.getAttribute('width') || '0');
-			const style = window.getComputedStyle(table);
+			const style = this.getComputedStyle(table);
 			return width > 400 || 
-				(style.width.includes('px') && parseInt(style.width) > 400) ||
+				(style?.width.includes('px') && parseInt(style.width) > 400) ||
 				table.getAttribute('align') === 'center' ||
 				table.className.toLowerCase().includes('content') ||
 				table.className.toLowerCase().includes('article');
