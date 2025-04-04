@@ -357,6 +357,7 @@ export const PARTIAL_SELECTORS = [
 	'error-',
 	'eyebrow',
 	'expand-reduce',
+	'external-anchor',
 	'externallinkembedwrapper', // The New Yorker
 	'extra-services',
 	'extra-title',
