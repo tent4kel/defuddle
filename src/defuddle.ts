@@ -11,15 +11,15 @@ import {
 	ALLOWED_ATTRIBUTES_DEBUG,
 	EXACT_SELECTORS,
 	PARTIAL_SELECTORS,
-	FOOTNOTE_LIST_SELECTORS,
-	FOOTNOTE_INLINE_REFERENCES,
 	ENTRY_POINT_ELEMENTS,
 	ALLOWED_EMPTY_ELEMENTS,
-	TEST_ATTRIBUTES
+	TEST_ATTRIBUTES,
+	NODE_TYPE
 } from './constants';
 
 import { mathRules } from './elements/math.full';
 import { codeBlockRules } from './elements/code';
+import { standardizeFootnotes } from './elements/footnotes';
 import { headingRules } from './elements/headings';
 import { ContentScorer, ContentScore } from './scoring';
 
@@ -147,19 +147,14 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 	}
 ];
 
-interface FootnoteData {
-	content: Element | string;
-	originalId: string;
-	refs: string[];
-}
-
-interface FootnoteCollection {
-	[footnoteNumber: number]: FootnoteData;
-}
-
 interface StyleChange {
 	selector: string;
 	styles: string;
+}
+
+// Type guard
+function isElement(node: Node): node is Element {
+	return node.nodeType === NODE_TYPE.ELEMENT_NODE;
 }
 
 export class Defuddle {
@@ -544,11 +539,11 @@ export class Defuddle {
 		function hasDirectInlineContent(el: Element): boolean {
 			for (const child of el.childNodes) {
 				// Check for non-empty text nodes
-				if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
+				if (child.nodeType === NODE_TYPE.TEXT_NODE && child.textContent?.trim()) {
 					return true;
 				}
 				// Check for element nodes that are considered inline
-				if (child.nodeType === Node.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase())) {
+				if (child.nodeType === NODE_TYPE.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase())) {
 					return true;
 				}
 			}
@@ -618,7 +613,7 @@ export class Defuddle {
 
 			// Check if it has excessive whitespace or empty text nodes
 			const textNodes = Array.from(div.childNodes).filter(node => 
-				node.nodeType === 3 && node.textContent?.trim() // 3 is TEXT_NODE
+				node.nodeType === NODE_TYPE.TEXT_NODE && node.textContent?.trim() // TEXT_NODE
 			);
 			if (textNodes.length === 0) return true;
 
@@ -695,8 +690,8 @@ export class Defuddle {
 			// Case 4: Div only contains text and/or inline elements - convert to paragraph
 			const childNodes = Array.from(div.childNodes);
 			const hasOnlyInlineOrText = childNodes.length > 0 && childNodes.every(child =>
-				(child.nodeType === Node.TEXT_NODE) ||
-				(child.nodeType === Node.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase()))
+				(child.nodeType === NODE_TYPE.TEXT_NODE) ||
+				(child.nodeType === NODE_TYPE.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase()))
 			);
 
 			if (hasOnlyInlineOrText && div.textContent?.trim()) { // Ensure there's actual content
@@ -840,7 +835,7 @@ export class Defuddle {
 		this.standardizeHeadings(element, metadata.title);
 		
 		// Standardize footnotes and citations
-		this.standardizeFootnotes(element);
+		standardizeFootnotes(element);
 
 		// Handle lazy-loaded images
 		this.handleLazyImages(element);
@@ -883,7 +878,7 @@ export class Defuddle {
 	private standardizeSpaces(element: Element) {
 		const processNode = (node: Node) => {
 			// Skip pre and code elements
-			if (node.nodeType === 1) { // ELEMENT_NODE
+			if (node.nodeType === NODE_TYPE.ELEMENT_NODE) {
 				const tag = (node as Element).tagName.toLowerCase();
 				if (tag === 'pre' || tag === 'code') {
 					return;
@@ -891,7 +886,7 @@ export class Defuddle {
 			}
 
 			// Process text nodes
-			if (node.nodeType === 3) { // TEXT_NODE
+			if (node.nodeType === NODE_TYPE.TEXT_NODE) {
 				const text = node.textContent || '';
 				// Replace &nbsp; with regular spaces, except when it's a single &nbsp; between words
 				const newText = text.replace(/\xA0+/g, (match) => {
@@ -930,9 +925,9 @@ export class Defuddle {
 
 			// First check direct siblings
 			while (sibling) {
-				if (sibling.nodeType === 3) { // TEXT_NODE
+				if (sibling.nodeType === NODE_TYPE.TEXT_NODE) { // TEXT_NODE
 					nextContent += sibling.textContent || '';
-				} else if (sibling.nodeType === 1) { // ELEMENT_NODE
+				} else if (sibling.nodeType === NODE_TYPE.ELEMENT_NODE) { // ELEMENT_NODE
 					// If we find an element sibling, check its content
 					nextContent += (sibling as Element).textContent || '';
 				}
@@ -1107,7 +1102,7 @@ export class Defuddle {
 				// Check if element has no meaningful children
 				const hasNoChildren = !el.hasChildNodes() || 
 					(Array.from(el.childNodes).every(node => {
-						if (node.nodeType === 3) { // TEXT_NODE
+						if (node.nodeType === NODE_TYPE.TEXT_NODE) { // TEXT_NODE
 							const nodeText = node.textContent || '';
 							return nodeText.trim().length === 0 && !nodeText.includes('\u00A0');
 						}
@@ -1171,7 +1166,7 @@ export class Defuddle {
 				let node: Node | null = currentNode.previousSibling;
 				
 				// Skip whitespace text nodes
-				while (node && node.nodeType === 3 && !node.textContent?.trim()) {
+				while (node && node.nodeType === NODE_TYPE.TEXT_NODE && !node.textContent?.trim()) {
 					node = node.previousSibling;
 				}
 				
@@ -1206,8 +1201,8 @@ export class Defuddle {
 		// First pass: remove empty text nodes
 		const removeEmptyTextNodes = (node: Node) => {
 			// Skip if inside pre or code
-			if (node instanceof Element) {
-				const tag = node.tagName.toLowerCase();
+			if (node.nodeType === NODE_TYPE.ELEMENT_NODE) {
+				const tag = (node as Element).tagName.toLowerCase();
 				if (tag === 'pre' || tag === 'code') {
 					return;
 				}
@@ -1218,7 +1213,7 @@ export class Defuddle {
 			children.forEach(removeEmptyTextNodes);
 
 			// Then handle this node
-			if (node.nodeType === Node.TEXT_NODE) {
+			if (node.nodeType === NODE_TYPE.TEXT_NODE) {
 				const text = node.textContent || '';
 				// If it's completely empty or just special characters/whitespace, remove it
 				if (!text || text.match(/^[\u200C\u200B\u200D\u200E\u200F\uFEFF\xA0\s]*$/)) {
@@ -1248,7 +1243,7 @@ export class Defuddle {
 
 		// Second pass: clean up empty elements and normalize spacing
 		const cleanupEmptyElements = (node: Node) => {
-			if (!(node instanceof Element)) return;
+			if (!isElement(node)) return;
 
 			// Skip pre and code elements
 			const tag = node.tagName.toLowerCase();
@@ -1257,7 +1252,9 @@ export class Defuddle {
 			}
 
 			// Process children first (depth-first)
-			Array.from(node.children).forEach(cleanupEmptyElements);
+			Array.from(node.childNodes)
+				.filter(isElement)
+				.forEach(cleanupEmptyElements);
 
 			// Then normalize this element's whitespace
 			node.normalize(); // Combine adjacent text nodes
@@ -1271,14 +1268,14 @@ export class Defuddle {
 			const endPattern = isBlockElement ? /^[\n\r\t \u200C\u200B\u200D\u200E\u200F\uFEFF\xA0]*$/ : /^[\n\r\t\u200C\u200B\u200D\u200E\u200F\uFEFF]*$/;
 			
 			while (node.firstChild && 
-				   node.firstChild.nodeType === Node.TEXT_NODE && 
+				   node.firstChild.nodeType === NODE_TYPE.TEXT_NODE && 
 				   (node.firstChild.textContent || '').match(startPattern)) {
 				node.removeChild(node.firstChild);
 				removedCount++;
 			}
 			
 			while (node.lastChild && 
-				   node.lastChild.nodeType === Node.TEXT_NODE && 
+				   node.lastChild.nodeType === NODE_TYPE.TEXT_NODE && 
 				   (node.lastChild.textContent || '').match(endPattern)) {
 				node.removeChild(node.lastChild);
 				removedCount++;
@@ -1292,7 +1289,7 @@ export class Defuddle {
 					const next = children[i + 1];
 
 					// Only add space between elements or between element and text
-					if (current instanceof Element || next instanceof Element) {
+					if (isElement(current) || isElement(next)) {
 						// Don't add space if next content starts with punctuation
 						const nextContent = next.textContent || '';
 						const currentContent = current.textContent || '';
@@ -1300,13 +1297,13 @@ export class Defuddle {
 						if (!nextContent.match(/^[,.!?:;]/) && 
 							!currentContent.match(/[,.!?:;]$/)) {
 							// Check if there's already a space
-							const hasSpace = (current.nodeType === Node.TEXT_NODE && 
+							const hasSpace = (current.nodeType === NODE_TYPE.TEXT_NODE && 
 											(current.textContent || '').endsWith(' ')) ||
-											(next.nodeType === Node.TEXT_NODE && 
+											(next.nodeType === NODE_TYPE.TEXT_NODE && 
 											(next.textContent || '').startsWith(' '));
 							
 							if (!hasSpace) {
-								const space = document.createTextNode(' ');
+								const space = this.doc.createTextNode(' ');
 								node.insertBefore(space, next);
 							}
 						}
@@ -1324,322 +1321,6 @@ export class Defuddle {
 			charactersRemoved: removedCount,
 			processingTime: `${(endTime - startTime).toFixed(2)}ms`
 		});
-	}
-
-	private createFootnoteItem(
-		footnoteNumber: number,
-		content: string | Element,
-		refs: string[]
-	): HTMLLIElement {
-		const doc = content instanceof Element ? content.ownerDocument : this.doc;
-		const newItem = doc.createElement('li');
-		newItem.className = 'footnote';
-		newItem.id = `fn:${footnoteNumber}`;
-
-		// Handle content
-		if (typeof content === 'string') {
-			const paragraph = doc.createElement('p');
-			paragraph.innerHTML = content;
-			newItem.appendChild(paragraph);
-		} else {
-			// Get all paragraphs from the content
-			const paragraphs = Array.from(content.querySelectorAll('p'));
-			if (paragraphs.length === 0) {
-				// If no paragraphs, wrap content in a paragraph
-				const paragraph = doc.createElement('p');
-				paragraph.innerHTML = content.innerHTML;
-				newItem.appendChild(paragraph);
-			} else {
-				// Copy existing paragraphs
-				paragraphs.forEach(p => {
-					const newP = doc.createElement('p');
-					newP.innerHTML = p.innerHTML;
-					newItem.appendChild(newP);
-				});
-			}
-		}
-
-		// Add backlink(s) to the last paragraph
-		const lastParagraph = newItem.querySelector('p:last-of-type') || newItem;
-		refs.forEach((refId, index) => {
-			const backlink = doc.createElement('a');
-			backlink.href = `#${refId}`;
-			backlink.title = 'return to article';
-			backlink.className = 'footnote-backref';
-			backlink.innerHTML = '↩';
-			if (index < refs.length - 1) {
-				backlink.innerHTML += ' ';
-			}
-			lastParagraph.appendChild(backlink);
-		});
-
-		return newItem;
-	}
-
-	private collectFootnotes(element: Element): FootnoteCollection {
-		const footnotes: FootnoteCollection = {};
-		let footnoteCount = 1;
-		const processedIds = new Set<string>(); // Track processed IDs
-
-		// Collect all footnotes and their IDs from footnote lists
-		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
-		footnoteLists.forEach(list => {
-			// Substack has individual footnote divs with no parent
-			if (list.matches('div.footnote[data-component-name="FootnoteToDOM"]')) {
-				const anchor = list.querySelector('a.footnote-number');
-				const content = list.querySelector('.footnote-content');
-				if (anchor && content) {
-					const id = anchor.id.replace('footnote-', '').toLowerCase();
-					if (id && !processedIds.has(id)) {
-						footnotes[footnoteCount] = {
-							content: content,
-							originalId: id,
-							refs: []
-						};
-						processedIds.add(id);
-						footnoteCount++;
-					}
-				}
-				return;
-			}
-
-			// Common format using OL/UL and LI elements
-			const items = list.querySelectorAll('li, div[role="listitem"]');
-			items.forEach(li => {
-				let id = '';
-				let content: Element | null = null;
-
-				// Handle citations with .citations class
-				const citationsDiv = li.querySelector('.citations');
-				if (citationsDiv?.id?.toLowerCase().startsWith('r')) {
-					id = citationsDiv.id.toLowerCase();
-					// Look for citation content within the citations div
-					const citationContent = citationsDiv.querySelector('.citation-content');
-					if (citationContent) {
-						content = citationContent;
-					}
-				} else {
-					// Extract ID from various formats
-					if (li.id.toLowerCase().startsWith('bib.bib')) {
-						id = li.id.replace('bib.bib', '').toLowerCase();
-					} else if (li.id.toLowerCase().startsWith('fn:')) {
-						id = li.id.replace('fn:', '').toLowerCase();
-					} else if (li.id.toLowerCase().startsWith('fn')) {
-						id = li.id.replace('fn', '').toLowerCase();
-					// Nature.com
-					} else if (li.hasAttribute('data-counter')) {
-						id = li.getAttribute('data-counter')?.replace(/\.$/, '')?.toLowerCase() || '';
-					} else {
-						const match = li.id.split('/').pop()?.match(/cite_note-(.+)/);
-						id = match ? match[1].toLowerCase() : li.id.toLowerCase();
-					}
-					content = li;
-				}
-
-				if (id && !processedIds.has(id)) {
-					footnotes[footnoteCount] = {
-						content: content || li,
-						originalId: id,
-						refs: []
-					};
-					processedIds.add(id);
-					footnoteCount++;
-				}
-			});
-		});
-
-		return footnotes;
-	}
-
-	private findOuterFootnoteContainer(el: Element): Element {
-		let current: Element | null = el;
-		let parent: Element | null = el.parentElement;
-		
-		// Keep going up until we find an element that's not a span or sup
-		while (parent && (
-			parent.tagName.toLowerCase() === 'span' || 
-			parent.tagName.toLowerCase() === 'sup'
-		)) {
-			current = parent;
-			parent = parent.parentElement;
-		}
-		
-		return current;
-	}
-
-	// Every footnote reference should be a sup element with an anchor inside
-	// e.g. <sup id="fnref:1"><a href="#fn:1">1</a></sup>
-	private createFootnoteReference(footnoteNumber: string, refId: string): HTMLElement {
-		const sup = this.doc.createElement('sup');
-		sup.id = refId;
-		const link = this.doc.createElement('a');
-		link.href = `#fn:${footnoteNumber}`;
-		link.textContent = footnoteNumber;
-		sup.appendChild(link);
-		return sup;
-	}
-
-	private standardizeFootnotes(element: Element) {
-		const footnotes = this.collectFootnotes(element);
-
-		// Standardize inline footnotes using the collected IDs
-		const footnoteInlineReferences = element.querySelectorAll(FOOTNOTE_INLINE_REFERENCES);
-		
-		// Group references by their parent sup element
-		const supGroups = new Map<Element, Element[]>();
-		
-		footnoteInlineReferences.forEach(el => {
-			if (!(el instanceof HTMLElement)) return;
-
-			let footnoteId = '';
-			let footnoteContent = '';
-
-			// Extract footnote ID based on element type
-			// Nature.com
-			if (el.matches('a[id^="ref-link"]')) {
-				footnoteId = el.textContent?.trim() || '';
-			// Science.org
-			} else if (el.matches('a[role="doc-biblioref"]')) {
-				const xmlRid = el.getAttribute('data-xml-rid');
-				if (xmlRid) {
-					footnoteId = xmlRid;
-				} else {
-					const href = el.getAttribute('href');
-					if (href?.startsWith('#core-R')) {
-						footnoteId = href.replace('#core-', '');
-					}
-				}
-			// Substack
-			} else if (el.matches('a.footnote-anchor, span.footnote-hovercard-target a')) {
-				const id = el.id?.replace('footnote-anchor-', '') || '';
-				if (id) {
-					footnoteId = id.toLowerCase();
-				}
-			// Arxiv
-			} else if (el.matches('cite.ltx_cite')) {
-				const link = el.querySelector('a');
-				if (link) {
-					const href = link.getAttribute('href');
-					if (href) {
-						const match = href.split('/').pop()?.match(/bib\.bib(\d+)/);
-						if (match) {
-							footnoteId = match[1].toLowerCase();
-						}
-					}
-				}
-			} else if (el.matches('sup.reference')) {
-				const links = el.querySelectorAll('a');
-				Array.from(links).forEach(link => {
-					const href = link.getAttribute('href');
-					if (href) {
-						const match = href.split('/').pop()?.match(/(?:cite_note|cite_ref)-(.+)/);
-						if (match) {
-							footnoteId = match[1].toLowerCase();
-						}
-					}
-				});
-			} else if (el.matches('sup[id^="fnref:"]')) {
-				footnoteId = el.id.replace('fnref:', '').toLowerCase();
-			} else if (el.matches('sup[id^="fnr"]')) {
-				footnoteId = el.id.replace('fnr', '').toLowerCase();
-			} else if (el.matches('span.footnote-reference')) {
-				footnoteId = el.getAttribute('data-footnote-id') || '';
-			} else if (el.matches('span.footnote-link')) {
-				footnoteId = el.getAttribute('data-footnote-id') || '';
-				footnoteContent = el.getAttribute('data-footnote-content') || '';
-			} else if (el.matches('a.citation')) {
-				footnoteId = el.textContent?.trim() || '';
-				footnoteContent = el.getAttribute('href') || '';
-			} else if (el.matches('a[id^="fnref"]')) {
-				footnoteId = el.id.replace('fnref', '').toLowerCase();
-			} else {
-				// Other citation types
-				const href = el.getAttribute('href');
-				if (href) {
-					const id = href.replace(/^[#]/, '');
-					footnoteId = id.toLowerCase();
-				}
-			}
-
-			if (footnoteId) {
-				// Find the footnote number by matching the original ID
-				const footnoteEntry = Object.entries(footnotes).find(
-					([_, data]) => data.originalId === footnoteId.toLowerCase()
-				);
-
-				if (footnoteEntry) {
-					const [footnoteNumber, footnoteData] = footnoteEntry;
-					
-					// Create footnote reference ID
-					const refId = footnoteData.refs.length > 0 ? 
-						`fnref:${footnoteNumber}-${footnoteData.refs.length + 1}` : 
-						`fnref:${footnoteNumber}`;
-					
-					footnoteData.refs.push(refId);
-
-					// Find the outermost container (span or sup)
-					const container = this.findOuterFootnoteContainer(el);
-					
-					// If container is a sup, group references
-					if (container.tagName.toLowerCase() === 'sup') {
-						if (!supGroups.has(container)) {
-							supGroups.set(container, []);
-						}
-						const group = supGroups.get(container)!;
-						group.push(this.createFootnoteReference(footnoteNumber, refId));
-					} else {
-						// Replace the container directly
-						container.replaceWith(this.createFootnoteReference(footnoteNumber, refId));
-					}
-				}
-			}
-		});
-
-		// Handle grouped references
-		supGroups.forEach((references, container) => {
-			if (references.length > 0) {
-				// Create a document fragment to hold all the references
-				const fragment = this.doc.createDocumentFragment();
-				
-				// Add each reference as its own sup element
-				references.forEach((ref, index) => {
-					const link = ref.querySelector('a');
-					if (link) {
-						const sup = this.doc.createElement('sup');
-						sup.id = ref.id;
-						sup.appendChild(link.cloneNode(true));
-						fragment.appendChild(sup);
-					}
-				});
-				
-				container.replaceWith(fragment);
-			}
-		});
-
-		// Create the standardized footnote list
-		const newList = this.doc.createElement('div');
-		newList.id = 'footnotes';
-		const orderedList = this.doc.createElement('ol');
-
-		// Create footnote items in order
-		Object.entries(footnotes).forEach(([number, data]) => {
-			const newItem = this.createFootnoteItem(
-				parseInt(number),
-				data.content,
-				data.refs
-			);
-			orderedList.appendChild(newItem);
-		});
-
-		// Remove original footnote lists
-		const footnoteLists = element.querySelectorAll(FOOTNOTE_LIST_SELECTORS);
-		footnoteLists.forEach(list => list.remove());
-
-		// If we have any footnotes, add the new list to the document
-		if (orderedList.children.length > 0) {
-			newList.appendChild(orderedList);
-			element.appendChild(newList);
-		}
 	}
 
 	private handleLazyImages(element: Element) {
