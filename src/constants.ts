@@ -320,6 +320,7 @@ export const PARTIAL_SELECTORS = [
 	'context-bar',
 	'context-widget', // Reuters
 	'core-collateral',
+	'cover-',
 	'creative-commons_',
 	'_cta',
 	'-cta',
@@ -480,6 +481,7 @@ export const PARTIAL_SELECTORS = [
 	'page-title',
 	'paywall_message',
 	'-partners',
+	'permission-',
 	'plea',
 	'popular',
 //	'popup', Gwern
@@ -493,6 +495,7 @@ export const PARTIAL_SELECTORS = [
 	'postdate',
 	'post-date',
 	'post_date',
+	'post-details',
 	'post-feeds',
 	'postinfo',
 	'post-info',
@@ -569,6 +572,10 @@ export const PARTIAL_SELECTORS = [
 	'reversefootnote',
 
 	'screen-reader-text',
+	'scroll_to',
+	'scroll-to',
+	'_search',
+	'-search',
 	'section-nav',
 //	'share',
 //	'-share', scitechdaily.com
@@ -605,6 +612,7 @@ export const PARTIAL_SELECTORS = [
 	'speechify-ignore',
 	'sponsor',
 	'springercitation',
+	'sr-only',
 //	'-stats',
 	'_stats',
 //	'sticky',
@@ -614,6 +622,7 @@ export const PARTIAL_SELECTORS = [
 	'subhead',
 	'submenu',
 //	'subscribe',
+	'subscription-',
 
 	'_tags',
 	'tags__item',
@@ -645,6 +654,8 @@ export const PARTIAL_SELECTORS = [
 	'twitter',
 
 	'u-hide',
+	'upsell',
+
 	'viewbottom',
 	'visually-hidden',
 	'welcomebox'
