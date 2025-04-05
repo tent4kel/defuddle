@@ -189,6 +189,7 @@ export const EXACT_SELECTORS = [
 	'#sitesub',
 	
 	// other
+	'#rss',
 	'.gutter',
 	'#primaryaudio', // NPR
 	'#NYT_ABOVE_MAIN_CONTENT_REGION',
@@ -480,6 +481,7 @@ export const PARTIAL_SELECTORS = [
 
 	'open-slideshow',
 	'originally-published', // Mercury News
+	'other-blogs',
 	'outline-view',
 	'overlay',
 
@@ -576,6 +578,7 @@ export const PARTIAL_SELECTORS = [
 	'related',
 	'relevant',
 	'reversefootnote',
+	'rss-link',
 
 	'screen-reader-text',
 	'scroll_to',
@@ -594,14 +597,15 @@ export const PARTIAL_SELECTORS = [
 	'sidebartitle',
 //	'sidebar_',
 	'sidebar-content',
-	'similar-',
-	'similar_',
-	'similars-',
+	'sidebar-wrapper',
 	'sideitems',
 	'sidebar-author',
 	'sidebar-item',
 	'side-box',
 	'side-logo',
+	'similar-',
+	'similar_',
+	'similars-',
 	'site-index',
 	'site-header',
 	'siteheader',
@@ -654,6 +658,7 @@ export const PARTIAL_SELECTORS = [
 	'tooltip',
 	'topbar',
 	'topic-list',
+	'topic-subnav',
 //	'top-section',
 	'top-wrapper',
 	'tree-item',
@@ -677,6 +682,7 @@ export const FOOTNOTE_INLINE_REFERENCES = [
 	'cite.ltx_cite',
 	'sup[id^="fnr"]',
 	'span[id^="fnr"]',
+	'span[class*="footnote_ref"]',
 	'span.footnote-link',
 	'a.citation',
 	'a[id^="ref-link"]',
