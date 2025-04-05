@@ -83,6 +83,7 @@ export const EXACT_SELECTORS = [
 	'.promo',
 	'.Promo',
 	'#barrier-page', // ft.com
+	'.alert',
 
 	// comments
 	'[id="comments" i]',
@@ -249,6 +250,7 @@ export const PARTIAL_SELECTORS = [
 	'article-meta',
 	'article_meta',
 	'article__meta',
+	'articlename',
 	'article-subject',
 	'article_subject',
 	'article-snippet',
@@ -258,6 +260,7 @@ export const PARTIAL_SELECTORS = [
 	'articletags',
 	'article-tags',
 	'article_tags',
+	'articletitle',
 	'article-title',
 	'article_title',
 	'articletopics',
@@ -422,6 +425,7 @@ export const PARTIAL_SELECTORS = [
 	'labstab', // Arxiv
 	'-labels',
 	'language-name',
+	'lastupdated',
 	'latest-content',
 	'-ledes-', // The Verge
 	'-license',
@@ -543,6 +547,7 @@ export const PARTIAL_SELECTORS = [
 	'press-inquiries',
 	'print-none',
 	'print-header',
+	'print:hidden',
 	'privacy-notice',
 	'privacy-settings',
 	'profile',
@@ -649,7 +654,7 @@ export const PARTIAL_SELECTORS = [
 	'tags__item',
 	'tag_list',
 	'taxonomy',
-	'table-content',
+//	'table-content',
 	'table-of-contents',
 	'tabs-',
 //	'teaser', Nature
