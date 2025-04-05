@@ -87,6 +87,7 @@ export const EXACT_SELECTORS = [
 
 	// comments
 	'[id="comments" i]',
+	'[id="comment" i]',
 
 	// header, nav
 	'header',
@@ -130,6 +131,7 @@ export const EXACT_SELECTORS = [
 	'[href*="#toc"]',
 	'[href="#top"]',
 	'[href="#Top"]',
+	'[href="#page-header"]',
 	'[href="#content"]',
 	'[href="#site-content"]',
 	'[href="#main-content"]',
@@ -170,7 +172,6 @@ export const EXACT_SELECTORS = [
 
 	// hidden for print
 	'.noprint',
-	'[data-link-name*="skip" i]',
 	'[data-print-layout="hide" i]',
 	'[data-block="donotprint" i]',
 
@@ -189,8 +190,13 @@ export const EXACT_SELECTORS = [
 	'#sidebar',
 	'#Sidebar',
 	'#sitesub',
-	
+
+	// skip links
+	'[data-link-name*="skip" i]',
+	'#skip-link',
+
 	// other
+	'.copyright',
 	'#rss',
 	'.gutter',
 	'#primaryaudio', // NPR
@@ -228,6 +234,7 @@ export const PARTIAL_SELECTORS = [
 	'adlayout',
 	'ad-tldr',
 	'ad-placement',
+	'ads-container',
 	'_ad_',
 	'allterms',
 	'alert-box',
@@ -493,6 +500,7 @@ export const PARTIAL_SELECTORS = [
 	'outline-view',
 	'overlay',
 
+	'page-header',
 	'page-title',
 	'paywall_message',
 	'-partners',
@@ -640,6 +648,7 @@ export const PARTIAL_SELECTORS = [
 //	'-stats',
 	'_stats',
 //	'sticky',
+	'story-date',
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
