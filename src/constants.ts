@@ -344,6 +344,7 @@ export const PARTIAL_SELECTORS = [
 	'comment-wrap',
 	'complementary',
 	'consent',
+	'contact-',
 	'content-card', // The Verge
 	'content-topics',
 	'contentpromo',
