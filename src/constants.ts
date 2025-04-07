@@ -48,7 +48,7 @@ export const PRESERVE_ELEMENTS = new Set([
 // Inline elements that should not be unwrapped
 export const INLINE_ELEMENTS = new Set([
 	'a', 'span', 'strong', 'em', 'i', 'b', 'u', 'code', 'br', 'small',
-	'sub', 'sup', 'mark', 'del', 'ins', 'q', 'abbr', 'cite', 'time',
+	'sub', 'sup', 'mark', 'del', 'ins', 'q', 'abbr', 'cite', 'relative-time', 'time',
 	'font'
 ]);
 
@@ -107,6 +107,7 @@ export const EXACT_SELECTORS = [
 	'#menu',
 	'#siteSub',
 	'.fixed',
+	'.previous',
 
 	// metadata
 	'.author',
@@ -116,9 +117,14 @@ export const EXACT_SELECTORS = [
 	'[data-date]',
 	'.meta',
 	'.tags',
+	'#tags',
+	'.categories',
+	'#categories',
 	'.toc',
 	'.Toc',
 	'#toc',
+	'.headline',
+	'#headline',
 	'#title',
 	'#Title',
 	'#articleTag',
@@ -156,6 +162,7 @@ export const EXACT_SELECTORS = [
 	'select',
 	'textarea',
 	'time',
+	'relative-time',
 
 	// iframes
 	'instaread-player',
@@ -197,6 +204,7 @@ export const EXACT_SELECTORS = [
 
 	// other
 	'.copyright',
+	'#copyright',
 	'#rss',
 	'.gutter',
 	'#primaryaudio', // NPR
@@ -225,10 +233,7 @@ export const PARTIAL_SELECTORS = [
 	'access-wall',
 	'activitypub',
 	'actioncall',
-	'after_content',
-	'after_main_article',
-	'appendix',
-	'avatar',
+	'addcomment',
 	'advert',
 //	'-ad-', howtogeek.com
 	'adlayout',
@@ -236,17 +241,22 @@ export const PARTIAL_SELECTORS = [
 	'ad-placement',
 	'ads-container',
 	'_ad_',
+	'after_content',
+	'after_main_article',
 	'allterms',
 	'alert-box',
+	'appendix',
 	'around-the-web',
 	'aroundpages',
 	'article-author',
+	'article-banner',
 	'article-bottom-section',
 	'article-bottom',
 	'article-category',
 	'article-citation',
 	'article__copy',
 	'article_date',
+	'article-date',
 	'article-end ',
 	'article_header',
 	'article-header',
@@ -278,6 +288,7 @@ export const PARTIAL_SELECTORS = [
 	'associated-people',
 	'audio-card',
 //	'author', Gwern
+//	'-author',
 	'author-bio',
 	'author-box',
 	'author-info',
@@ -286,6 +297,7 @@ export const PARTIAL_SELECTORS = [
 	'author-name',
 	'author-publish-info',
 	'authored-by',
+	'avatar',
 
 	'back-to-top',
 	'backlink_container',
@@ -297,10 +309,12 @@ export const PARTIAL_SELECTORS = [
 	'bookmark-',
 	'-bookmark',
 	'bottominfo',
+	'bottomnav',
 	'bottom-of-article',
 	'bottom-wrapper',
 	'brand-bar',
 	'breadcrumb',
+	'brdcrumb',
 	'button-wrapper',
 	'buttons-container',
 	'btn-',
@@ -327,6 +341,7 @@ export const PARTIAL_SELECTORS = [
 	'comment-number',
 	'comment-respond',
 	'comment-thread',
+	'comment-wrap',
 	'complementary',
 	'consent',
 	'content-card', // The Verge
@@ -336,6 +351,7 @@ export const PARTIAL_SELECTORS = [
 	'context-widget', // Reuters
 	'core-collateral',
 	'cover-',
+	'created-date',
 	'creative-commons_',
 	'_cta',
 	'-cta',
@@ -361,6 +377,7 @@ export const PARTIAL_SELECTORS = [
 	'eletters',
 	'emailsignup',
 	'engagement-widget',
+	'enhancement',
 	'entry-author-info',
 	'entry-categories',
 	'entry-date',
@@ -379,6 +396,7 @@ export const PARTIAL_SELECTORS = [
 	'facebook',
 	'fancy-box',
 	'favorite',
+	'featured-content',
 	'feedback',
 	'feed-links',
 	'field-site-sections',
@@ -388,6 +406,7 @@ export const PARTIAL_SELECTORS = [
 	'footer',
 	'footnote-back',
 	'footnoteback',
+	'form-group',
 	'for-you',
 	'frontmatter',
 	'further-reading',
@@ -479,6 +498,7 @@ export const PARTIAL_SELECTORS = [
 	'nav_',
 	'navbar',
 //	'navigation',
+	'navigation-post',
 	'next-',
 	'newsgallery',
 	'news-story-title',
@@ -500,6 +520,7 @@ export const PARTIAL_SELECTORS = [
 	'outline-view',
 	'overlay',
 
+	'pagehead',
 	'page-header',
 	'page-title',
 	'paywall_message',
@@ -509,8 +530,9 @@ export const PARTIAL_SELECTORS = [
 	'popular',
 //	'popup', Gwern
 	'popup_links',
-	'pop-up',
 	'popover',
+	'pop_stories',
+	'pop-up',
 	'post-author',
 	'post-bottom',
 	'post__category',
@@ -530,7 +552,10 @@ export const PARTIAL_SELECTORS = [
 	'post-meta',
 	'postmeta',
 	'post_more',
+	'postnavi',
 	'post-navigation',
+	'postpath',
+	'post-preview',
 	'postsnippet',
 	'post_snippet',
 	'post-snippet',
@@ -548,6 +573,7 @@ export const PARTIAL_SELECTORS = [
 	'post__title',
 	'post-ufi-button',
 //	'preview', used on Obsidian Publish
+	'prev-post',
 	'prevnext',
 	'prev_next',
 	'prev-next',
@@ -635,6 +661,7 @@ export const PARTIAL_SELECTORS = [
 //	'skip-',
 //	'skip-link', TechCrunch
 	'skip-content',
+	'skip-to-content',
 //	'skip-link',
 	'c-skip-link',
 	'_skip-link',
@@ -642,6 +669,7 @@ export const PARTIAL_SELECTORS = [
 	'slug-wrap',
 	'social',
 	'speechify-ignore',
+	'speedbump',
 	'sponsor',
 	'springercitation',
 	'sr-only',
@@ -649,6 +677,7 @@ export const PARTIAL_SELECTORS = [
 	'_stats',
 //	'sticky',
 	'story-date',
+	'story-navigation',
 	'storyreadtime', // Medium
 	'storypublishdate', // Medium
 	'subject-label',
