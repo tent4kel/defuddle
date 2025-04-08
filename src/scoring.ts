@@ -6,14 +6,14 @@ const contentIndicators = [
 	'entry',
 	'image',
 	'img',
-	'photo',
+	'font',
 	'figure',
 	'figcaption',
-	'table',
 	'pre',
 	'main',
 	'post',
-	'story'
+	'story',
+	'table'
 ];
 
 // Text content to test against
@@ -278,6 +278,16 @@ export class ContentScorer {
 		
 		// If the element has a significant amount of text and paragraphs, it's likely content
 		if (words > 50 && paragraphs > 1) {
+			return true;
+		}
+
+		// Check for elements with significant text content, even if they don't have many paragraphs
+		if (words > 100) {
+			return true;
+		}
+
+		// Check for elements with text content and some paragraphs
+		if (words > 30 && paragraphs > 0) {
 			return true;
 		}
 
