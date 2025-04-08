@@ -34,7 +34,7 @@ export const ENTRY_POINT_ELEMENTS = [
 ];
 
 export const MOBILE_WIDTH = 600;
-export const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main'];
+export const BLOCK_ELEMENTS = ['div', 'section', 'article', 'main', 'aside', 'header', 'footer', 'nav', 'content'];
 
 // Elements that should not be unwrapped
 export const PRESERVE_ELEMENTS = new Set([
@@ -49,21 +49,9 @@ export const PRESERVE_ELEMENTS = new Set([
 // Inline elements that should not be unwrapped
 export const INLINE_ELEMENTS = new Set([
 	'a', 'span', 'strong', 'em', 'i', 'b', 'u', 'code', 'br', 'small',
-	'sub', 'sup', 'mark', 'del', 'ins', 'q', 'abbr', 'cite', 'relative-time', 'time',
+	'sub', 'sup', 'mark', 'date', 'del', 'ins', 'q', 'abbr', 'cite', 'relative-time', 'time',
 	'font'
 ]);
-
-// Hidden elements that should be removed
-export const HIDDEN_ELEMENT_SELECTORS = [
-	'[hidden]',
- 	'[aria-hidden="true"]:not([class*="math"])',
-	'[style*="display: none"]:not([class*="math"])',
-	'[style*="display:none"]:not([class*="math"])',
-	'[style*="visibility: hidden"]',
-	'[style*="visibility:hidden"]',
-	'.hidden',
-	'.invisible'
-].join(',');
 
 // Selectors to be removed
 export const EXACT_SELECTORS = [
@@ -81,6 +69,7 @@ export const EXACT_SELECTORS = [
 	'[id^="ad-" i]',
 	'[id$="-ad" i]',
 	'[role="banner" i]',
+	'[alt*="advert" i]',
 	'.promo',
 	'.Promo',
 	'#barrier-page', // ft.com
@@ -113,7 +102,7 @@ export const EXACT_SELECTORS = [
 	// metadata
 	'.author',
 	'.Author',
-	'.categories',
+	'[class$="_bio"]',
 	'#categories',
 	'.contributor',
 	'.date',
@@ -155,6 +144,7 @@ export const EXACT_SELECTORS = [
 	'button',
 		// '[role="button"]', Medium images
 	'canvas',
+	'date',
 	'dialog',
 	'fieldset',
 	'form',
@@ -165,6 +155,16 @@ export const EXACT_SELECTORS = [
 	'textarea',
 	'time',
 	'relative-time',
+
+	// hidden
+	'[hidden]',
+	'[aria-hidden="true"]:not([class*="math"])',
+	'[style*="display: none"]:not([class*="math"])',
+	'[style*="display:none"]:not([class*="math"])',
+	'[style*="visibility: hidden"]',
+	'[style*="visibility:hidden"]',
+	'.hidden',
+	'.invisible',
 
 	// iframes
 	'instaread-player',
@@ -178,6 +178,7 @@ export const EXACT_SELECTORS = [
 	// newsletter
 	'#newsletter',
 	'#Newsletter',
+	'.subscribe',
 
 	// hidden for print
 	'.noprint',
@@ -249,6 +250,7 @@ export const PARTIAL_SELECTORS = [
 	'after_main_article',
 	'afterpost',
 	'allterms',
+	'-alert-',
 	'alert-box',
 	'appendix',
 	'around-the-web',
@@ -259,6 +261,7 @@ export const PARTIAL_SELECTORS = [
 	'article-bottom-section',
 	'article-bottom',
 	'article-category',
+	'article-card',
 	'article-citation',
 	'article__copy',
 	'article_date',
@@ -414,6 +417,7 @@ export const PARTIAL_SELECTORS = [
 	'fixheader',
 	'floating-vid',
 //	'follow',
+	'follower',
 	'footer',
 	'footnote-back',
 	'footnoteback',
@@ -508,7 +512,7 @@ export const PARTIAL_SELECTORS = [
 
 	'nav-',
 	'nav_',
-	'navbar',
+//	'navbar',
 //	'navigation',
 	'navigation-post',
 	'next-',
@@ -647,6 +651,7 @@ export const PARTIAL_SELECTORS = [
 	'_search',
 	'-search',
 	'section-nav',
+	'series-banner',
 //	'share',
 //	'-share', scitechdaily.com
 	'share-box',
@@ -740,6 +745,7 @@ export const PARTIAL_SELECTORS = [
 	'trending',
 	'trust-feat',
 	'trust-badge',
+	'trust-project',
 	'twitter',
 
 	'u-hide',
