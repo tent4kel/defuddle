@@ -214,7 +214,8 @@ export const EXACT_SELECTORS = [
 	'[data-testid="photoviewer-children-figure"] > span', // New York Times
 	'table.infobox',
 	'.pencraft:not(.pc-display-contents)', // Substack
-	'[data-optimizely="related-articles-section" i]' // The Economist
+	'[data-optimizely="related-articles-section" i]', // The Economist
+	'[data-orientation="vertical"]'
 ];
 
 // Attributes to test against for partial matches
@@ -251,6 +252,7 @@ export const PARTIAL_SELECTORS = [
 	'around-the-web',
 	'aroundpages',
 	'article-author',
+	'article-badges',
 	'article-banner',
 	'article-bottom-section',
 	'article-bottom',
@@ -432,6 +434,7 @@ export const PARTIAL_SELECTORS = [
 	'header-pattern', // The Verge
 //	'headlines', Mercurynews
 	'hero-list',
+	'-hidden',
 	'hide-for-print',
 	'hide-print',
 	'hide-when-no-script',
@@ -510,6 +513,8 @@ export const PARTIAL_SELECTORS = [
 	'news-story-title',
 //	'newsletter', used on Substack
 	'newsletter_',
+	'newsletterbanner',
+	'newslettercontainer',
 	'newsletter-form',
 	'newsletter-signup',
 	'newslettersignup',
@@ -676,7 +681,7 @@ export const PARTIAL_SELECTORS = [
 	'_skip-link',
 	'-slider',
 	'slug-wrap',
-	'social',
+//	'social',
 	'speechify-ignore',
 	'speedbump',
 	'sponsor',
