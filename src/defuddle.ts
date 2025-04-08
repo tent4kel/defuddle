@@ -1549,8 +1549,8 @@ export class Defuddle {
 			const elements = doc.querySelectorAll(selector);
 			elements.forEach(element => {
 				// Base score from selector priority (earlier = higher)
-				let score = (ENTRY_POINT_ELEMENTS.length - index) * 10;
-				
+				let score = (ENTRY_POINT_ELEMENTS.length - index) * 40;
+
 				// Add score based on content analysis
 				score += ContentScorer.scoreElement(element);
 				
