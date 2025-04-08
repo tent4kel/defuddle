@@ -21,6 +21,7 @@ import { mathRules } from './elements/math.full';
 import { codeBlockRules } from './elements/code';
 import { standardizeFootnotes } from './elements/footnotes';
 import { headingRules } from './elements/headings';
+import { imageRules } from './elements/images';
 import { ContentScorer, ContentScore } from './scoring';
 
 // Element standardization rules
@@ -35,6 +36,7 @@ const ELEMENT_STANDARDIZATION_RULES: StandardizationRule[] = [
 	...mathRules,
 	...codeBlockRules,
 	...headingRules,
+	...imageRules,
 
 	// Convert divs with paragraph role to actual paragraphs
 	{ 
@@ -837,9 +839,6 @@ export class Defuddle {
 		// Standardize footnotes and citations
 		standardizeFootnotes(element);
 
-		// Handle lazy-loaded images
-		this.handleLazyImages(element);
-
 		// Convert embedded content to standard formats
 		this.standardizeElements(element);
 
@@ -1290,22 +1289,28 @@ export class Defuddle {
 
 					// Only add space between elements or between element and text
 					if (isElement(current) || isElement(next)) {
-						// Don't add space if next content starts with punctuation
+						// Get the text content
 						const nextContent = next.textContent || '';
 						const currentContent = current.textContent || '';
 						
-						if (!nextContent.match(/^[,.!?:;]/) && 
-							!currentContent.match(/[,.!?:;]$/)) {
-							// Check if there's already a space
-							const hasSpace = (current.nodeType === NODE_TYPE.TEXT_NODE && 
-											(current.textContent || '').endsWith(' ')) ||
-											(next.nodeType === NODE_TYPE.TEXT_NODE && 
-											(next.textContent || '').startsWith(' '));
-							
-							if (!hasSpace) {
-								const space = this.doc.createTextNode(' ');
-								node.insertBefore(space, next);
-							}
+						// Don't add space if:
+						// 1. Next content starts with punctuation or closing parenthesis
+						// 2. Current content ends with punctuation or opening parenthesis
+						// 3. There's already a space
+						const nextStartsWithPunctuation = nextContent.match(/^[,.!?:;)\]]/);
+						const currentEndsWithPunctuation = currentContent.match(/[,.!?:;(\[]\s*$/);
+						
+						const hasSpace = (current.nodeType === NODE_TYPE.TEXT_NODE && 
+										(current.textContent || '').endsWith(' ')) ||
+										(next.nodeType === NODE_TYPE.TEXT_NODE && 
+										(next.textContent || '').startsWith(' '));
+						
+						// Only add space if none of the above conditions are true
+						if (!nextStartsWithPunctuation && 
+							!currentEndsWithPunctuation && 
+							!hasSpace) {
+							const space = this.doc.createTextNode(' ');
+							node.insertBefore(space, next);
 						}
 					}
 				}
@@ -1321,40 +1326,6 @@ export class Defuddle {
 			charactersRemoved: removedCount,
 			processingTime: `${(endTime - startTime).toFixed(2)}ms`
 		});
-	}
-
-	private handleLazyImages(element: Element) {
-		let processedCount = 0;
-		const lazyImages = element.querySelectorAll('img[data-src], img[data-srcset]');
-
-		lazyImages.forEach(img => {
-			// Check if element is an image by checking tag name and required properties
-			if (img.tagName.toLowerCase() !== 'img' || !('src' in img) || !('srcset' in img)) {
-				return;
-			}
-
-			// Handle data-src
-			const dataSrc = img.getAttribute('data-src');
-			if (dataSrc && !img.getAttribute('src')) {
-				img.setAttribute('src', dataSrc);
-				processedCount++;
-			}
-
-			// Handle data-srcset
-			const dataSrcset = img.getAttribute('data-srcset');
-			if (dataSrcset && !img.getAttribute('srcset')) {
-				img.setAttribute('srcset', dataSrcset);
-				processedCount++;
-			}
-
-			// Remove lazy loading related classes and attributes
-			img.classList.remove('lazy', 'lazyload');
-			img.removeAttribute('data-ll-status');
-			img.removeAttribute('data-src');
-			img.removeAttribute('data-srcset');
-		});
-
-		this._log('Processed lazy images:', processedCount);
 	}
 
 	private standardizeElements(element: Element): void {
