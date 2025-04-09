@@ -336,6 +336,7 @@ export const PARTIAL_SELECTORS = [
 	'card-media',
 	'card-post',
 //	'carousel',
+	'carouselcontainer',
 	'carousel-container',
 	'cat_header',
 	'catlinks',
