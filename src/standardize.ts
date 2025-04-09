@@ -9,7 +9,7 @@ import {
 } from './constants';
 
 import { DefuddleMetadata } from './types';
-import { mathRules } from './elements/math.full';
+import { mathRules } from './elements/math';
 import { codeBlockRules } from './elements/code';
 import { standardizeFootnotes } from './elements/footnotes';
 import { headingRules } from './elements/headings';
