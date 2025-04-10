@@ -549,7 +549,7 @@ export const PARTIAL_SELECTORS = [
 	'popular',
 //	'popup', Gwern
 	'popup_links',
-	'popover',
+//	'popover',
 	'pop_stories',
 	'pop-up',
 	'post-author',
