@@ -184,7 +184,7 @@ export const imageRules = [
 	
 	// Standardize complex image elements (figure, picture, source, figcaption)
 	{
-		selector: 'figure, [class*="figure"], [class*="image"], [class*="img"], [class*="photo"], [class*="picture"], [class*="media"], [class*="caption"]',
+		selector: 'figure, [class*="figure"], [class*="image"], [class*="img"], [class*="photo"], [class*="picture"], [class*="caption"]',
 		element: 'figure',
 		transform: (el: Element, doc: Document): Element => {
 			try {
