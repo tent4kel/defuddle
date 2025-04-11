@@ -442,7 +442,7 @@ export const PARTIAL_SELECTORS = [
 	'header-pattern', // The Verge
 //	'headlines', Mercurynews
 	'hero-list',
-	'-hidden',
+//	'-hidden',
 	'hide-for-print',
 	'hide-print',
 	'hide-when-no-script',
@@ -537,7 +537,7 @@ export const PARTIAL_SELECTORS = [
 	'originally-published', // Mercury News
 	'other-blogs',
 	'outline-view',
-	'overlay',
+//	'overlay',
 
 	'pagehead',
 	'page-header',
