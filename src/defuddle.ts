@@ -38,7 +38,37 @@ export class Defuddle {
 	 * Parse the document and extract its main content
 	 */
 	parse(): DefuddleResponse {
+		// Try first with default settings
+		const result = this.parseInternal();
+
+		// If result has very little content, try again without clutter removal
+		if (result.wordCount < 200) {
+			console.log('Initial parse returned very little content, trying again');
+			const retryResult = this.parseInternal({ 
+				removePartialSelectors: false 
+			});
+			
+			// Return the result with more content
+			if (retryResult.wordCount > result.wordCount) {
+				this._log('Retry produced more content');
+				return retryResult;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Internal parse method that does the actual work
+	 */
+	private parseInternal(overrideOptions: Partial<DefuddleOptions> = {}): DefuddleResponse {
 		const startTime = Date.now();
+		const options = { 
+			removeExactSelectors: true, 
+			removePartialSelectors: true, 
+			...this.options, 
+			...overrideOptions 
+		};
 
 		// Extract metadata first since we'll need it in multiple places
 		const schemaOrgData = MetadataExtractor.extractSchemaOrgData(this.doc);
@@ -46,7 +76,7 @@ export class Defuddle {
 
 		try {
 			// Use site-specific extractor first, if there is one
-			const url = this.options.url || this.doc.URL;
+			const url = options.url || this.doc.URL;
 			const extractor = ExtractorRegistry.findExtractor(this.doc, url, schemaOrgData);
 			if (extractor && extractor.canExtract()) {
 				const extracted = extractor.extract();
@@ -106,7 +136,9 @@ export class Defuddle {
 			ContentScorer.scoreAndRemove(clone, this.debug);
 
 			// Remove clutter using selectors
-			this.removeClutter(clone);
+			if (options.removeExactSelectors || options.removePartialSelectors) {
+				this.removeBySelector(clone, options.removeExactSelectors, options.removePartialSelectors);
+			}
 
 			// Normalize the main content
 			standardizeContent(mainContent, metadata, this.doc, this.debug);
@@ -297,7 +329,7 @@ export class Defuddle {
 		this._log('Removed hidden elements:', count);
 	}
 
-	private removeClutter(doc: Document) {
+	private removeBySelector(doc: Document, removeExact: boolean = true, removePartial: boolean = true) {
 		const startTime = Date.now();
 		let exactSelectorCount = 0;
 		let partialSelectorCount = 0;
@@ -306,51 +338,55 @@ export class Defuddle {
 		const elementsToRemove = new Set<Element>();
 
 		// First collect elements matching exact selectors
-		const exactElements = doc.querySelectorAll(EXACT_SELECTORS.join(','));
-		exactElements.forEach(el => {
-			if (el?.parentNode) {
-				elementsToRemove.add(el);
-				exactSelectorCount++;
-			}
-		});
-
-		// Pre-compile regexes and combine into a single regex for better performance
-		const combinedPattern = PARTIAL_SELECTORS.join('|');
-		const partialRegex = new RegExp(combinedPattern, 'i');
-
-		// Create an efficient attribute selector for elements we care about
-		const attributeSelector = TEST_ATTRIBUTES.map(attr => `[${attr}]`).join(',');
-		const allElements = doc.querySelectorAll(attributeSelector);
-
-		// Process elements for partial matches
-		allElements.forEach(el => {
-			// Skip if already marked for removal
-			if (elementsToRemove.has(el)) {
-				return;
-			}
-
-			// Get all relevant attributes and combine into a single string
-			const attrs = TEST_ATTRIBUTES.map(attr => {
-				if (attr === 'class') {
-					return el.className && typeof el.className === 'string' ? el.className : '';
+		if (removeExact) {
+			const exactElements = doc.querySelectorAll(EXACT_SELECTORS.join(','));
+			exactElements.forEach(el => {
+				if (el?.parentNode) {
+					elementsToRemove.add(el);
+					exactSelectorCount++;
 				}
-				if (attr === 'id') {
-					return el.id || '';
+			});
+		}
+
+		if (removePartial) {
+			// Pre-compile regexes and combine into a single regex for better performance
+			const combinedPattern = PARTIAL_SELECTORS.join('|');
+			const partialRegex = new RegExp(combinedPattern, 'i');
+
+			// Create an efficient attribute selector for elements we care about
+			const attributeSelector = TEST_ATTRIBUTES.map(attr => `[${attr}]`).join(',');
+			const allElements = doc.querySelectorAll(attributeSelector);
+
+			// Process elements for partial matches
+			allElements.forEach(el => {
+				// Skip if already marked for removal
+				if (elementsToRemove.has(el)) {
+					return;
 				}
-				return el.getAttribute(attr) || '';
-			}).join(' ').toLowerCase();
 
-			// Skip if no attributes to check
-			if (!attrs.trim()) {
-				return;
-			}
+				// Get all relevant attributes and combine into a single string
+				const attrs = TEST_ATTRIBUTES.map(attr => {
+					if (attr === 'class') {
+						return el.className && typeof el.className === 'string' ? el.className : '';
+					}
+					if (attr === 'id') {
+						return el.id || '';
+					}
+					return el.getAttribute(attr) || '';
+				}).join(' ').toLowerCase();
 
-			// Check for partial match using single regex test
-			if (partialRegex.test(attrs)) {
-				elementsToRemove.add(el);
-				partialSelectorCount++;
-			}
-		});
+				// Skip if no attributes to check
+				if (!attrs.trim()) {
+					return;
+				}
+
+				// Check for partial match using single regex test
+				if (partialRegex.test(attrs)) {
+					elementsToRemove.add(el);
+					partialSelectorCount++;
+				}
+			});
+		}
 
 		// Remove all collected elements in a single pass
 		elementsToRemove.forEach(el => el.remove());
