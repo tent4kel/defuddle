@@ -107,6 +107,7 @@ export const EXACT_SELECTORS = [
 	'#categories',
 	'.contributor',
 	'.date',
+	'#date',
 	'[data-date]',
 	'.entry-meta',
 	'.meta',
