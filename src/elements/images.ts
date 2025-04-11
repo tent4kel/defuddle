@@ -184,7 +184,7 @@ export const imageRules = [
 	
 	// Standardize complex image elements (figure, picture, source, figcaption)
 	{
-		selector: 'figure, [class*="figure"], [class*="image"], [class*="img"], [class*="photo"], [class*="picture"], [class*="caption"]',
+		selector: 'figure, p:has(> [class*="caption"])',
 		element: 'figure',
 		transform: (el: Element, doc: Document): Element => {
 			try {
@@ -334,7 +334,13 @@ function hasBetterImageSource(element: Element): boolean {
 			continue;
 		}
 		
-		if (/\.(jpg|jpeg|png|webp)/i.test(attr.value)) {
+		// Check if it's a data-* attribute and contains an image URL
+		if (attr.name.startsWith('data-') && /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(attr.value)) {
+			return true;
+		}
+		
+		// Check non-data attributes for image extensions
+		if (/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(attr.value)) {
 			return true;
 		}
 	}
