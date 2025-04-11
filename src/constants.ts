@@ -89,6 +89,7 @@ export const EXACT_SELECTORS = [
 	'nav',
 	'.navigation',
 	'#navigation',
+	'.hero',
 	'[role="navigation" i]',
 	'[role="dialog" i]',
 	'[role*="complementary" i]',
@@ -455,6 +456,8 @@ export const PARTIAL_SELECTORS = [
 	'interlude',
 	'interaction',
 	'itemendrow',
+	'invisible',
+
 	'jumplink',
 	'jump-to-',
 
