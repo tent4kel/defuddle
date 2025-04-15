@@ -25,6 +25,7 @@ export const ENTRY_POINT_ELEMENTS = [
 	'.article-wrapper',
 	'.entry-content',
 	'.content-article',
+	'.post',
 	'.markdown-body',
 	'article',
 	'[role="article"]',
@@ -205,6 +206,7 @@ export const EXACT_SELECTORS = [
 
 	// skip links
 	'[data-link-name*="skip" i]',
+	'[aria-label*="skip" i]',
 	'#skip-link',
 
 	// other
@@ -255,6 +257,7 @@ export const PARTIAL_SELECTORS = [
 	'-alert-',
 	'alert-box',
 	'appendix',
+	'_archive',
 	'around-the-web',
 	'aroundpages',
 	'article-author',
@@ -342,7 +345,9 @@ export const PARTIAL_SELECTORS = [
 	'carousel-container',
 	'cat_header',
 	'catlinks',
+	'_categories',
 	'card-author',
+	'card-content',
 	'chapter-list', // The Economist
 	'collections',
 	'comments',
@@ -648,6 +653,7 @@ export const PARTIAL_SELECTORS = [
 	'related',
 	'relevant',
 	'reversefootnote',
+	'_rss',
 	'rss-link',
 
 	'screen-reader-text',
@@ -758,7 +764,8 @@ export const PARTIAL_SELECTORS = [
 
 	'viewbottom',
 	'visually-hidden',
-	'welcomebox'
+	'welcomebox',
+	'widget_pages',
 //	'widget-'
 ];
 
