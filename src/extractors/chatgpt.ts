@@ -50,13 +50,10 @@ export class ChatGPTExtractor extends ConversationExtractor {
 
 			// Process inline references using regex to find the containers
 			// Look for spans containing citation links, replacing entire structure
-			const containerPattern = /(?:<\/p>)?<div class="relative inline-flex[^>]*>.*?<\/div>|<span[^>]*>(?:<div class="relative inline-flex[^>]*>|<div[^>]*class="[^"]*relative inline-flex[^>]*>).*?<\/div><\/span>/g;
-			messageContent = messageContent.replace(containerPattern, (match) => {
-				// Extract URL from the match
-				const urlMatch = match.match(/href="([^"]+)"/);
-				if (!urlMatch) return match;
-
-				const url = urlMatch[1];
+			// Updated regex for the new span structure: <span class="ms-1 inline-flex..."><a href="...">...</a></span>
+			const citationSpanPattern = /<span class="ms-1 inline-flex[^>]*>[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<\/a>[\s\S]*?<\/span>/g;
+			messageContent = messageContent.replace(citationSpanPattern, (match, url) => {
+				// url is the captured href value
 				let domain = '';
 				let fragmentText = '';
 				
@@ -85,31 +82,33 @@ export class ChatGPTExtractor extends ConversationExtractor {
 						}
 					}
 				} catch (e) {
-					domain = url;
+					console.error(`Failed to parse URL: ${url}`, e);
+					domain = url; // Fallback to using the raw URL if parsing fails
 				}
 
 				// Check if this URL already exists in our footnotes
 				let footnoteIndex = this.footnotes.findIndex(fn => fn.url === url);
+				let footnoteNumber: number;
+
 				if (footnoteIndex === -1) {
 					// Only create new footnote if URL doesn't exist
 					this.footnoteCounter++;
-					footnoteIndex = this.footnoteCounter;  // Keep it 1-based
+					footnoteNumber = this.footnoteCounter; // Use the counter directly (1-based)
 					this.footnotes.push({ 
 						url, 
 						text: `<a href="${url}">${domain}</a>${fragmentText}`
 					});
 				} else {
-					// Use existing footnote index (already 1-based since we never subtracted 1)
-					footnoteIndex++;
+					// Use existing footnote index (0-based) and convert to 1-based number
+					footnoteNumber = footnoteIndex + 1;
 				}
 				
-				// Return just the footnote reference
-				return `<span class="" data-state="closed"><sup id="fnref:${footnoteIndex}"><a href="#fn:${footnoteIndex}">${footnoteIndex}</a></sup></span>`;
+				// Return just the footnote reference using a simple sup tag
+				return `<sup id="fnref:${footnoteNumber}"><a href="#fn:${footnoteNumber}">${footnoteNumber}</a></sup>`;
 			});
 
-			// Clean up any empty spans and stray paragraph tags
+			// Clean up any stray empty paragraph tags
 			messageContent = messageContent
-				.replace(/<span[^>]*>\s*<\/span>/g, '')
 				.replace(/<p[^>]*>\s*<\/p>/g, '');
 
 			messages.push({
