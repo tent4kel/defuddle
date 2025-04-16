@@ -74,7 +74,7 @@ export class ExtractorRegistry {
 
 		this.register({
 			patterns: [
-				/^https?:\/\/grok\.com\/(chat|share)\/.*/
+				/^https?:\/\/grok\.com\/(chat|share)(\/.*)?$/
 			],
 			extractor: GrokExtractor,
 		});

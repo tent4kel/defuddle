@@ -81,7 +81,7 @@ export class Defuddle {
 			if (extractor && extractor.canExtract()) {
 				const extracted = extractor.extract();
 				const endTime = Date.now();
-				
+				// console.log('Using extractor:', extractor.constructor.name.replace('Extractor', ''));
 				return {
 					content: extracted.contentHtml,
 					title: extracted.variables?.title || metadata.title,
