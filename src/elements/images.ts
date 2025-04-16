@@ -17,56 +17,125 @@ export const imageRules = [
 	// Handle picture elements first to ensure we get the highest resolution
 	{
 		selector: 'picture',
-		element: 'img',
+		element: 'picture',
 		transform: (el: Element, doc: Document): Element => {
-			// Get all source elements
 			const sourceElements = el.querySelectorAll('source');
-			
-			// Create a new img element
-			const newImg = doc.createElement('img');
-			
-			// If we have multiple sources, try to select the best one
-			if (sourceElements.length > 1) {
-				// Find the best source based on media queries and srcset
+			const imgElement = el.querySelector('img');
+
+			if (!imgElement) {
+				console.warn('Picture element without img fallback:', el.outerHTML);
 				const bestSource = selectBestSource(sourceElements);
 				if (bestSource) {
-					// Get the srcset from the best source
 					const srcset = bestSource.getAttribute('srcset');
 					if (srcset) {
+						const newImg = doc.createElement('img');
 						applySrcsetToImage(srcset, newImg);
+						el.innerHTML = '';
+						el.appendChild(newImg);
+						return el;
 					}
 				}
-			} else if (sourceElements.length === 1) {
-				// If only one source, use it
-				const srcset = sourceElements[0].getAttribute('srcset');
-				if (srcset) {
-					applySrcsetToImage(srcset, newImg);
-				}
+				return el;
 			}
-			
-			// Copy other attributes from the original img if it exists
-			const originalImg = el.querySelector('img');
-			if (originalImg) {
-				// Copy all attributes except srcset
-				copyAttributesExcept(originalImg, newImg, ['srcset']);
-				
-				// Always set the src attribute directly from the original img
-				const originalSrc = originalImg.getAttribute('src');
-				
-				// Always use the original src if it exists
-				if (originalSrc) {
-					newImg.setAttribute('src', originalSrc);
+
+			let bestSrcset: string | null = null;
+			let bestSrc: string | null = null;
+
+			if (sourceElements.length > 0) {
+				const bestSource = selectBestSource(sourceElements);
+				if (bestSource) {
+					bestSrcset = bestSource.getAttribute('srcset');
+					if (bestSrcset) {
+						bestSrc = extractFirstUrlFromSrcset(bestSrcset);
+					}
 				}
 			}
 
-			if (!newImg.hasAttribute('src') && originalImg) {
-				const originalSrc = originalImg.getAttribute('src');
-				if (originalSrc) {
-					newImg.setAttribute('src', originalSrc);
+			if (bestSrcset) {
+				imgElement.setAttribute('srcset', bestSrcset);
+			}
+			if (bestSrc && isValidImageUrl(bestSrc)) {
+				imgElement.setAttribute('src', bestSrc);
+			} else if (!imgElement.hasAttribute('src') || !isValidImageUrl(imgElement.getAttribute('src') || '')) {
+				const firstUrl = extractFirstUrlFromSrcset(imgElement.getAttribute('srcset') || bestSrcset || '');
+				if (firstUrl && isValidImageUrl(firstUrl)) {
+					imgElement.setAttribute('src', firstUrl);
 				}
 			}
-			
-			return newImg;
+
+			sourceElements.forEach(source => source.remove());
+
+			return el;
+		}
+	},
+	
+	// Handle custom <uni-image-full-width> elements
+	{
+		selector: 'uni-image-full-width',
+		element: 'figure',
+		transform: (el: Element, doc: Document): Element => {
+			const figure = doc.createElement('figure');
+			const img = doc.createElement('img');
+
+			// Find the original image element
+			const originalImg = el.querySelector('img');
+			if (!originalImg) {
+				// If no img inside, return an empty figure or maybe just the original element?
+				// Returning empty figure for now, as it represents a failed conversion.
+				console.warn('uni-image-full-width without img:', el.outerHTML);
+				return figure; 
+			}
+
+			let bestSrc = originalImg.getAttribute('src'); // Default to src
+			const dataLoadingAttr = originalImg.getAttribute('data-loading');
+			if (dataLoadingAttr) {
+				try {
+					const dataLoading = JSON.parse(dataLoadingAttr);
+					if (dataLoading.desktop && isValidImageUrl(dataLoading.desktop)) {
+						bestSrc = dataLoading.desktop; // Prefer desktop URL
+					}
+				} catch (e) {
+					console.warn('Failed to parse data-loading attribute:', dataLoadingAttr, e);
+				}
+			}
+			if (bestSrc && isValidImageUrl(bestSrc)) {
+				img.setAttribute('src', bestSrc);
+			} else {
+				// If no valid src found, maybe skip this image?
+				console.warn('Could not find valid src for uni-image-full-width:', el.outerHTML);
+				return figure; // Return empty figure
+			}
+
+			let altText = originalImg.getAttribute('alt');
+			if (!altText) {
+				altText = el.getAttribute('alt-text'); // Fallback to parent attribute
+			}
+			if (altText) {
+				img.setAttribute('alt', altText);
+			}
+
+			// Append the image to the figure
+			figure.appendChild(img);
+
+			// Find and add caption
+			const figcaptionEl = el.querySelector('figcaption');
+			if (figcaptionEl) {
+				// Extract text content, potentially from nested elements like <p>
+				const captionText = figcaptionEl.textContent?.trim();
+				if (captionText && captionText.length > 5) { // Basic check for meaningful caption
+					const figcaption = doc.createElement('figcaption');
+					// Try to get cleaner text from specific inner element if possible
+					const richTextP = figcaptionEl.querySelector('.rich-text p');
+					if (richTextP) {
+						figcaption.innerHTML = richTextP.innerHTML; // Use innerHTML to preserve formatting if needed
+					} else {
+						figcaption.textContent = captionText;
+					}
+					figure.appendChild(figcaption);
+				}
+			}
+
+			return figure;
 		}
 	},
 	
@@ -130,54 +199,39 @@ export const imageRules = [
 		element: 'span',
 		transform: (el: Element, doc: Document): Element => {
 			try {
-				// Check if this element contains an image
 				const hasImage = containsImage(el);
 				if (!hasImage) {
-					return el; // Not an image element, return as is
+					return el; 
 				}
 				
-				// Find the main image element
 				const imgElement = findMainImage(el);
 				if (!imgElement) {
-					return el; // No image found, return as is
+					return el; 
 				}
 				
-				// Find any caption
 				const caption = findCaption(el);
 				
-				// Process the image element
+				// Process the image element (might return the img itself or handle picture/source)
 				const processedImg = processImageElement(imgElement, doc);
 				
-				// If there's a meaningful caption, wrap in a figure
 				if (caption && hasMeaningfulCaption(caption)) {
-					// Create a new figure element
-					const figure = doc.createElement('figure');
-					
-					// Add the processed image to the figure
-					figure.appendChild(processedImg);
-					
-					// Add caption - ensure we don't duplicate content
-					const figcaption = doc.createElement('figcaption');
-					
-					// Extract unique caption content
-					const uniqueCaptionContent = extractUniqueCaptionContent(caption);
-					figcaption.innerHTML = uniqueCaptionContent;
-					
-					figure.appendChild(figcaption);
-					
-					// Remove the original caption element to prevent duplication
+					const figure = createFigureWithCaption(processedImg, caption, doc);
+
+					// Remove the original caption element from its parent 
+					// to prevent duplication, as the span itself might remain.
 					if (caption.parentNode) {
 						caption.parentNode.removeChild(caption);
 					}
 					
-					return figure;
+					return figure; // Replace the span (or its content) with the figure
 				} else {
-					// No meaningful caption, just return the image
+					// No meaningful caption, return just the processed image.
+					// This might replace the span content or the span itself depending on framework.
 					return processedImg;
 				}
 			} catch (error) {
 				console.warn('Error processing span with image:', error);
-				return el; // Return original element on error
+				return el; 
 			}
 		}
 	},
@@ -188,58 +242,69 @@ export const imageRules = [
 		element: 'figure',
 		transform: (el: Element, doc: Document): Element => {
 			try {
-				// Check if this element or its children contain an image
 				const hasImage = containsImage(el);
 				if (!hasImage) {
-					return el; // Not an image element, return as is
+					return el; 
 				}
 				
-				// Find the main image element
-				const imgElement = findMainImage(el);
+				const imgElement = findMainImage(el); // Initial find (might be picture)
 				if (!imgElement) {
-					return el; // No image found, return as is
+					return el; 
 				}
+
+				// Note: Previous rules might have processed the image inside 'el'.
 				
-				// Find any caption
 				const caption = findCaption(el);
 				
-				// Process the image element
-				const processedImg = processImageElement(imgElement, doc);
-				
-				// If there's a meaningful caption, wrap in a figure
 				if (caption && hasMeaningfulCaption(caption)) {
-					// Create a new figure element
-					const figure = doc.createElement('figure');
-					
-					// Add the processed image to the figure
-					figure.appendChild(processedImg);
-					
-					// Add caption - ensure we don't duplicate content
-					const figcaption = doc.createElement('figcaption');
-					
-					// Extract unique caption content
-					const uniqueCaptionContent = extractUniqueCaptionContent(caption);
-					figcaption.innerHTML = uniqueCaptionContent;
-					
-					figure.appendChild(figcaption);
-					
-					// Remove the original caption element to prevent duplication
-					if (caption.parentNode) {
-						caption.parentNode.removeChild(caption);
+					// Find the *current* image element inside 'el' again.
+					// It might have been modified (e.g., picture rule -> img)
+					const currentImg = findMainImage(el); 
+					let imageToAdd: Element;
+
+					if (currentImg) {
+						// We'll clone this inside the helper function
+						imageToAdd = currentImg; 
+					} else {
+						// Fallback: process the initially found element.
+						console.warn("Figure rule couldn't find current image element in:", el.outerHTML);
+						// processImageElement will clone if needed
+						imageToAdd = processImageElement(imgElement, doc); 
 					}
-					
-					return figure;
+
+					// Use the helper function to create the figure
+					// The helper clones the imageToAdd before appending.
+					return createFigureWithCaption(imageToAdd, caption, doc);
 				} else {
-					// No meaningful caption, just return the image
-					return processedImg;
+					// No meaningful caption found. Return the original element 'el'.
+					// Preceding rules should have processed the image content *within* 'el'.
+					return el;
 				}
 			} catch (error) {
 				console.warn('Error processing complex image element:', error);
-				return el; // Return original element on error
+				return el; 
 			}
 		}
 	},
 ];
+
+/**
+ * Creates a standard <figure> element containing an image and a caption.
+ */
+function createFigureWithCaption(imageElement: Element, captionElement: Element, doc: Document): Element {
+	const figure = doc.createElement('figure');
+	
+	// Append a clone of the image element to prevent side effects
+	figure.appendChild(imageElement.cloneNode(true)); 
+	
+	// Add caption
+	const figcaption = doc.createElement('figcaption');
+	const uniqueCaptionContent = extractUniqueCaptionContent(captionElement);
+	figcaption.innerHTML = uniqueCaptionContent;
+	figure.appendChild(figcaption);
+
+	return figure;
+}
 
 /**
  * Apply srcset to an image element
@@ -657,7 +722,11 @@ function processImageElement(element: Element, doc: Document): Element {
 	if (tagName === 'img') {
 		return processImgElement(element, doc);
 	} else if (tagName === 'picture') {
-		return processPictureElement(element, doc);
+		// The picture rule modifies the img inside the picture and returns the picture itself.
+		// This function might be called by rules like 'span:has(img)' or 'figure'.
+		// If it receives a picture element processed by the picture rule, it should extract the img inside.
+		const imgInside = element.querySelector('img');
+		return imgInside ? processImgElement(imgInside, doc) : element.cloneNode(true) as Element;
 	} else if (tagName === 'source') {
 		return processSourceElement(element, doc);
 	}

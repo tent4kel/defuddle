@@ -782,9 +782,10 @@ function flattenWrapperElements(element: Element, doc: Document): void {
 	const processElement = (el: Element): boolean => {
 		// Skip processing if element has been removed or should be preserved
 		if (!el.isConnected || shouldPreserveElement(el)) return false;
+		const tagName = el.tagName.toLowerCase();
 
-		// Case 1: Empty element or element with only whitespace
-		if (!el.hasChildNodes() || !el.textContent?.trim()) {
+		// Case 1: Element is truly empty (no text content, no child elements) and not self-closing
+		if (!ALLOWED_EMPTY_ELEMENTS.has(tagName) && !el.children.length && !el.textContent?.trim()) {
 			el.remove();
 			processedCount++;
 			return true;
