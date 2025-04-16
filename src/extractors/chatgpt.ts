@@ -49,41 +49,37 @@ export class ChatGPTExtractor extends ConversationExtractor {
 			messageContent = tempDiv.innerHTML;
 
 			// Process inline references using regex to find the containers
-			// Look for spans containing citation links, replacing entire structure
-			// Updated regex for the new span structure: <span class="ms-1 inline-flex..."><a href="...">...</a></span>
-			const citationSpanPattern = /<span class="ms-1 inline-flex[^>]*>[\s\S]*?<a href="([^"]+)"[^>]*>[\s\S]*?<\/a>[\s\S]*?<\/span>/g;
-			messageContent = messageContent.replace(citationSpanPattern, (match, url) => {
-				// url is the captured href value
+			// Look for spans containing citation links (a[target=_blank][rel=noopener]), replacing entire structure
+			// Also capture optional preceding ZeroWidthSpace
+			const citationPattern = /(&ZeroWidthSpace;)?(<span[^>]*?>\s*<a(?=[^>]*?href="([^"]+)")(?=[^>]*?target="_blank")(?=[^>]*?rel="noopener")[^>]*?>[\s\S]*?<\/a>\s*<\/span>)/gi;
+
+			messageContent = messageContent.replace(citationPattern, (match, zws, spanStructure, url) => {
+				// url is captured group 3
 				let domain = '';
 				let fragmentText = '';
-				
+
 				try {
 					// Extract domain without www.
 					domain = new URL(url).hostname.replace(/^www\./, '');
-					
+
 					// Extract and decode the fragment text if it exists
 					const hashParts = url.split('#:~:text=');
 					if (hashParts.length > 1) {
 						fragmentText = decodeURIComponent(hashParts[1]);
-						// Replace URL-encoded commas and clean up
 						fragmentText = fragmentText.replace(/%2C/g, ',');
 						
-						// Split the fragment into start and end if it contains a comma
 						const parts = fragmentText.split(',');
 						if (parts.length > 1 && parts[0].trim()) {
-							// Only show first part with ellipsis if it has content
 							fragmentText = ` — ${parts[0].trim()}...`;
 						} else if (parts[0].trim()) {
-							// If no comma but has content, wrap the whole text
 							fragmentText = ` — ${fragmentText.trim()}`;
 						} else {
-							// If no content, don't show fragment text at all
 							fragmentText = '';
 						}
 					}
 				} catch (e) {
 					console.error(`Failed to parse URL: ${url}`, e);
-					domain = url; // Fallback to using the raw URL if parsing fails
+					domain = url; 
 				}
 
 				// Check if this URL already exists in our footnotes
@@ -91,19 +87,17 @@ export class ChatGPTExtractor extends ConversationExtractor {
 				let footnoteNumber: number;
 
 				if (footnoteIndex === -1) {
-					// Only create new footnote if URL doesn't exist
 					this.footnoteCounter++;
-					footnoteNumber = this.footnoteCounter; // Use the counter directly (1-based)
+					footnoteNumber = this.footnoteCounter;
 					this.footnotes.push({ 
 						url, 
 						text: `<a href="${url}">${domain}</a>${fragmentText}`
 					});
 				} else {
-					// Use existing footnote index (0-based) and convert to 1-based number
 					footnoteNumber = footnoteIndex + 1;
 				}
 				
-				// Return just the footnote reference using a simple sup tag
+				// Return just the footnote reference, replacing the ZWS (if captured) and the entire span structure
 				return `<sup id="fnref:${footnoteNumber}"><a href="#fn:${footnoteNumber}">${footnoteNumber}</a></sup>`;
 			});
 
