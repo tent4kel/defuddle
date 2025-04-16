@@ -79,7 +79,7 @@ export class ExtractorRegistry {
 			extractor: GrokExtractor,
 		});
 
-    this.register({
+		this.register({
 			patterns: [
 				/^https?:\/\/gemini\.google\.com\/app\/.*/
 			],
