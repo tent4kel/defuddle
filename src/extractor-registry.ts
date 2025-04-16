@@ -7,6 +7,7 @@ import { YoutubeExtractor } from './extractors/youtube';
 import { HackerNewsExtractor } from './extractors/hackernews';
 import { ChatGPTExtractor } from './extractors/chatgpt';
 import { ClaudeExtractor } from './extractors/claude';
+import { GrokExtractor } from './extractors/grok';
 import { GeminiExtractor } from './extractors/gemini';
 
 type ExtractorConstructor = new (document: Document, url: string, schemaOrgData?: any) => BaseExtractor;
@@ -72,6 +73,13 @@ export class ExtractorRegistry {
 		});
 
 		this.register({
+			patterns: [
+				/^https?:\/\/grok\.com\/(chat|share)\/.*/
+			],
+			extractor: GrokExtractor,
+		});
+
+    this.register({
 			patterns: [
 				/^https?:\/\/gemini\.google\.com\/app\/.*/
 			],
