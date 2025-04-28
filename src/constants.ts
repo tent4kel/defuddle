@@ -419,6 +419,7 @@ export const PARTIAL_SELECTORS = [
 	'fancy-box',
 	'favorite',
 	'featured-content',
+	'feature_feed',
 	'feedback',
 	'feed-links',
 	'field-site-sections',
