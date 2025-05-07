@@ -111,8 +111,8 @@ The core bundle is recommended for most use cases. It still handles math content
 |--------------------------|---------|---------------------------------------------------------------------------------|
 | `debug`                  | boolean | Enable debug logging                                                            |
 | `url`                    | string  | URL of the page being parsed                                                    |
-| `markdown`               | boolean | Convert output to markdown                                                      |
-| `includeMarkdown`        | boolean | Include markdown in the response                                                |
+| `markdown`               | boolean | Convert `content` to Markdown                                                   |
+| `separateMarkdown`       | boolean | Keep `content` as HTML and return `contentMarkdown` as Markdown                 |
 | `removeExactSelectors`   | boolean | Whether to remove elements matching exact selectors like ads, social buttons, etc. Defaults to true. |
 | `removePartialSelectors` | boolean | Whether to remove elements matching partial selectors like ads, social buttons, etc. Defaults to true. |
 

@@ -46,7 +46,7 @@ export async function Defuddle(
 	// Convert to markdown if requested
 	if (options?.markdown) {
 		result.content = createMarkdownContent(result.content, pageUrl);
-	} else if (options?.includeMarkdown) {
+	} else if (options?.separateMarkdown) {
 		result.contentMarkdown = createMarkdownContent(result.content, pageUrl);
 	}
 

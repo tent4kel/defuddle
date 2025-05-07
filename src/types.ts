@@ -30,14 +30,14 @@ export interface DefuddleOptions {
 	url?: string;
 
 	/**
-	 * Convert output to markdown
+	 * Convert output to Markdown
 	 */
 	markdown?: boolean;
 
 	/**
-	 * Include markdown in the response
+	 * Include Markdown in the response
 	 */
-	includeMarkdown?: boolean;
+	separateMarkdown?: boolean;
 
 	/**
 	 * Whether to remove elements matching exact selectors like ads, social buttons, etc.
