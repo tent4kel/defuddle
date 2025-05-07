@@ -98,7 +98,7 @@ export const EXACT_SELECTORS = [
 	'.menu',
 	'#menu',
 	'#siteSub',
-	'.fixed',
+	// '.fixed', see issue #44
 	'.previous',
 
 	// metadata
