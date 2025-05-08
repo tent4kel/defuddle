@@ -885,24 +885,24 @@ function processSourceElement(element: Element, doc: Document): Element {
  */
 function extractFirstUrlFromSrcset(srcset: string): string | null {
 	// Split the srcset by commas
-	const parts = srcset.split(',');
+	const parts = srcset.split(','); // Split by comma only
 	if (parts.length === 0) {
 		return null;
 	}
-	
-	// Get the first part
+
+	// Get the first part and trim whitespace
 	const firstPart = parts[0].trim();
-	
+
 	// Extract the URL (everything before the first space)
 	const urlMatch = firstPart.match(urlPattern);
 	if (urlMatch && urlMatch[1]) {
 		const url = urlMatch[1];
-		
+
 		// Skip SVG data URLs
 		if (isSvgDataUrl(url)) {
 			// Try to find a better URL in the srcset
 			for (let i = 1; i < parts.length; i++) {
-				const part = parts[i].trim();
+				const part = parts[i].trim(); // Trim each part
 				const match = part.match(urlPattern);
 				if (match && match[1] && !isSvgDataUrl(match[1])) {
 					return match[1];
@@ -910,10 +910,10 @@ function extractFirstUrlFromSrcset(srcset: string): string | null {
 			}
 			return null;
 		}
-		
+
 		return url;
 	}
-	
+
 	return null;
 }
 
