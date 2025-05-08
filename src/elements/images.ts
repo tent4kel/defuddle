@@ -2,6 +2,8 @@
  * Standardization rules for handling images
  */
 
+import { isElement, isTextNode } from '../utils';
+
 // Pre-compile regular expressions
 const b64DataUrlRegex = /^data:image\/([^;]+);base64,/;
 const srcsetPattern = /\.(jpg|jpeg|png|webp)\s+\d/;
@@ -651,17 +653,16 @@ function extractUniqueCaptionContent(caption: Element): string {
 	const processedTexts = new Set<string>();
 	
 	// Helper function to process a node
-	const processNode = (node: any) => {
-		if (node.nodeType === 3) { // 3 is TEXT_NODE
+	const processNode = (node: Node) => {
+		if (isTextNode(node)) {
 			const text = node.textContent?.trim() || '';
 			if (text && !processedTexts.has(text)) {
 				textNodes.push(text);
 				processedTexts.add(text);
 			}
-		} else if (node.nodeType === 1) { // 1 is ELEMENT_NODE
-			const element = node as Element;
+		} else if (isElement(node)) {
 			// Process child nodes
-			const childNodes = element.childNodes;
+			const childNodes = node.childNodes;
 			for (let i = 0; i < childNodes.length; i++) {
 				processNode(childNodes[i]);
 			}
