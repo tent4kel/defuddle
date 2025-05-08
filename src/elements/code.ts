@@ -1,4 +1,4 @@
-import { NODE_TYPE } from '../constants';
+import { isTextNode, isElement } from '../utils';
 
 // Language patterns
 const HIGHLIGHTER_PATTERNS = [
@@ -119,10 +119,6 @@ const CODE_LANGUAGES = new Set([
 	'zig'
 ]);
 
-function isElement(node: Node): node is Element {
-	return node.nodeType === NODE_TYPE.ELEMENT_NODE;
-}
-
 // Convert code blocks with different syntax highlighters and line numbers
 // to a standard <pre> and <code> element with a language attribute
 export const codeBlockRules = [
@@ -242,7 +238,7 @@ export const codeBlockRules = [
 
 			// Recursively extract text content while preserving structure
 			const extractStructuredText = (element: Node): string => {
-				if (element.nodeType === NODE_TYPE.TEXT_NODE) {
+				if (isTextNode(element)) {
 					return element.textContent || '';
 				}
 				

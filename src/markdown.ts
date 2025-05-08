@@ -1,5 +1,5 @@
 import TurndownService from 'turndown';
-import { NODE_TYPE } from './constants';
+import { isElement, isTextNode } from './utils';
 
 // Define a type that works for both JSDOM and browser environments
 type GenericElement = {
@@ -29,16 +29,11 @@ type GenericElement = {
 	closest?: (selector: string) => Element | null;
 };
 
-// Helper functions for type assertions
-function isGenericElement(node: unknown): node is GenericElement {
+export function isGenericElement(node: unknown): node is GenericElement {
 	return node !== null && typeof node === 'object' && 'getAttribute' in node;
 }
 
-function isElement(node: Node): node is Element {
-	return node.nodeType === NODE_TYPE.ELEMENT_NODE;
-}
-
-function asGenericElement(node: any): GenericElement {
+export function asGenericElement(node: any): GenericElement {
 	return node as unknown as GenericElement;
 }
 
@@ -417,7 +412,7 @@ export function createMarkdownContent(content: string, url: string) {
 
 	turndownService.addRule('handleTextNodesInTables', {
 		filter: function (node: any): boolean {
-			return node.nodeType === NODE_TYPE.TEXT_NODE && 
+			return isTextNode(node) && 
 				   node.parentNode !== null && 
 				   node.parentNode.nodeName === 'TD';
 		},
@@ -484,8 +479,8 @@ export function createMarkdownContent(content: string, url: string) {
 				const prevChar = prevNode && isGenericElement(prevNode) ? prevNode.textContent?.slice(-1) || '' : '';
 				const nextChar = nextNode && isGenericElement(nextNode) ? nextNode.textContent?.[0] || '' : '';
 
-				const isStartOfLine = !prevNode || (prevNode.nodeType === NODE_TYPE.TEXT_NODE && prevNode.textContent?.trim() === '');
-				const isEndOfLine = !nextNode || (nextNode.nodeType === NODE_TYPE.TEXT_NODE && nextNode.textContent?.trim() === '');
+				const isStartOfLine = !prevNode || (isTextNode(prevNode) && prevNode.textContent?.trim() === '');
+				const isEndOfLine = !nextNode || (isTextNode(nextNode) && nextNode.textContent?.trim() === '');
 
 				const leftSpace = (!isStartOfLine && prevChar && !/[\s$]/.test(prevChar)) ? ' ' : '';
 				const rightSpace = (!isEndOfLine && nextChar && !/[\s$]/.test(nextChar)) ? ' ' : '';

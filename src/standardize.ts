@@ -4,8 +4,7 @@ import {
 	INLINE_ELEMENTS,
 	ALLOWED_ATTRIBUTES,
 	ALLOWED_ATTRIBUTES_DEBUG,
-	ALLOWED_EMPTY_ELEMENTS,
-	NODE_TYPE
+	ALLOWED_EMPTY_ELEMENTS
 } from './constants';
 
 import { DefuddleMetadata } from './types';
@@ -14,7 +13,7 @@ import { codeBlockRules } from './elements/code';
 import { standardizeFootnotes } from './elements/footnotes';
 import { headingRules } from './elements/headings';
 import { imageRules } from './elements/images';
-import { isElement, getComputedStyle, logDebug } from './utils';
+import { isElement, isTextNode, isCommentNode, getComputedStyle, logDebug } from './utils';
 
 // Element standardization rules
 // Maps selectors to their target HTML element name
@@ -190,7 +189,7 @@ export function standardizeContent(element: Element, metadata: DefuddleMetadata,
 function standardizeSpaces(element: Element): void {
 	const processNode = (node: Node) => {
 		// Skip pre and code elements
-		if (node.nodeType === NODE_TYPE.ELEMENT_NODE) {
+		if (isElement(node)) {
 			const tag = (node as Element).tagName.toLowerCase();
 			if (tag === 'pre' || tag === 'code') {
 				return;
@@ -198,7 +197,7 @@ function standardizeSpaces(element: Element): void {
 		}
 
 		// Process text nodes
-		if (node.nodeType === NODE_TYPE.TEXT_NODE) {
+		if (isTextNode(node)) {
 			const text = node.textContent || '';
 			// Replace &nbsp; with regular spaces, except when it's a single &nbsp; between words
 			const newText = text.replace(/\xA0+/g, (match) => {
@@ -237,9 +236,9 @@ function removeTrailingHeadings(element: Element): void {
 
 		// First check direct siblings
 		while (sibling) {
-			if (sibling.nodeType === NODE_TYPE.TEXT_NODE) { // TEXT_NODE
+			if (isTextNode(sibling)) { // TEXT_NODE
 				nextContent += sibling.textContent || '';
-			} else if (sibling.nodeType === NODE_TYPE.ELEMENT_NODE) { // ELEMENT_NODE
+			} else if (isElement(sibling)) { // ELEMENT_NODE
 				// If we find an element sibling, check its content
 				nextContent += (sibling as Element).textContent || '';
 			}
@@ -325,7 +324,7 @@ function removeHtmlComments(element: Element): void {
 	allElements.forEach(el => {
 		const childNodes = Array.from(el.childNodes);
 		childNodes.forEach(node => {
-			if (node.nodeType === 8) { // 8 is the node type for comments
+			if (isCommentNode(node)) {
 				node.remove();
 				removedCount++;
 			}
@@ -414,7 +413,7 @@ function removeEmptyElements(element: Element): void {
 			// Check if element has no meaningful children
 			const hasNoChildren = !el.hasChildNodes() || 
 				(Array.from(el.childNodes).every(node => {
-					if (node.nodeType === NODE_TYPE.TEXT_NODE) { // TEXT_NODE
+					if (isTextNode(node)) { // TEXT_NODE
 						const nodeText = node.textContent || '';
 						return nodeText.trim().length === 0 && !nodeText.includes('\u00A0');
 					}
@@ -478,7 +477,7 @@ function stripExtraBrElements(element: Element): void {
 			let node: Node | null = currentNode.previousSibling;
 			
 			// Skip whitespace text nodes
-			while (node && node.nodeType === NODE_TYPE.TEXT_NODE && !node.textContent?.trim()) {
+			while (node && isTextNode(node) && !node.textContent?.trim()) {
 				node = node.previousSibling;
 			}
 			
@@ -513,7 +512,7 @@ function removeEmptyLines(element: Element, doc: Document): void {
 	// First pass: remove empty text nodes
 	const removeEmptyTextNodes = (node: Node) => {
 		// Skip if inside pre or code
-		if (node.nodeType === NODE_TYPE.ELEMENT_NODE) {
+		if (isElement(node)) {
 			const tag = (node as Element).tagName.toLowerCase();
 			if (tag === 'pre' || tag === 'code') {
 				return;
@@ -525,7 +524,7 @@ function removeEmptyLines(element: Element, doc: Document): void {
 		children.forEach(removeEmptyTextNodes);
 
 		// Then handle this node
-		if (node.nodeType === NODE_TYPE.TEXT_NODE) {
+		if (isTextNode(node)) {
 			const text = node.textContent || '';
 			// If it's completely empty or just special characters/whitespace, remove it
 			if (!text || text.match(/^[\u200C\u200B\u200D\u200E\u200F\uFEFF\xA0\s]*$/)) {
@@ -580,14 +579,14 @@ function removeEmptyLines(element: Element, doc: Document): void {
 		const endPattern = isBlockElement ? /^[\n\r\t \u200C\u200B\u200D\u200E\u200F\uFEFF\xA0]*$/ : /^[\n\r\t\u200C\u200B\u200D\u200E\u200F\uFEFF]*$/;
 		
 		while (node.firstChild && 
-			   node.firstChild.nodeType === NODE_TYPE.TEXT_NODE && 
+			   isTextNode(node.firstChild) && 
 			   (node.firstChild.textContent || '').match(startPattern)) {
 			node.removeChild(node.firstChild);
 			removedCount++;
 		}
 		
 		while (node.lastChild && 
-			   node.lastChild.nodeType === NODE_TYPE.TEXT_NODE && 
+			   isTextNode(node.lastChild) && 
 			   (node.lastChild.textContent || '').match(endPattern)) {
 			node.removeChild(node.lastChild);
 			removedCount++;
@@ -613,9 +612,9 @@ function removeEmptyLines(element: Element, doc: Document): void {
 					const nextStartsWithPunctuation = nextContent.match(/^[,.!?:;)\]]/);
 					const currentEndsWithPunctuation = currentContent.match(/[,.!?:;(\[]\s*$/);
 					
-					const hasSpace = (current.nodeType === NODE_TYPE.TEXT_NODE && 
+					const hasSpace = (isTextNode(current) && 
 									(current.textContent || '').endsWith(' ')) ||
-									(next.nodeType === NODE_TYPE.TEXT_NODE && 
+									(isTextNode(next) && 
 									(next.textContent || '').startsWith(' '));
 					
 					// Only add space if none of the above conditions are true
@@ -691,11 +690,11 @@ function flattenWrapperElements(element: Element, doc: Document): void {
 	function hasDirectInlineContent(el: Element): boolean {
 		for (const child of el.childNodes) {
 			// Check for non-empty text nodes
-			if (child.nodeType === NODE_TYPE.TEXT_NODE && child.textContent?.trim()) {
+			if (isTextNode(child) && child.textContent?.trim()) {
 				return true;
 			}
 			// Check for element nodes that are considered inline
-			if (child.nodeType === NODE_TYPE.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase())) {
+			if (isElement(child) && INLINE_ELEMENTS.has(child.nodeName.toLowerCase())) {
 				return true;
 			}
 		}
@@ -764,7 +763,7 @@ function flattenWrapperElements(element: Element, doc: Document): void {
 
 		// Check if it has excessive whitespace or empty text nodes
 		const textNodes = Array.from(el.childNodes).filter(node => 
-			node.nodeType === NODE_TYPE.TEXT_NODE && node.textContent?.trim()
+			isTextNode(node) && node.textContent?.trim()
 		);
 		if (textNodes.length === 0) return true;
 
@@ -842,8 +841,8 @@ function flattenWrapperElements(element: Element, doc: Document): void {
 		// Case 4: Element only contains text and/or inline elements - convert to paragraph
 		const childNodes = Array.from(el.childNodes);
 		const hasOnlyInlineOrText = childNodes.length > 0 && childNodes.every(child =>
-			(child.nodeType === NODE_TYPE.TEXT_NODE) ||
-			(child.nodeType === NODE_TYPE.ELEMENT_NODE && INLINE_ELEMENTS.has(child.nodeName.toLowerCase()))
+			(isTextNode(child)) ||
+			(isElement(child) && INLINE_ELEMENTS.has(child.nodeName.toLowerCase()))
 		);
 
 		if (hasOnlyInlineOrText && el.textContent?.trim()) { // Ensure there's actual content
