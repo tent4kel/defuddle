@@ -28,6 +28,7 @@ export interface DefuddleResponse extends DefuddleMetadata {
 export interface DefuddleOptions {
 	/**
 	 * Enable debug logging
+	 * Defaults to false
 	 */
 	debug?: boolean;
 
@@ -38,29 +39,31 @@ export interface DefuddleOptions {
 
 	/**
 	 * Convert output to Markdown
+	 * Defaults to false
 	 */
 	markdown?: boolean;
 
 	/**
 	 * Include Markdown in the response
+	 * Defaults to false
 	 */
 	separateMarkdown?: boolean;
 
 	/**
-	 * Whether to remove elements matching exact selectors like ads, social buttons, etc.
-	 * Defaults to true.
+	 * Remove elements matching exact selectors like ads, social buttons, etc
+	 * Defaults to true
 	 */
 	removeExactSelectors?: boolean;
 
 	/**
-	 * Whether to remove elements matching partial selectors like ads, social buttons, etc.
-	 * Defaults to true.
+	 * Remove elements matching partial selectors like ads, social buttons, etc
+	 * Defaults to true
 	 */
 	removePartialSelectors?: boolean;
 
 	/**
-	 * Whether to remove images from the page
-	 * Defaults to false.
+	 * Remove images
+	 * Defaults to false
 	 */
 	removeImages?: boolean
 }
