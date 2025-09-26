@@ -206,7 +206,7 @@ export const EXACT_SELECTORS = [
 	'[data-optimizely="related-articles-section" i]', // The Economist
 	'[data-orientation="vertical"]',
 	'.gh-header-sticky', // GitHub
-	'[data-testid="issue-metadata-sticky"]', // GitHub
+	'[data-testid="issue-metadata-sticky"]', // GitHub	
 ];
 
 // Attributes to test against for partial matches
@@ -217,7 +217,8 @@ export const TEST_ATTRIBUTES = [
 	'data-testid',
 	'data-test-id',
 	'data-qa',
-	'data-cy'
+	'data-cy',
+	'data-sara-component'
 ];
 
 // Removal patterns tested against attributes above
@@ -354,6 +355,7 @@ export const PARTIAL_SELECTORS = [
 	'content-topics',
 	'contentpromo',
 	'context-bar',
+	'content-box', // spiegel.de
 	'context-widget', // Reuters
 	'core-collateral',
 	'cover-',
@@ -405,6 +407,7 @@ export const PARTIAL_SELECTORS = [
 	'favorite',
 	'featured-content',
 	'feature_feed',
+	'feature-bar', //spiegel.de
 	'feedback',
 	'feed-links',
 	'field-site-sections',
@@ -638,6 +641,7 @@ export const PARTIAL_SELECTORS = [
 	'recirc',
 	'register',
 	'related',
+	'related-articles',
 	'relevant',
 	'reversefootnote',
 	'_rss',
