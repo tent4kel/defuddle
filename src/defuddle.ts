@@ -430,7 +430,7 @@ export class Defuddle {
 
 	// Find small IMG and SVG elements
 	private findSmallImages(doc: Document): Set<string> {
-		const MIN_DIMENSION = 33;
+		const MIN_DIMENSION = 129;
 		const smallImages = new Set<string>();
 		const transformRegex = /scale\(([\d.]+)\)/;
 		const startTime = Date.now();
