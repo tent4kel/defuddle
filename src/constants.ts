@@ -447,6 +447,7 @@ export const PARTIAL_SELECTORS = [
 	'hidden-accessibility',
 
 	'infoline',
+	'inhalt',
 	'instacartIntegration',
 	'interlude',
 	'interaction',
@@ -463,6 +464,8 @@ export const PARTIAL_SELECTORS = [
 //	'keyword', // used in syntax highlighting
 	'keyword_wrap',
 	'kicker',
+	'Kommentare',
+
 
 	'labstab', // Arxiv
 	'-labels',
@@ -537,6 +540,7 @@ export const PARTIAL_SELECTORS = [
 	'other-blogs',
 	'outline-view',
 //	'overlay',
+	'z-overlay',
 
 	'pagehead',
 	'page-header',
