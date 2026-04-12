@@ -241,7 +241,8 @@ export const EXACT_SELECTORS = [
 	'[class*="digestPostEmbed"]', // class has hash suffix in browser-rendered DOM
 
   	// related / recommendation widgets
-  	'[data-sara-component*="related-articles"]',
+  	'[data-sara-component*="related-articles"]', // spiegel.de
+	'article[data-k5a-isslot="true"]', // zeit.de
 	
 	// hidden for print
 	'.noprint',
