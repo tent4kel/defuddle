@@ -240,6 +240,9 @@ export const EXACT_SELECTORS = [
 	'[data-component-name="SubscribeWidgetToDOM"]',
 	'[class*="digestPostEmbed"]', // class has hash suffix in browser-rendered DOM
 
+  	// related / recommendation widgets
+  	'[data-sara-component*="related-articles"]',
+	
 	// hidden for print
 	'.noprint',
 	'[data-print-layout="hide" i]',
