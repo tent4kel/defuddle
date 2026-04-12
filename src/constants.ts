@@ -445,6 +445,7 @@ export const PARTIAL_SELECTORS = [
 	'content-topics',
 	'contentpromo',
 	'context-bar',
+	'content-box', // spiegel.de
 	'context-widget', // Reuters
 	'core-collateral',
 	'cover-image',
@@ -474,6 +475,7 @@ export const PARTIAL_SELECTORS = [
 	'donate',
 	'donation',
 	'dropdown', // Ars Technica
+	'data-sara-component' //spiegel.de
 
 	'editorial_contact',
 	'editorial-contact',
@@ -502,6 +504,7 @@ export const PARTIAL_SELECTORS = [
 	'facebook',
 	'fancy-box',
 	'favorite',
+	'feature-bar', //spiegel.de
 	'featured-content',
 	'feature_feed',
 	'feedback',
@@ -753,6 +756,7 @@ export const PARTIAL_SELECTORS = [
 	'redirectedfrom',
 	'recirc',
 	'register',
+	'related-articles', // spiegel.de
 	'(?<!h[1-6]-)related',
 	'relevant',
 	'reversefootnote',
