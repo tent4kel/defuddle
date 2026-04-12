@@ -243,6 +243,8 @@ export const EXACT_SELECTORS = [
   	// related / recommendation widgets
   	'[data-sara-component*="related-articles"]', // spiegel.de
 	'article[data-k5a-isslot="true"]', // zeit.de
+	'[data-render$="-article-teaser"]', // zeit.de
+	'[data-prop-vivi-embed-name$="-article-teaser"]', // zeit.de
 	
 	// hidden for print
 	'.noprint',
