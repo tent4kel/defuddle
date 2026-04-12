@@ -479,7 +479,7 @@ export const PARTIAL_SELECTORS = [
 	'donate',
 	'donation',
 	'dropdown', // Ars Technica
-	'data-sara-component' //spiegel.de
+	'data-sara-component', //spiegel.de
 
 	'editorial_contact',
 	'editorial-contact',
