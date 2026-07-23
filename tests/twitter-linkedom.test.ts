@@ -131,6 +131,43 @@ describe('TwitterExtractor markup resilience', () => {
 		expect(body.indexOf('Second post in the thread.')).toBeLessThan(body.indexOf('twitter comments'));
 	});
 
+	test('DOM thread wins over the async single-tweet path, even detached', async () => {
+		// Regression: a reader view parses the page into a detached document
+		// (defaultView !== window), which used to flip XOembedExtractor to
+		// prefer the async oEmbed/FxTwitter path. That path returns only the
+		// single main tweet, so the thread self-replies and the replies were
+		// silently dropped — the popup showed the whole thread but the reader
+		// showed just the first post. Here the async fetch SUCCEEDS (unlike the
+		// other hermetic tests): the DOM still has to win because it is richer.
+		const singleTweetFetch = (async (input: string | URL) => {
+			const target = String(input);
+			if (target.includes('api.fxtwitter.com')) {
+				return {
+					ok: true,
+					status: 200,
+					json: async () => ({
+						code: 200,
+						tweet: {
+							text: 'Durable formats outlast the apps that read them.',
+							author: { name: 'Example Name', screen_name: 'examplename' },
+						},
+					}),
+				};
+			}
+			return { ok: false, status: 404, json: async () => ({}) };
+		}) as unknown as typeof fetch;
+
+		const doc = parseLinkedomHTML(page(`
+			<div aria-label="Timeline: Conversation">${MAIN}${SELF_REPLY}${REPLY}</div>`), url);
+		const result = await Defuddle(doc, url, { markdown: false, fetch: singleTweetFetch });
+
+		// The self-reply (thread) and the stranger's reply only exist in the DOM
+		// path — the async single-tweet result has neither.
+		expect(result.content).toContain('A follow-up in the same thread.');
+		expect(result.content).toContain('A reply from someone else.');
+		expect(result.content).toContain('twitter comments');
+	});
+
 	test('falls back to a single tweet when there is no timeline', async () => {
 		const { result } = await parse(`
 			<div>${tweet('examplename', 'Example Name', 'A single tweet with no surrounding timeline.', '1001')}</div>`);
