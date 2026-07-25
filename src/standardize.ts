@@ -15,12 +15,12 @@ import {
 } from './constants';
 
 import { DefuddleMetadata } from './types';
-import { mathRules } from './elements/math';
-import { wrapRawLatexDelimiters } from './elements/math.base';
+import { mathRules, createCleanMathEl } from './elements/math';
+import { wrapRawLatexDelimiters, extractLatexFromImageSrc, LOOKS_LIKE_LATEX_RE } from './elements/math.base';
 import { codeBlockRules } from './elements/code';
 import { headingRules, removePermalinkAnchors, isPermalinkAnchor } from './elements/headings';
 import { imageRules } from './elements/images';
-import { isElement, isTextNode, isCommentNode, isSVGElement, getComputedStyle, logDebug } from './utils';
+import { isElement, isTextNode, isCommentNode, isSVGElement, getComputedStyle, logDebug, normalizeText } from './utils';
 import { transferContent, isDirectTableChild, getClassName } from './utils/dom';
 
 // Module-level debug flag, set by standardizeContent for child functions
@@ -164,6 +164,7 @@ export function standardizeContent(element: Element, metadata: DefuddleMetadata,
 		}
 		: <T>(_: string, fn: () => T): T => fn();
 
+	step('standardizeDropCaps', () => standardizeDropCaps(element));
 	step('standardizeSpaces', () => standardizeSpaces(element));
 	step('removeHtmlComments', () => removeHtmlComments(element));
 	step('standardizeHeadings', () => standardizeHeadings(element, metadata.title, doc));
@@ -172,7 +173,10 @@ export function standardizeContent(element: Element, metadata: DefuddleMetadata,
 	step('resolveSvgColors', () => resolveSvgColors(element, doc));
 
 	if (!debug) {
+		step('replaceCustomElements', () => replaceCustomElements(element, doc));
+		step('convertDataAsSpans', () => convertDataAsSpans(element, doc));
 		step('convertBlockSpans', () => convertBlockSpans(element, doc));
+		step('unwrapLayoutTables', () => unwrapLayoutTables(element));
 		step('flattenWrapperElements[1]', () => flattenWrapperElements(element, doc));
 		step('removePermalinkAnchors', () => removePermalinkAnchors(element));
 		step('stripUnwantedAttributes', () => stripUnwantedAttributes(element, debug));
@@ -378,14 +382,6 @@ export function removeOrphanedDividers(element: Element): void {
 }
 
 function standardizeHeadings(element: Element, title: string, doc: Document): void {
-	const normalizeText = (text: string): string => {
-		return text
-			.replace(/\u00A0/g, ' ') // Convert non-breaking spaces to regular spaces
-			.replace(/\s+/g, ' ') // Normalize all whitespace to single spaces
-			.trim()
-			.toLowerCase();
-	};
-
 	const h1s = element.getElementsByTagName('h1');
 
 	Array.from(h1s).forEach(h1 => {
@@ -505,8 +501,122 @@ function unwrapElement(el: Element): void {
 	el.remove();
 }
 
+/**
+ * Replace layout-only tables with their content. After selector removal,
+ * some tables end up with only one non-empty cell (e.g. a TOC cell was
+ * emptied). If that cell holds a single block element, the table is just
+ * a layout wrapper and should be unwrapped.
+ */
+function unwrapLayoutTables(element: Element): void {
+	const tables = Array.from(element.querySelectorAll('table'));
+	let count = 0;
+
+	for (const table of tables) {
+		if (!table.parentNode) continue;
+
+		// Skip data tables with explicit structure hints
+		if (table.querySelector('thead, tfoot, th, caption')) continue;
+
+		// Only check direct cells to avoid matching nested tables
+		const cells = Array.from(table.querySelectorAll(':scope > tbody > tr > td, :scope > tr > td'));
+		const nonEmptyCells = cells.filter(td => td.textContent?.trim());
+
+		if (nonEmptyCells.length !== 1) continue;
+
+		const cell = nonEmptyCells[0];
+		const children = Array.from(cell.children).filter(
+			c => c.textContent?.trim()
+		);
+
+		if (children.length === 1 && BLOCK_LEVEL_ELEMENTS.has(children[0].tagName.toLowerCase())) {
+			table.replaceWith(children[0]);
+			count++;
+		}
+	}
+
+	logDebug(_debug, 'Unwrapped layout tables:', count);
+}
+
 const TW_BLOCK_RE = /(?:^|\s)block(?:\s|$)/;
 const DISPLAY_BLOCK_RE = /display\s*:\s*block/i;
+
+/**
+ * Replace custom elements (hyphenated tag names) with divs so they
+ * participate in block-level flattening instead of being treated as inline.
+ */
+function replaceCustomElements(element: Element, doc: Document): void {
+	const customElements = Array.from(element.querySelectorAll('*')).filter(
+		el => el.tagName.includes('-')
+			&& !INLINE_ELEMENTS.has(el.tagName.toLowerCase())
+			&& !isSVGElement(el)
+	).reverse();
+
+	let replacedCount = 0;
+	for (const el of customElements) {
+		if (!el.parentNode) continue;
+		const div = doc.createElement('div');
+		while (el.firstChild) {
+			div.appendChild(el.firstChild);
+		}
+		el.replaceWith(div);
+		replacedCount++;
+	}
+	logDebug(_debug, 'Replaced custom elements with divs:', replacedCount);
+}
+
+const DATA_AS_ALLOWED = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote']);
+
+/**
+ * Merge drop cap elements into their surrounding text.
+ * Sites like The Economist use <span data-caps="initial">T</span><small>HE REST</small>
+ * which produces "T HE REST" as text. This merges them into "THE REST".
+ */
+function standardizeDropCaps(element: Element): void {
+	const caps = Array.from(element.querySelectorAll('span[data-caps="initial"]'));
+	let count = 0;
+
+	for (const span of caps) {
+		if (!span.parentNode) continue;
+		const next = span.nextElementSibling;
+
+		if (next && next.tagName === 'SMALL') {
+			const initial = span.textContent || '';
+			const rest = next.textContent || '';
+			const merged = span.ownerDocument.createTextNode(initial + rest);
+			span.parentNode.insertBefore(merged, span);
+			next.remove();
+			span.remove();
+		} else {
+			unwrapElement(span);
+		}
+		count++;
+	}
+
+	if (count > 0) element.normalize();
+	logDebug(_debug, 'Standardized drop caps:', count);
+}
+
+/**
+ * Convert <span data-as="<tag>"> to a real element of that tag.
+ * Mintlify/MDX emits these when a logical paragraph contains block-level
+ * components, to sidestep HTML's content model. Must run before attribute
+ * stripping so data-as is still present.
+ */
+function convertDataAsSpans(element: Element, doc: Document): void {
+	let convertedCount = 0;
+	const spans = Array.from(element.querySelectorAll('span[data-as]'));
+	for (const span of spans) {
+		if (!span.parentNode) continue;
+		const target = span.getAttribute('data-as')!.toLowerCase();
+		if (!DATA_AS_ALLOWED.has(target)) continue;
+
+		const replacement = doc.createElement(target);
+		transferContent(span, replacement);
+		span.replaceWith(replacement);
+		convertedCount++;
+	}
+	logDebug(_debug, 'Converted data-as spans:', convertedCount);
+}
 
 /**
  * Convert spans styled as block-level paragraphs to <p> elements.
@@ -864,20 +974,11 @@ function stripExtraBrElements(element: Element): void {
 		consecutiveBrs = [];
 	};
 
-	// Process all br elements
 	brElements.forEach(currentNode => {
-		// Check if this br is consecutive with previous ones
 		let isConsecutive = false;
 		if (consecutiveBrs.length > 0) {
 			const lastBr = consecutiveBrs[consecutiveBrs.length - 1];
-			let node: Node | null = currentNode.previousSibling;
-			
-			// Skip whitespace text nodes
-			while (node && isTextNode(node) && !node.textContent?.trim()) {
-				node = node.previousSibling;
-			}
-			
-			if (node === lastBr) {
+			if (skipWhitespace(currentNode, 'previous') === lastBr) {
 				isConsecutive = true;
 			}
 		}
@@ -885,20 +986,75 @@ function stripExtraBrElements(element: Element): void {
 		if (isConsecutive) {
 			consecutiveBrs.push(currentNode);
 		} else {
-			// Process any previously collected brs before starting new group
 			processBrs();
 			consecutiveBrs = [currentNode];
 		}
 	});
 
-	// Process any remaining br elements
 	processBrs();
+
+	// Remove <br> elements (or groups of <br>) between block-level elements,
+	// and trailing <br> inside blocks. CMS editors often insert standalone <br>
+	// as spacers between paragraphs, figures, and headings. These are redundant
+	// because block elements already produce spacing.
+	const remainingBrs = Array.from(element.getElementsByTagName('br'));
+
+	for (const br of remainingBrs) {
+		const parent = br.parentElement;
+		if (!parent) continue;
+		if (br.closest('pre, code')) continue;
+
+		const parentTag = parent.tagName.toLowerCase();
+
+		// Case 1: <br> (or consecutive group) between block-level siblings
+		// e.g. </p><br><p>, </figure><br><br><p>, </h2><br><p>
+		if (BLOCK_LEVEL_ELEMENTS.has(parentTag) || parentTag === 'body') {
+			const group: Element[] = [br];
+			let scan = skipWhitespace(br, 'next');
+			while (scan && isElement(scan) && scan.tagName.toLowerCase() === 'br') {
+				group.push(scan);
+				scan = skipWhitespace(scan, 'next');
+			}
+
+			const prev = skipWhitespace(group[0], 'previous');
+			const next = skipWhitespace(group[group.length - 1], 'next');
+			const prevIsBlock = prev && isElement(prev) && BLOCK_LEVEL_ELEMENTS.has(prev.tagName.toLowerCase());
+			const nextIsBlock = next && isElement(next) && BLOCK_LEVEL_ELEMENTS.has(next.tagName.toLowerCase());
+
+			if ((prevIsBlock && nextIsBlock) || (prevIsBlock && !next) || !prev) {
+				for (const b of group) {
+					b.remove();
+					processedCount++;
+				}
+				continue;
+			}
+		}
+
+		// Case 2: trailing <br> inside a block element
+		// e.g. <p>Some text. <br></p>
+		if (BLOCK_LEVEL_ELEMENTS.has(parentTag)) {
+			if (!skipWhitespace(br, 'next')) {
+				br.remove();
+				processedCount++;
+			}
+		}
+	}
 
 	const endTime = Date.now();
 	logDebug(_debug, 'Standardized br elements:', {
 		removed: processedCount,
 		processingTime: `${(endTime - startTime).toFixed(2)}ms`
 	});
+}
+
+/** Walk siblings in one direction, skipping whitespace-only text nodes. */
+function skipWhitespace(node: Node, direction: 'previous' | 'next'): Node | null {
+	const prop = direction === 'previous' ? 'previousSibling' : 'nextSibling';
+	let sibling: Node | null = node[prop];
+	while (sibling && isTextNode(sibling) && !sibling.textContent?.trim()) {
+		sibling = sibling[prop];
+	}
+	return sibling;
 }
 
 function moveWhitespaceOutside(node: Element, doc: Document, direction: 'leading' | 'trailing'): number {
@@ -1082,6 +1238,36 @@ function standardizeElements(element: Element, doc: Document, subProfile?: Recor
 	// are present but haven't rendered (no JS execution).
 	stepSE('wrapRawLatexDelimiters', () => wrapRawLatexDelimiters(element, doc));
 
+	// Convert images from LaTeX rendering services into <math> elements.
+	// Uses URL-based heuristics (not domain allowlists) to detect encoded LaTeX,
+	// then falls back to alt text containing LaTeX commands.
+	stepSE('convertLatexImages', () => {
+		for (const img of Array.from(element.querySelectorAll('img[src]'))) {
+			const src = img.getAttribute('src');
+			if (!src) continue;
+
+			let latex = extractLatexFromImageSrc(src);
+
+			// Fall back to alt text if it contains LaTeX commands
+			if (!latex) {
+				const alt = img.getAttribute('alt') || '';
+				if (LOOKS_LIKE_LATEX_RE.test(alt)) {
+					latex = alt;
+				}
+			}
+
+			if (!latex) continue;
+
+			const isBlock = /\\begin\{/.test(latex)
+				|| (img.parentElement?.tagName.toLowerCase() === 'p'
+					&& img.parentElement.childNodes.length === 1);
+
+			const mathEl = createCleanMathEl(null, latex, isBlock, doc);
+			img.replaceWith(mathEl);
+			processedCount++;
+		}
+	});
+
 	// Convert elements based on standardization rules
 	ELEMENT_STANDARDIZATION_RULES.forEach(rule => {
 		const selectorKey = rule.selector.substring(0, 30);
@@ -1172,6 +1358,18 @@ function standardizeElements(element: Element, doc: Document, subProfile?: Recor
 			processedCount++;
 		}
 	});
+
+	// Remove tables with no text and no media in any cell
+	for (const table of Array.from(element.querySelectorAll('table'))) {
+		if (!table.parentNode) continue;
+		const cells = table.querySelectorAll('td, th');
+		if (cells.length > 0
+			&& Array.from(cells).every(cell => !(cell.textContent || '').trim())
+			&& !table.querySelector('img, picture, video, audio, iframe, svg, math')) {
+			table.remove();
+			processedCount++;
+		}
+	}
 
 	// Unwrap single-column layout tables (used for styling/positioning, not data)
 	const tables = Array.from(element.querySelectorAll('table'));

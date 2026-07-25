@@ -1,9 +1,12 @@
 import { logDebug } from '../utils';
 import { getClassName } from '../utils/dom';
 import { isBase64Placeholder } from '../elements/images';
+import { LOOKS_LIKE_LATEX_RE } from '../elements/math.base';
 
 const STYLE_WIDTH_PATTERN = /width\s*:\s*(\d+)/;
 const STYLE_HEIGHT_PATTERN = /height\s*:\s*(\d+)/;
+// Matches width hints in CDN image URLs: ?w=48, &width=48, /w:48/, /width:48/
+const URL_WIDTH_PATTERN = /(?:width[=:/]|[/,?&]w[_:=])(\d+)/;
 
 export function getElementIdentifier(element: Element): string | null {
 	// Try to create a unique identifier using various attributes
@@ -82,11 +85,31 @@ export function findSmallImages(doc: Document, debug: boolean): Set<string> {
 		const widths = [attrWidth, styleWidth, computedWidth, viewBoxWidth].filter(d => d > 0);
 		const heights = [attrHeight, styleHeight, computedHeight, viewBoxHeight].filter(d => d > 0);
 
+		// Fallback: when no explicit dimensions, check srcset 1x URL width hint.
+		// Images served at ≤32px via CDN params (e.g. ?w=32 1x) are icons.
+		if (widths.length === 0 && heights.length === 0 && element.tagName.toLowerCase() === 'img') {
+			const srcset = element.getAttribute('srcset') || '';
+			// Find the 1x descriptor entry (or the smallest width descriptor)
+			const oneXMatch = srcset.match(/(\S+)\s+1x/);
+			if (oneXMatch) {
+				const urlWidth = parseInt(oneXMatch[1].match(URL_WIDTH_PATTERN)?.[1] || '0');
+				if (urlWidth > 0) widths.push(urlWidth);
+			}
+		}
+
 		if (widths.length > 0 || heights.length > 0) {
 			const effectiveWidth = widths.length > 0 ? Math.min(...widths) : Infinity;
 			const effectiveHeight = heights.length > 0 ? Math.min(...heights) : Infinity;
 
 			if (effectiveWidth < MIN_DIMENSION || effectiveHeight < MIN_DIMENSION) {
+				// Skip math/equation images
+				if (element.tagName.toLowerCase() === 'img') {
+					const alt = element.getAttribute('alt') || '';
+					if (LOOKS_LIKE_LATEX_RE.test(alt)) continue;
+					if (element.classList.contains('latex') || element.classList.contains('tex')) continue;
+					if (element.getAttribute('data-latex') || element.getAttribute('data-math')) continue;
+				}
+
 				const identifier = getElementIdentifier(element);
 				if (identifier) {
 					smallImages.add(identifier);
