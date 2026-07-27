@@ -210,6 +210,8 @@ export const EXACT_SELECTORS = [
 	// footer
 	'footer',
 
+	'ignore',
+
 	// inputs, forms, elements
 	'.aside',
 	'aside:not([class*="callout"])',
@@ -353,6 +355,7 @@ export const PARTIAL_SELECTORS = [
 	'(?<!main-)access-wall', // avoid matching data-test="main-access-wall" (content container)
 	'activitypub',
 	'actioncall',
+	'adcontainer',
 	'addcomment',
 	'addtoany',
 	'advert',
@@ -388,6 +391,7 @@ export const PARTIAL_SELECTORS = [
 	'article_date',
 	'article-date',
 	'article-end ',
+	'articleheader',
 	'article_header',
 	'article-header',
 	'article__header',
@@ -652,6 +656,7 @@ export const PARTIAL_SELECTORS = [
 
 	'masthead',
 	'marketing',
+	'media-card',
 	'media-inquiry',
 	'-menu',
 	'menu-',
@@ -681,6 +686,7 @@ export const PARTIAL_SELECTORS = [
 	'nav_',
 //	'navbar',
 //	'navigation',
+	'navcontainer',
 	'navigation-post',
 	'next-',
 	'next_prev',
@@ -794,7 +800,9 @@ export const PARTIAL_SELECTORS = [
 	'quick_up',
 
 	'_rail',
+	'ratingscontainer',
 	'ratingssection',
+	'reactions',
 	'read_also',
 	'readmore',
 	'read-next',
@@ -814,6 +822,7 @@ export const PARTIAL_SELECTORS = [
 	'recirc',
 	'register',
 	'(?<!h[1-6]-)related',
+	'-relance',
 	'relevant',
 	'relposts',
 	'reversefootnote',
@@ -848,6 +857,7 @@ export const PARTIAL_SELECTORS = [
 	'sidebartitle',
 //	'sidebar_',
 	'sidebar-content',
+	'sidebar-element',
 	'sidebar-wrapper',
 	'sideitems',
 	'sidebar-author',
