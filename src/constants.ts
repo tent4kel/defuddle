@@ -644,7 +644,8 @@ export const PARTIAL_SELECTORS = [
 	'listinks',
 	'loading',
 	'loa-info',
-	'logo',
+	// Matches 'logo' only at a class-token edge ('site-logo', 'logo-wrapper').
+	'(?:(?<![\\w-])logo|logo(?![\\w-]))',
 	'ltx_role_refnum', // Arxiv
 	'ltx_tag_bibitem',
 	'ltx_error',
