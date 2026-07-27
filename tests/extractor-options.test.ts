@@ -87,16 +87,23 @@ describe('includeReplies', () => {
 });
 
 describe('options.fetch', () => {
-	test('RedditExtractor uses an injected fetch for old.reddit.com', async () => {
+	test('RedditExtractor routes its requests through an injected fetch', async () => {
 		const document = parseLinkedomHTML('<html><body><shreddit-post></shreddit-post></body></html>');
-		const fetch = vi.fn().mockResolvedValue({ ok: false, status: 403 });
+		const fetch = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 403,
+			url: '',
+			text: () => Promise.resolve(''),
+		});
 
 		const extractor = new RedditExtractor(document, REDDIT_URL, undefined, { fetch: fetch as any });
 
-		// Rejects on the non-ok response; the assertion is that the injected
-		// fetch was reached at all rather than globalThis.fetch.
+		// Both sources refuse, so extraction fails — the assertion is that the
+		// injected fetch was reached at all rather than globalThis.fetch.
 		await expect(extractor.extractAsync()).rejects.toThrow('403');
-		expect(fetch).toHaveBeenCalledOnce();
-		expect(fetch.mock.calls[0][0]).toBe('https://old.reddit.com/r/PKMS/comments/1uqti0c/x/');
+
+		const requested = fetch.mock.calls.map(call => call[0] as string);
+		expect(requested).toContain('https://old.reddit.com/r/PKMS/comments/1uqti0c/x/');
+		expect(requested.some(url => url.endsWith('.rss'))).toBe(true);
 	});
 });
