@@ -1,4 +1,5 @@
 import { ConversationExtractor } from './_conversation';
+import { ExtractorOptions } from './_base';
 import { ConversationMessage, ConversationMetadata, Footnote } from '../types/extractors';
 import { parseHTML, serializeHTML, escapeHtml } from '../utils/dom';
 
@@ -8,8 +9,8 @@ export class ChatGPTExtractor extends ConversationExtractor {
 	private footnoteCounter: number;
 	private cachedMessages: ConversationMessage[] | null = null;
 
-	constructor(document: Document, url: string) {
-		super(document, url);
+	constructor(document: Document, url: string, schemaOrgData?: any, options?: ExtractorOptions) {
+		super(document, url, schemaOrgData, options);
 		this.turns = document.querySelectorAll('[data-testid^="conversation-turn-"]');
 		this.footnotes = [];
 		this.footnoteCounter = 0;

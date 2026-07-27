@@ -1,4 +1,4 @@
-import { BaseExtractor } from './_base';
+import { BaseExtractor, ExtractorOptions } from './_base';
 import { ExtractorResult } from '../types/extractors';
 import { parseHTML, serializeHTML } from '../utils/dom';
 import { buildCommentTree, buildContentHtml, type CommentData } from '../utils/comments';
@@ -7,8 +7,8 @@ export class RedditExtractor extends BaseExtractor {
 	private shredditPost: Element | null;
 	private isOldReddit: boolean;
 
-	constructor(document: Document, url: string) {
-		super(document, url);
+	constructor(document: Document, url: string, schemaOrgData?: any, options?: ExtractorOptions) {
+		super(document, url, schemaOrgData, options);
 		this.shredditPost = document.querySelector('shreddit-post');
 		this.isOldReddit = !!document.querySelector('.thing.link');
 	}
