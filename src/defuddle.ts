@@ -248,8 +248,11 @@ export class Defuddle {
 		// removed too: CSS @import / url() inside it can fetch external
 		// resources from the reader's IP. applySvgFallbackStyles in
 		// standardize.ts reconstructs basic fill/stroke from class names.
+		// Remove SVG SMIL elements that can mutate sanitized URL attributes.
 		const dangerousElements = body.querySelectorAll(
-			'script:not([type^="math/"]), style, noscript, frame, frameset, object, embed, applet, base'
+			'script:not([type^="math/"]), style, noscript, frame, frameset, object, embed, applet, base, ' +
+			'animate, set, animatemotion, animatetransform, animatecolor, discard, ' +
+			'animateMotion, animateTransform, animateColor'
 		);
 		for (const el of dangerousElements) {
 			el.remove();
