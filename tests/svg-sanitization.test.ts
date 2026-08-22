@@ -54,5 +54,25 @@ describe('SVG sanitization', () => {
 			expect(result.content).not.toMatch(/javascript:/i);
 			expect(result.content).not.toMatch(/<animate|<set\b/i);
 		});
+
+		test(`strips SMIL animation from schema.org text fallback: ${name}`, async () => {
+			const articleBody = `${payload} one two three four five six seven eight nine ten eleven twelve`;
+			const html = `<!DOCTYPE html><html><head><title>SMIL</title>
+<script type="application/ld+json">${JSON.stringify({
+				'@context': 'https://schema.org',
+				'@type': 'Article',
+				headline: 'SMIL',
+				articleBody
+			})}</script></head>
+<body><main><p>hi</p></main></body></html>`;
+
+			const result = await Defuddle(
+				parseDocument(html, 'https://example.com/smil-schema'),
+				'https://example.com/smil-schema'
+			);
+
+			expect(result.content).not.toMatch(/javascript:/i);
+			expect(result.content).not.toMatch(/<animate|<set\b/i);
+		});
 	}
 });

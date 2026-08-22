@@ -179,8 +179,9 @@ export class Defuddle {
 					result = schemaRetry;
 				} else {
 					this._log('Using schema.org text as content (DOM element not found)');
-					result.content = schemaText;
-					result.wordCount = this.countHtmlWords(schemaText);
+					const safeSchemaHtml = this._sanitizeExtractorHtml(schemaText);
+					result.content = safeSchemaHtml;
+					result.wordCount = this.countHtmlWords(safeSchemaHtml);
 				}
 			} finally {
 				this.doc = liveDoc;
