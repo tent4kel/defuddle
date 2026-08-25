@@ -6,7 +6,7 @@ export function getTermsPage(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Terms of Service — Defuddle</title>
+	<title>Terms of Service · Defuddle</title>
 	<style>
 		* {
 			margin: 0;

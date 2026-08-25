@@ -6,7 +6,7 @@ export function getLandingPage(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Defuddle — Get the main content of any page as Markdown.</title>
+	<title>Defuddle · Get the main content of any page as Markdown.</title>
 	<meta name="description" content="Get the main content of any page as clean, readable Markdown.">
 	<style>
 		* {
@@ -34,7 +34,7 @@ export function getLandingPage(): string {
 		}
 		.divider {
 			border: none;
-			border-top: 1px solid #343331;
+			border-top: 1px solid #282726;
 		}
 		.bottom {
 			max-width: 600px;
@@ -131,7 +131,7 @@ export function getLandingPage(): string {
 			padding: 0.75rem 1.5rem;
 			font-size: 1rem;
 			border: none;
-			border-radius: 8px;
+			border-radius: 999px;
 			background: #F2F0E5;
 			color: #1C1B1A;
 			font-weight: 600;

@@ -8,7 +8,7 @@ export function getSuccessPage(sessionId: string): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>API Key — Defuddle</title>
+	<title>API Key · Defuddle</title>
 	<style>
 		* {
 			margin: 0;
@@ -90,7 +90,6 @@ export function getSuccessPage(sessionId: string): string {
 		}
 		pre.usage {
 			background: #1C1B1A;
-			border: 1px solid #343331;
 			border-radius: 8px;
 			padding: 0.75rem 1rem;
 			overflow-x: auto;
