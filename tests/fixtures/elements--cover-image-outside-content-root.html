@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cover Image Outside Content Root</title>
+<meta property="og:image" content="https://example.com/images/cover-photo.jpg?w=1200&h=628">
+</head>
+<body>
+<article>
+<div class="splash">
+	<div class="splash__container">
+		<h1>Article Whose Hero Image Sits Outside The Chosen Content Root</h1>
+	</div>
+	<div class="splash__cover-image">
+		<div class="aspect-ratio-wrapper">
+			<img class="desktop-image" src="https://example.com/images/cover-photo.jpg?w=2100&h=1181" alt="" width="2100" height="1181">
+			<img class="mobile-image" src="https://example.com/images/cover-photo.jpg?w=767&h=431" alt="" width="767" height="431">
+		</div>
+		<figcaption class="wp-caption-text">
+			<div>A photographer for Example Agency</div>
+		</figcaption>
+	</div>
+	<header class="entry-header">
+		<span>By Jane Doe</span>
+	</header>
+	<div class="entry-content" role="article">
+		<p>This is the first paragraph of the article body, padded with enough sentences that the content scoring heuristics treat it as real article content rather than boilerplate text that should be discarded during extraction.</p>
+		<p>This is the second paragraph, continuing the discussion with additional padding text so that the removeLowScoring and link-density checks don't mistake this short fixture for a navigation block or an index page.</p>
+	</div>
+</div>
+</article>
+</body>
+</html>

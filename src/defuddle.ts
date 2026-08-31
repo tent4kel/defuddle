@@ -953,6 +953,13 @@ export class Defuddle {
 				}
 			});
 
+			// Rescue a captioned cover image that lives outside the main content
+			// element (e.g. a hero/splash section that's a sibling of the chosen
+			// content root, not a descendant of it — see adoptExternalCoverImage).
+			profileStep('adoptExternalCoverImage', () => {
+				this.adoptExternalCoverImage(mainContent!, clone, metadata.image || '');
+			});
+
 			// Standardize footnotes before cleanup (CSS sidenotes use display:none)
 			profileStep('standardizeFootnotesCallouts', () => {
 				if (options.standardize) {
@@ -1378,6 +1385,73 @@ export class Defuddle {
 
 			mainContent.appendChild(el);
 		});
+	}
+
+	/**
+	 * Rescue a captioned cover image that lives outside the main content
+	 * element — e.g. a "hero"/"splash" section that's a sibling of the
+	 * chosen content root (not an ancestor or descendant of it), so no
+	 * removal-based step ever sees it since those only operate within
+	 * mainContent's own subtree.
+	 *
+	 * Only rescues the image when it matches the page's own declared cover
+	 * image (metadata.image) — avoiding grabbing an unrelated decorative
+	 * image — and has a real caption nearby. This mirrors _removeCoverImage's
+	 * existing rule that an uncaptioned cover image is redundant with
+	 * metadata.image, not real editorial content worth showing inline: this
+	 * step supplies the missing half of that rule for images that were never
+	 * in mainContent to begin with, rather than duplicating its logic.
+	 *
+	 * Inserts a minimal <figure><img><figcaption> built from the found
+	 * elements (not the original markup) so it always matches the shape the
+	 * "figure" image rule expects, then leaves standardizeContent to do the
+	 * normal picture/caption merging as if it had always been there.
+	 */
+	private adoptExternalCoverImage(mainContent: Element, root: Document | Element, metadataImage: string): void {
+		if (!metadataImage) return;
+		const body = (root as any).body || root;
+		if (!body || mainContent === body) return;
+
+		const metaNorm = this._normalizeSrc(metadataImage);
+
+		let bestImg: Element | null = null;
+		for (const img of body.querySelectorAll('img')) {
+			if (mainContent.contains(img) || img.closest('noscript')) continue;
+			const src = img.getAttribute('src') || '';
+			if (!src || src.startsWith('data:')) continue;
+			if (this._normalizeSrc(src) !== metaNorm) continue;
+			// Multiple matches (e.g. separate desktop/mobile <img> variants)
+			// are different crops of the same declared cover image — keep
+			// only the best rather than rescuing every one of them.
+			bestImg = bestImg ? this._pickBestImage(bestImg, img) : img;
+		}
+		if (!bestImg) return;
+
+		// Look for a <figcaption> anywhere within a small number of
+		// ancestor levels above the image — sites commonly place it as a
+		// sibling of the image's immediate wrapper rather than nested
+		// directly inside it (see findCaption in elements/images.ts for the
+		// same pattern, applied here since that function isn't reachable
+		// from this stage of the pipeline).
+		let container: Element = bestImg;
+		let caption: Element | null = null;
+		for (let i = 0; i < 4 && container.parentElement; i++) {
+			container = container.parentElement;
+			caption = container.querySelector('figcaption');
+			if (caption) break;
+		}
+		if (!caption || !(caption.textContent || '').trim()) return;
+
+		const doc = mainContent.ownerDocument!;
+		const figure = doc.createElement('figure');
+		figure.appendChild(bestImg.cloneNode(true));
+		const figcaption = doc.createElement('figcaption');
+		while (caption.firstChild) {
+			figcaption.appendChild(caption.firstChild);
+		}
+		figure.appendChild(figcaption);
+
+		mainContent.insertBefore(figure, mainContent.firstChild);
 	}
 
 	/**
