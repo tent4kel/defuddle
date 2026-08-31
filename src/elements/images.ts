@@ -980,7 +980,45 @@ function selectBestSource(sources: NodeListOf<Element>): Element | null {
 		}
 	}
 	
-	// If no default source, try to find the highest resolution source
+	// Prefer sources targeted at larger viewports via their media query.
+	// Mobile-first breakpoint lists (ascending max-width tiers, then a
+	// trailing min-width catch-all) put the highest-resolution image behind
+	// the widest viewport condition — a min-width source (e.g.
+	// "(min-width: 767px)") serves the largest images and outranks any
+	// max-width source; among min-width sources the largest threshold wins;
+	// among max-width-only sources the largest threshold is the best
+	// available. This is checked before the srcset-based scan below because
+	// srcset width/DPR hints go unnoticed when a source only uses density
+	// descriptors (e.g. "url 2x") that are identical across every breakpoint.
+	let bestMinWidthSource: Element | null = null;
+	let bestMinWidth = -1;
+	let bestMaxWidthSource: Element | null = null;
+	let bestMaxWidth = -1;
+
+	for (let i = 0; i < sources.length; i++) {
+		const media = sources[i].getAttribute('media') || '';
+		const minMatch = media.match(/min-width:\s*(\d+)/);
+		const maxMatch = media.match(/max-width:\s*(\d+)/);
+
+		if (minMatch) {
+			const width = parseInt(minMatch[1], 10);
+			if (width > bestMinWidth) {
+				bestMinWidth = width;
+				bestMinWidthSource = sources[i];
+			}
+		} else if (maxMatch) {
+			const width = parseInt(maxMatch[1], 10);
+			if (width > bestMaxWidth) {
+				bestMaxWidth = width;
+				bestMaxWidthSource = sources[i];
+			}
+		}
+	}
+
+	if (bestMinWidthSource) return bestMinWidthSource;
+	if (bestMaxWidthSource) return bestMaxWidthSource;
+
+	// If no media queries, try to find the highest resolution source
 	// by analyzing the srcset values
 	let bestSource: Element | null = null;
 	let maxResolution = 0;

@@ -7,7 +7,7 @@
 }
 ```
 
-![A wide shot of the subject described in the article.](https://example.com/images/photo-480.jpg)
+![A wide shot of the subject described in the article.](https://example.com/images/photo-660.jpg)
 
 A wide shot of the subject described in the article. © Photographer Name
 
