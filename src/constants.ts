@@ -351,7 +351,10 @@ export const TEST_ATTRIBUTES = [
 	'data-testid',
 	'data-test-id',
 	'data-qa',
-	'data-cy'
+	'data-cy',
+	'x-data',
+	'x-effect',
+	'x-show'
 ];
 
 // Removal patterns tested against attributes above

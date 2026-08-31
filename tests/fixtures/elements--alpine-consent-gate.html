@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Alpine Consent Gate</title>
+</head>
+<body>
+<article>
+<h1>Article With An Embedded Post Behind A Consent Gate</h1>
+<p>This is the first paragraph of the article body, padded with enough sentences that the content scoring heuristics treat it as real article content rather than boilerplate text that should be discarded during extraction. It needs to be long enough, with enough distinct words, that the overall word count of this fixture stays comfortably above any low-content retry threshold the pipeline might otherwise trigger.</p>
+<p>This is a second real paragraph of genuine article content, again padded with plenty of unique wording so that the surrounding text reads as a normal, full-length article rather than a short stub. The point is to make sure the consent-gate removal below is exercised through selector matching specifically, not through a side effect of the scorer treating the whole short document as low-value.</p>
+<div>
+	<div class="bg-sec2-lightest rounded py-24 px-24 pointer-events-auto" x-data x-effect="if ($store.ThirdpartyConsent.accepted) $el.classList.add('hidden')">
+		<div class="font-extrabold border-separator-b pb-16 text-xl leading-tight">Recommended external content</div>
+		<div class="leading-loose mt-16 text-base flow-root">
+			At this point you will find external content from a third-party platform that complements the article. You can withdraw your consent at any time.
+		</div>
+		<p>I agree that external content is displayed to me. Personal data may be transmitted to third-party platforms as a result.</p>
+	</div>
+</div>
+<p>This is a third paragraph of real article content, continuing the discussion with additional distinct padding text so that the removeLowScoring and link-density checks don't mistake this fixture for a navigation block or an index page.</p>
+<p>A fourth and final paragraph rounds out the article body with more genuine content, ensuring the fixture reads like a normal, substantial article throughout rather than a minimal reproduction case.</p>
+</article>
+</body>
+</html>

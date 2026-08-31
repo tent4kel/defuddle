@@ -93,7 +93,16 @@ export function removeBySelector(doc: Document, debug: boolean, removeExact: boo
 					(el.getAttribute('data-testid') || '') + ' ' +
 					(el.getAttribute('data-test-id') || '') + ' ' +
 					(el.getAttribute('data-qa') || '') + ' ' +
-					(el.getAttribute('data-cy') || '')
+					(el.getAttribute('data-cy') || '') + ' ' +
+					// Alpine.js directives: consent-gate widgets (e.g. an embed's
+					// "accept third-party content" prompt) are commonly built as
+					// `x-effect="if ($store.ThirdpartyConsent.accepted) ..."`,
+					// toggling a "hidden" class client-side after consent — invisible
+					// to removeHiddenElements on a static parse, so the existing
+					// "consent"/"cookie" keywords need to see these values too.
+					(el.getAttribute('x-data') || '') + ' ' +
+					(el.getAttribute('x-effect') || '') + ' ' +
+					(el.getAttribute('x-show') || '')
 			).toLowerCase();
 
 			// The id is matched separately. A delimited id (e.g. "feedback-form") is
