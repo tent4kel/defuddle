@@ -9,7 +9,7 @@ import {
 	HIDDEN_EXACT_SKIP_SELECTOR,
 	ENTRY_POINT_ELEMENTS
 } from './constants';
-import { standardizeContent } from './standardize';
+import { standardizeContent, standardizeExtractorOutput } from './standardize';
 import { standardizeFootnotes, FOOTNOTE_SECTION_RE } from './elements/footnotes';
 import { standardizeCallouts } from './elements/callouts';
 import { ContentScorer, ContentScore } from './removals/scoring';
@@ -179,8 +179,9 @@ export class Defuddle {
 					result = schemaRetry;
 				} else {
 					this._log('Using schema.org text as content (DOM element not found)');
-					result.content = schemaText;
-					result.wordCount = this.countHtmlWords(schemaText);
+					const safeSchemaHtml = this._sanitizeExtractorHtml(schemaText);
+					result.content = safeSchemaHtml;
+					result.wordCount = this.countHtmlWords(safeSchemaHtml);
 				}
 			} finally {
 				this.doc = liveDoc;
@@ -248,8 +249,11 @@ export class Defuddle {
 		// removed too: CSS @import / url() inside it can fetch external
 		// resources from the reader's IP. applySvgFallbackStyles in
 		// standardize.ts reconstructs basic fill/stroke from class names.
+		// Remove SVG SMIL elements that can mutate sanitized URL attributes.
 		const dangerousElements = body.querySelectorAll(
-			'script:not([type^="math/"]), style, noscript, frame, frameset, object, embed, applet, base'
+			'script:not([type^="math/"]), style, noscript, frame, frameset, object, embed, applet, base, ' +
+			'animate, set, animatemotion, animatetransform, animatecolor, discard, ' +
+			'animateMotion, animateTransform, animateColor'
 		);
 		for (const el of dangerousElements) {
 			el.remove();
@@ -1726,6 +1730,15 @@ export class Defuddle {
 	 *
 	 * Relative-URL resolution runs on the same parsed DOM so extractor output is
 	 * parsed and serialized only once (resolveRelativeUrls no-ops without a URL).
+	 *
+	 * Extractors lift message and comment bodies straight out of the page, so the
+	 * result also needs the cleanup the main pipeline gets from standardizeContent
+	 * (attribute stripping and empty-spacer removal). standardizeExtractorOutput
+	 * applies the subset of those steps that fits already-built markup.
+	 *
+	 * It runs after the passes above so they still see `href`/`src`/`srcdoc` intact,
+	 * and after resolveRelativeUrls so no element is dropped before its URLs are
+	 * rewritten.
 	 */
 	private _sanitizeExtractorHtml(html: string): string {
 		if (!html) return html;
@@ -1733,6 +1746,7 @@ export class Defuddle {
 		container.appendChild(parseHTML(this.doc, html));
 		this._stripUnsafeElements(container);
 		this.resolveRelativeUrls(container);
+		standardizeExtractorOutput(container, this.debug);
 		return serializeHTML(container);
 	}
 

@@ -6,72 +6,72 @@ export function getDocsPage(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Defuddle — Documentation</title>
+	<title>Defuddle · Documentation</title>
 	<meta name="description" content="Documentation for Defuddle, a library that extracts the main content from web pages and returns clean, readable HTML.">
 	<style>
 		/* Flexoki syntax highlighting */
 		.hljs {
 			background: #1C1B1A;
-			color: #CECDC3;
+			color: #B7B5AC;
 		}
 		.hljs-keyword,
 		.hljs-selector-tag,
 		.hljs-meta .hljs-keyword {
-			color: #A699D0;
+			color: #8B7EC8;
 		}
 		.hljs-string,
 		.hljs-regexp {
-			color: #87D3C3;
+			color: #5ABDAC;
 		}
 		.hljs-comment,
 		.hljs-doctag {
-			color: #878580;
+			color: #6F6E69;
 			font-style: italic;
 		}
 		.hljs-title,
 		.hljs-title.function_,
 		.hljs-section {
-			color: #F9AE77;
+			color: #EC8B49;
 		}
 		.hljs-number,
 		.hljs-literal {
-			color: #F4A4C2;
+			color: #E47DA8;
 		}
 		.hljs-built_in,
 		.hljs-type,
 		.hljs-title.class_ {
-			color: #ECCB60;
+			color: #DFB431;
 		}
 		.hljs-variable,
 		.hljs-params,
 		.hljs-attr {
-			color: #92BFDB;
+			color: #66A0C8;
 		}
 		.hljs-name,
 		.hljs-tag {
-			color: #F89A8A;
+			color: #E8705F;
 		}
 		.hljs-attribute {
-			color: #F9AE77;
+			color: #EC8B49;
 		}
 		.hljs-meta,
 		.hljs-symbol {
-			color: #BEC97E;
+			color: #A0AF54;
 		}
 		.hljs-operator,
 		.hljs-punctuation {
-			color: #B7B5AC;
+			color: #9F9D96;
 		}
 		.hljs-property {
-			color: #92BFDB;
+			color: #66A0C8;
 		}
 		.hljs-addition {
-			color: #879A39;
-			background: rgba(135, 154, 57, 0.1);
+			color: #66800B;
+			background: rgba(102, 128, 11, 0.1);
 		}
 		.hljs-deletion {
-			color: #D14D41;
-			background: rgba(209, 77, 65, 0.1);
+			color: #AF3029;
+			background: rgba(175, 48, 41, 0.1);
 		}
 	</style>
 	<style>
@@ -145,7 +145,6 @@ export function getDocsPage(): string {
 		}
 		pre {
 			background: #1C1B1A;
-			border: 1px solid #343331;
 			border-radius: 8px;
 			padding: 1rem;
 			overflow-x: auto;
@@ -163,9 +162,8 @@ export function getDocsPage(): string {
 		}
 		p code, li code, td code {
 			background: #1C1B1A;
-			padding: 0.15rem 0.4rem;
+			padding: 0.12rem 0.38rem;
 			border-radius: 4px;
-			border: 1px solid #343331;
 			font-size: 0.8rem;
 		}
 		table {
@@ -202,10 +200,6 @@ export function getDocsPage(): string {
 			margin-bottom: 2rem;
 		}
 		.note {
-			background: #1C1B1A;
-			border: 1px solid #343331;
-			border-radius: 8px;
-			padding: 1rem;
 			margin-bottom: 1rem;
 			font-size: 0.9rem;
 			color: #878580;
@@ -215,7 +209,7 @@ export function getDocsPage(): string {
 		}
 		${getFooterCSS()}
 		.toc {
-			background: #1C1B1A;
+
 			border: 1px solid #343331;
 			border-radius: 8px;
 			padding: 1.25rem 1.5rem;
@@ -231,7 +225,8 @@ export function getDocsPage(): string {
 			margin-bottom: 0.25rem;
 		}
 		.toc a {
-			color: #878580;
+			color: #F2F0E5;
+			font-weight: 500;
 			border: none;
 			font-size: 0.9rem;
 		}

@@ -6,7 +6,7 @@ export function getPricingPage(): string {
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Pricing — Defuddle</title>
+	<title>Pricing · Defuddle</title>
 	<meta name="description" content="Buy API request blocks for the Defuddle API.">
 	<style>
 		* {
@@ -115,7 +115,6 @@ export function getPricingPage(): string {
 		}
 		.how-it-works pre {
 			background: #1C1B1A;
-			border: 1px solid #343331;
 			border-radius: 8px;
 			padding: 1rem;
 			overflow-x: auto;
