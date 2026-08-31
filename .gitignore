@@ -3,6 +3,7 @@
 .context
 
 node_modules/
+.toolchain/
 
 dist/*
 !dist/index.js
