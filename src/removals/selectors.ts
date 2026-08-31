@@ -155,6 +155,22 @@ export function removeBySelector(doc: Document, debug: boolean, removeExact: boo
 				return;
 			}
 		} catch (e) {}
+		// Rescue captioned figures (e.g. a hero image with a photo credit) out of
+		// a <header> before it's removed. Sites commonly bundle the headline and
+		// hero image in one header block, which otherwise matches boilerplate
+		// selectors (e.g. "article-header") and takes the image down with it.
+		// _removeCoverImage already keeps captioned figures over deduping them
+		// against the metadata image — but only if they survive this step.
+		if (el.tagName === 'HEADER') {
+			const headerParent = el.parentElement;
+			if (headerParent) {
+				for (const figure of Array.from(el.querySelectorAll('figure'))) {
+					if (figure.querySelector('img, picture') && figure.querySelector('figcaption')) {
+						headerParent.insertBefore(figure, el);
+					}
+				}
+			}
+		}
 		// Buttons that contain media (e.g. Bloomberg image zoom overlays) —
 		// extract only the media, discard the button and its non-media children
 		// (SVG icons, overlay text) to avoid leaking UI chrome.

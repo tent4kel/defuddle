@@ -1443,7 +1443,21 @@ export class Defuddle {
 						url = url.replace(/^,\s*/, '');
 					}
 					lastIdx = entryPattern.lastIndex;
-					entries.push(`${resolve(url)} ${match[2]}`);
+
+					// A candidate with no descriptor of its own (implicit 1x, e.g.
+					// the first entry in "url1, url2 2x") has no whitespace+descriptor
+					// boundary to stop the regex above, so it — and possibly more
+					// descriptor-less candidates before it — gets swept into this
+					// match alongside the descriptor-bearing one. Split on any comma
+					// immediately followed by a fresh absolute URL to recover each
+					// candidate; only the last piece carries this match's descriptor,
+					// the rest are implicit-1x candidates resolved on their own.
+					const pieces = url.split(/,\s+(?=https?:\/\/)/);
+					const lastPiece = pieces.pop()!;
+					for (const piece of pieces) {
+						if (piece) entries.push(resolve(piece));
+					}
+					entries.push(`${resolve(lastPiece)} ${match[2]}`);
 				}
 
 				if (entries.length > 0) {

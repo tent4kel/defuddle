@@ -54,6 +54,7 @@ export function buildFrontmatter(result: DefuddleResponse, sourceUrl?: string): 
 	if (sourceUrl) lines.push(`source: "${sourceUrl}"`);
 	if (result.domain) lines.push(`domain: "${result.domain}"`);
 	if (result.language) lines.push(`language: "${result.language}"`);
+	if (result.image) lines.push(`image: "${esc(result.image)}"`);
 	if (result.description) {
 		const desc = countWords(result.description) > 300
 			? truncateWords(result.description, 300)

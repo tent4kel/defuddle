@@ -928,6 +928,20 @@ function extractFirstUrlFromSrcset(srcset: string): string | null {
 
 		lastIndex = entryPattern.lastIndex;
 
+		// An entry with no descriptor of its own (implicit 1x, e.g. the first
+		// candidate in "url1, url2 2x") has no whitespace+descriptor boundary to
+		// stop the regex above, so it — and any further descriptor-less entries
+		// before it — gets swept into the *next* entry's match. This function
+		// wants only the very first URL in the srcset, so cut at the first
+		// comma that's followed by a fresh absolute URL — schemed URLs don't
+		// contain a literal ", https://" internally (CDN transform params with
+		// embedded commas, e.g. Substack's "$s_!x!,w_424,c_limit/...", do
+		// contain commas, but never immediately before a new scheme).
+		const embeddedUrlBoundary = /,\s+(?=https?:\/\/)/.exec(url);
+		if (embeddedUrlBoundary) {
+			url = url.slice(0, embeddedUrlBoundary.index);
+		}
+
 		if (!url) continue;
 
 		// Skip SVG data URLs
