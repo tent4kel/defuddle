@@ -285,7 +285,7 @@ export const imageRules = [
 
 					if (currentImg) {
 						// We'll clone this inside the helper function
-						imageToAdd = currentImg; 
+						imageToAdd = currentImg;
 					} else {
 						// Fallback: process the initially found element.
 						// Fallback: process the initially found element
@@ -295,7 +295,18 @@ export const imageRules = [
 
 					// Use the helper function to create the figure
 					// The helper clones the imageToAdd before appending.
-					return createFigureWithCaption(imageToAdd, caption, doc);
+					const newFigure = createFigureWithCaption(imageToAdd, caption, doc);
+
+					// If the caption was found outside 'el' (e.g. a sibling
+					// <figcaption> on broken/non-nested markup — see findCaption),
+					// detach it now so it doesn't linger as a duplicate alongside
+					// the new merged figure. A caption nested inside 'el' needs no
+					// extra handling: 'el' itself is about to be replaced wholesale.
+					if (caption.parentNode && !el.contains(caption)) {
+						caption.parentNode.removeChild(caption);
+					}
+
+					return newFigure;
 				} else {
 					// No meaningful caption found. Return the original element 'el'.
 					// Preceding rules should have processed the image content *within* 'el'.
@@ -537,7 +548,24 @@ function findCaption(element: Element): Element | null {
 	if (figcaption) {
 		return figcaption;
 	}
-	
+
+	// Check for a <figcaption> as a sibling rather than nested inside —
+	// some sites (e.g. lightbox/expandable image widgets) close the
+	// <figure> early to make room for a zoom button, leaving the caption
+	// as a sibling instead of a spec-compliant child. A literal
+	// <figcaption> tag is an unambiguous signal, so it takes priority over
+	// the alt-text fallback below — falling back to alt text here would
+	// synthesize a caption that duplicates this element's own text while
+	// leaving the real one behind unconsumed.
+	if (element.parentElement) {
+		for (const sibling of element.parentElement.children) {
+			if (sibling !== element && sibling.tagName === 'FIGCAPTION') {
+				const textContent = sibling.textContent?.trim();
+				if (textContent) return sibling;
+			}
+		}
+	}
+
 	// Check for elements with caption-related classes or attributes
 	const captionSelectors = [
 		'[class*="caption"]',

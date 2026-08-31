@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Responsive Hidden Image Variants</title>
+</head>
+<body>
+<article>
+<h1>Article With Two Breakpoint-Swapped Hero Image Variants</h1>
+<figure class="figure-media">
+	<div class="figure-media-variant">
+		<picture>
+			<source srcset="https://example.com/images/photo-wide.webp 960w" type="image/webp">
+			<img class="sm:hidden" src="https://example.com/images/photo-wide.jpg" width="960" height="640" title="A wide crop of the subject." alt="A wide crop of the subject.">
+		</picture>
+	</div>
+	<div class="figure-media-variant">
+		<picture>
+			<source srcset="https://example.com/images/photo-tall.webp 520w" type="image/webp">
+			<img class="md:hidden lg:hidden" src="https://example.com/images/photo-tall.jpg" width="520" height="391" title="A wide crop of the subject." alt="A wide crop of the subject.">
+		</picture>
+	</div>
+</figure>
+<p>This is the first paragraph of the article body, padded with enough sentences that the content scoring heuristics treat it as real article content rather than boilerplate text that should be discarded during extraction.</p>
+<p>This is the second paragraph, continuing the discussion with additional padding text so that the removeLowScoring and link-density checks don't mistake this short fixture for a navigation block or an index page.</p>
+</article>
+</body>
+</html>
